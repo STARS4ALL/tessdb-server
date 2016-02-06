@@ -1,0 +1,12 @@
+_trial_temp/
+*.egg-info/
+build
+dist
+*.pyc
+*.pyo
+*~
+tessdb/*.pyc
+tessdb/*.pyo
+tessdb/*~
+my*
+*.db
