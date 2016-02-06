@@ -141,7 +141,7 @@ class Location(Table):
             location_id             INTEGER PRIMARY KEY,
             contact_email           TEXT,
             site                    TEXT,
-            postal_code             TEXT,
+            zipcode                 TEXT,
             location                TEXT,
             province                TEXT,
             country                 TEXT

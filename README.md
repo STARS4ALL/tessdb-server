@@ -1,4 +1,4 @@
-# TESSDB
+# tessdb
 
 Linux service to collect measurements pubished by TESS Sky Quality Meter via MQTT.
 TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www.observatorioremoto.com/TESS.pdf)
@@ -13,7 +13,9 @@ using historic data. You can also monitor current station status.
 
 These data sources are available:
 
-+ individual samples (real time, 5 min. aprox)
++ individual samples (real time, 5 min. aprox between samples).
+
+The sampling period should be > 1 min.
 
 **Warning**: Time is UTC, not local time.
 
@@ -27,5 +29,5 @@ See the [MAINTENANCE.md file](MAINTENANCE.md)
 
 ## Data Model
 
-See the [INSTALL.md file](INSTALL.md)
+See the [DATABASE.md file](INSTALL.md)
 

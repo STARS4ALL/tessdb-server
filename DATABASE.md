@@ -2,42 +2,36 @@
 
 ## A.1. Dimensional Modelling
 
+The data model follows the [dimensional modelling approach by Ralph Kimball]
+(https://en.wikipedia.org/wiki/Dimensional_modeling). More frerences can also ve found in
+[Star Schemas](https://en.wikipedia.org/wiki/Star_schema).
 
 ## A.2 The data model
 
+![TESS Database Model](doc/tessdb.jpeg)
 
-The RealTimeSamples table is an aid for possible (more or less) real time monitoring of EMA weather stations.
-
-Real time status messages are stored in this table. If the service runs in the background long enough, this table will be periodically purged approximately at 00:00:00 UTC to delete last days samples. 
-
-## Data Model
-
-The data model follows the [dimensional modelling approach by Ralph Kimball]
-(https://en.wikipedia.org/wiki/Dimensional_modeling).
+The figure above shows the layout of **TESSDB**.
 
 ### Dimension Tables
 
-* `Date` : preloaded for 10 years)
-* `Time` : preloaded, minute resolution)
-* `Station`: registered weather stations where to collect data
-* `Type` : measurement types (`Minima`, `Maxima`, `Samples`, 'Averages', MinMax' )
-* `Units`: an assorted collection of unit labels for reports
+* `date_t`      : preloaded from 2016 to 2026)
+* `time_t`      : preloaded, with minute resolution)
+* `instrument_t`: registered weather stations where to collect data
+* `location_t`  : locations where instruments are deployed
+* `units_t`     : an assorted collection of unit labels for reports
 
-The Ùnits` table is what Dr. Kimball denotes as a *junk dimension*.
+The `units_t` table is what Dr. Kimball denotes as a *junk dimension*.
 
 ### Fact Tables
 
-* `MinMaxHistory` : fact table contaning hourly minima and maxima measurements ffrom EMA weather stations.
-
-* `RealTimeSamples` : fact table containing current EMA status messages.
-
+* `readings_t` : Accumulatin sanpshot fact table containing measurements from several TESS instruents.
 
 ## A.3 Sample queries
 
 ## A.4 data mode listing
 
-
-            CREATE TABLE IF NOT EXISTS Date
+      ```
+            CREATE TABLE IF NOT EXISTS date_t
             (
             date_id        INTEGER PRIMARY KEY, 
             sql_date       TEXT, 
@@ -54,8 +48,7 @@ The Ùnits` table is what Dr. Kimball denotes as a *junk dimension*.
             year           INTEGER
             );
 
-            
-            CREATE TABLE IF NOT EXISTS Time
+            CREATE TABLE IF NOT EXISTS time_t
             (
             time_id        INTEGER PRIMARY KEY, 
             time           TEXT,
@@ -63,157 +56,65 @@ The Ùnits` table is what Dr. Kimball denotes as a *junk dimension*.
             minute         INTEGER,
             day_fraction   REAL
             );
-            
-            
-            CREATE TABLE IF NOT EXISTS Station
+
+            CREATE TABLE IF NOT EXISTS units_t
             (
-            station_id     INTEGER PRIMARY KEY, 
-            mqtt_id        TEXT,
-            name           TEXT,
-            owner          TEXT,
-            location       TEXT,
-            province       TEXT,
-            longitude      REAL,
-            longitude_text TEXT,
-            latitude       REAL,
-            latitude_text  TEXT,
-            elevation      REAL
+            units_id                  INTEGER PRIMARY KEY AUTOINCREMENT, 
+            frequency_units           REAL,
+            magnitude_units           REAL,
+            ambient_temperature_units REAL,
+            sky_temperature_units     REAL,
+            azimuth_units             REAL,
+            altitude_units            REAL,
+            longitude_units           REAL,
+            latitude_units            REAL,
+            height_units              REAL,
+            valid_since               TEXT,
+            valid_until               TEXT,
+            valid_state               TEXT
             );
 
-
-	    CREATE TABLE IF NOT EXISTS Type
+            CREATE TABLE IF NOT EXISTS location_t
             (
-            type_id        INTEGER PRIMARY KEY, 
-            type           TEXT
+            location_id             INTEGER PRIMARY KEY,
+            contact_email           TEXT,
+            site                    TEXT,
+            zipcode                 TEXT,
+            location                TEXT,
+            province                TEXT,
+            country                 TEXT
             );
 
-	    CREATE TABLE IF NOT EXISTS Units
+            CREATE TABLE IF NOT EXISTS instrument_t
             (
-            units_id             INTEGER PRIMARY KEY, 
-            roof_relay           TEXT,
-            aux_relay            TEXT,
-            voltage_units        TEXT,
-            wet_units            TEXT,
-            cloudy_units         TEXT,
-            cal_pressure_units   TEXT,
-            abs_pressure_units   TEXT,
-            rain_units           TEXT,
-            irradiation_units    TEXT,
-            magnitude_units      TEXT,
-            frequency_units      TEXT,
-            temperature_units    TEXT,
-            rel_humidity_units   TEXT,
-            dew_point_units      TEXT,
-            wind_speed_units     TEXT,
-            wind_speed10m_units  TEXT,
-            wind_direction_units TEXT
+            instrument_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            name               TEXT,
+            mac_address        TEXT, 
+            calibration_k      REAL,
+            calibrated_since   TEXT,
+            calibrated_until   TEXT,
+            calibrated_state   TEXT,
+            current_loc_id     INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id)
             );
 
-  
-	    CREATE TABLE IF NOT EXISTS MinMaxHistory
+            CREATE TABLE IF NOT EXISTS readings_t
             (
-            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
-            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
-            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
-            type_id            INTEGER NOT NULL REFERENCES Type(type_id),
-            units_id           INTEGER NOT NULL REFERENCES Units(units_id),
-            voltage            REAL,
-            wet                REAL,
-            cloudy             REAL,
-            cal_pressure       REAL,
-            abs_pressure       REAL,
-            rain               REAL,
-            irradiation        REAL,
-            vis_magnitude      REAL,
-            frequency          REAL,
-            temperature        REAL,
-            rel_humidity       REAL,
-            dew_point          REAL,
-            wind_speed         REAL,
-            wind_speed10m      REAL,
-            wind_direction     INTEGER,
-            timestamp          TEXT,
-            PRIMARY KEY (date_id, time_id, station_id, type_id)
+            date_id             INTEGER NOT NULL REFERENCES date_t(date_id), 
+            time_id             INTEGER NOT NULL REFERENCES time_t(time_id), 
+            instrument_id       INTEGER NOT NULL REFERENCES instrument_t(instrument_id),
+            location_id         INTEGER NOT NULL REFERENCES location_t(location_id),
+            units_id            INTEGER NOT NULL REFERENCES units_t(units_id),
+            sequence_number     INTEGER,
+            frequency           REAL,
+            magnitude           REAL,
+            ambient_temperature REAL,
+            sky_temperature     REAL,
+            azimuth             REAL,
+            altitude            REAL,
+            longitude           REAL,
+            latitude            REAL,
+            height              REAL,
+            timestamp           TEXT,
+            PRIMARY KEY (date_id, time_id, instrument_id)
             );
-
-
-
-	    CREATE TABLE IF NOT EXISTS RealTimeSamples
-            (
-            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
-            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
-            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
-            type_id            INTEGER NOT NULL REFERENCES Type(type_id),
-            units_id           INTEGER NOT NULL REFERENCES Units(units_id),
-            voltage            REAL,
-            wet                REAL,
-            cloudy             REAL,
-            cal_pressure       REAL,
-            abs_pressure       REAL,
-            rain               REAL,
-            irradiation        REAL,
-            vis_magnitude      REAL,
-            frequency          REAL,
-            temperature        REAL,
-            rel_humidity       REAL,
-            dew_point          REAL,
-            wind_speed         REAL,
-            wind_speed10m      REAL,
-            wind_direction     INTEGER,
-            timestamp          TEXT,
-            PRIMARY KEY (date_id, time_id, station_id, type_id)
-            );
-  
- 
-	    CREATE TABLE IF NOT EXISTS AveragesHistory
-            (
-            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
-            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
-            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
-            units_id           INTEGER NOT NULL REFERENCES Units(units_id),
-            voltage            REAL,
-            wet                REAL,
-            cloudy             REAL,
-            cal_pressure       REAL,
-            abs_pressure       REAL,
-            rain               REAL,
-            irradiation        REAL,
-            vis_magnitude      REAL,
-            frequency          REAL,
-            temperature        REAL,
-            rel_humidity       REAL,
-            dew_point          REAL,
-            wind_speed         REAL,
-            wind_speed10m      REAL,
-            wind_direction     INTEGER,
-            timestamp          TEXT,
-            PRIMARY KEY (date_id, time_id, station_id)
-            );
-
-
-            CREATE TABLE IF NOT EXISTS HistoryStats
-            (
-            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
-            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
-            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
-            type_id            INTEGER NOT NULL REFERENCES Type(type_id),
-            records_submitted  INTEGER,
-            records_committed  INTEGER,
-            timestamp          TEXT DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (date_id, time_id, station_id, type_id)
-            );
-   
-
-	    CREATE TABLE IF NOT EXISTS RealTimeStats
-            (
-            date_id            INTEGER NOT NULL REFERENCES Date(date_id), 
-            time_id            INTEGER NOT NULL REFERENCES Time(time_id), 
-            station_id         INTEGER NOT NULL REFERENCES Station(station_id),
-            type_id            INTEGER NOT NULL REFERENCES Type(type_id),
-            timestamp          TEXT,
-            window_size        INTEGER,
-            num_samples        INTEGER,
-            num_bytes          INTEGER,
-            lag                INTEGER,
-            PRIMARY KEY (date_id, time_id, station_id, type_id)
-            );
+      ```

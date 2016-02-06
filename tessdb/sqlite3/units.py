@@ -136,7 +136,7 @@ def _populateIgn(transaction, rows):
             :altitude_units,
             :longitude_units,
             :latitude_units,
-             :height_units,
+            :height_units,
             :valid_since,
             :valid_until,
             :valid_state

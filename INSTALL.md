@@ -26,7 +26,7 @@ or from GitHub:
 
 
 * All executables are copied to `/usr/local/bin`
-* The database is located at `/etc/dbase/tessdb.db` by default
+* The database is located at `/var/dbase/tess.db` by default
 * The log file is located at `/var/log/tessdb.log`
 
 ### A.2.2 Start up Verification
@@ -67,6 +67,7 @@ In special, the database file name and location is specified in this file.
 
 ### B.2. Logging
 
-Log file is usually placed under `/var/log/tessdb.log` in Linux or `C:\tessdb\log` on Windows. 
-Default log level is `INFO`. It generates very litte logging at this level.
-File is rotated by the application itself. 
+Log file is usually placed under `/var/log/tessdb.log` in Linux or under `C:\tessdb\log` folder on Windows. 
+Default log level is `info`. It generates very litte logging at this level.
+File is rotated by logrotate under Linux. 
+For Windows, it requires support from an exteral log rotator software such as [LogRotateWin](http://sourceforge.net/projects/logrotatewin/)
