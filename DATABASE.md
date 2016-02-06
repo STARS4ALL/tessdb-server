@@ -38,10 +38,9 @@ constant has its indicator set to `Current` and the expiration date in a far awa
 
 #### Unit dimension
 
-The `units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects ar labels denoting
-the current measurement units of samples in the fact table. Should the units change, we keep track of them
-in a similar technique as described in the `instrument_t` table. Columns `valid_since`, `valid_until` and
-`valid_state` keep track of units change in a similar way as above.
+The `units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects various labels denoting
+the current measurement units of samples in the fact table. Columns `valid_since`, `valid_until` and
+`valid_state` keep track of units change in a similar technique as above should the units change.
 
 ### Fact Tables
 
