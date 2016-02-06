@@ -23,7 +23,7 @@ The figure below shows the layout of **tessdb**.
 #### Instrument Dimension
 
 This dimension holds the current list of instruments. 
-The real key is an artificial key ìnstrument_id` linked to the Fact table.
+The real key is an artificial key `instrument_id` linked to the Fact table.
 The `mac_address` is the natural key.
 The `name` attribute is an alternative key. An instrument name can be changed
 as log as there is no other instrument with the same name.
