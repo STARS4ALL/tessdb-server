@@ -1,0 +1,9 @@
+include versioneer.py
+include tessdb/_version.py
+include README.md
+include init.d/tessdb
+include default/tessdb
+include config/*
+include scripts/*
+include dbase/*
+include log/*

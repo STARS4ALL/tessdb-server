@@ -1,0 +1,88 @@
+# ----------------------------------------------------------------------
+# Copyright (c) 2014 Rafael Gonzalez.
+#
+# See the LICENSE file for details
+# ----------------------------------------------------------------------
+
+[log]
+
+# File where log is stored, if any
+# Leave blank if no logfile is desired
+# Not reloadable property
+path = /var/log/tessdb.log
+
+# log file rotation policy, either 'time' or 'size'
+# Not reloadable property
+policy = time
+
+# File Max size in bytes when rotating by size
+# Not reloadable property
+max_size = 1000000
+
+#------------------------------------------------------------------------#
+
+[tessdb]
+
+# Global section
+
+# namespace log level (debug, info, warn, error, critical)
+# Reloadable property
+log_level = info
+
+#------------------------------------------------------------------------#
+[mqtt]
+
+# MQTT Client config
+
+# Broker to connect
+# Not reloadable property
+broker = test.mosquitto.org
+
+# Connection port (unauthenticated)
+# Not reloadable property
+port = 1883
+
+# Keepalive connection (in seconds)
+# Not reloadable property
+keepalive = 60
+
+# MQTT topics to subscribe
+# Reloadable property
+topics= STARS4ALL/+/readings, STARS4ALL/register
+
+# MQTT payload validation
+# Reloadable property
+validation = yes
+
+# namespace log level (debug, info, warn, error, critical)
+# Reloadable property
+log_level = info
+
+#------------------------------------------------------------------------#
+
+# Database configuration section
+[dbase]
+
+# All items in this section are reconfigurable by reload
+
+# For SQLite, this is the full path name to the database file
+# Not reloadable property
+connection_string = /var/dbase/tess.db
+
+# Directory where JSON data is located
+# Not reloadable property
+json_dir = /etc/tessdb
+
+# Limit years (included) for the Date dimension (from Jan 1 to Dec 12)
+# Not reloadable property
+year_start = 2016
+year_end   = 2026
+
+# Date format for the Date dimension (date field)
+# Examples: (%Y/%m/%d => 2015/12/31) (%d/%m/%Y => 31/12/2015)
+# Not reloadable property
+date_fmt = %d/%m/%Y
+
+# namespace log level (debug, info, warn, error, critical)
+# Reloadable property
+log_level = info

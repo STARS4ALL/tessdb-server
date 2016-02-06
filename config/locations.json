@@ -1,0 +1,45 @@
+# ----------------------------------------------------------------------
+# Copyright (c) 2014 Rafael Gonzalez.
+#
+# See the LICENSE file for details
+# ----------------------------------------------------------------------
+
+
+# LOCATIONS FILE FORMAT
+#
+# A list of location entries. 
+# Each location is a list with the following fields:
+# ----------------------------
+#    [
+#           location_id             INTEGER PRIMARY KEY,
+#            contact_email           TEXT,
+#            site                    TEXT,
+#            postal_code             TEXT,
+#            location                TEXT,
+#            province                TEXT,
+#            country                 TEXT
+#    ], 
+# ----------------------------
+
+# location_id = -1 is reserved for the 'Unknown' location
+
+[
+    {
+        "location_id"   : -1, 
+        "contact_email" : "Unknown", 
+        "site"          : "Unknown", 
+        "postal_code"   : "Unknown", 
+        "location"      : "Unknown", 
+        "province"      : "Unknown", 
+        "country"       : "Unknown"
+    }, 
+    {
+        "location_id"   : 1, 
+        "contact_email" : "cristogg@yahoo.es",
+        "site"          : "Laboratorio de Cristobal Garcia", 
+        "postal_code"   : "28822", 
+        "location"      : "Coslada", 
+        "province"      : "Madrid", 
+        "country"       : "Espana"
+    }
+]
