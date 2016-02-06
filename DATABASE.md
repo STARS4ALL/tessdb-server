@@ -33,7 +33,7 @@ The `calibration_k` holds the current value of the instrument calibration consta
 A history of calibration constant changes are maintained in the `instrument_t` table
 if the instrument is ever recalibrated. Columns `calibrated_since` and `calibrated_until`
 hold the timestamps where the calibration constant is valid. Column `calibrated_state`
-is an indicator. Its values are either `**Current**` or `**Expired**`. The current calibration
+is an indicator. Its values are either **`Current`** or **`Expired`**. The current calibration
 constant has its indicator set to `Current` and the expiration date in a far away future (Y2999).
 
 #### Unit dimension
