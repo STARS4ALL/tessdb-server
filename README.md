@@ -9,7 +9,7 @@ TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www
 TESS instruments into a SQLite Database. 
 
 Desktop applicatons may query the database to generate reports and graphs
-using historic data. You can also monitor current station status.
+using the accumulated, historic data.
 
 These data sources are available:
 
@@ -29,5 +29,5 @@ See the [MAINTENANCE.md file](MAINTENANCE.md)
 
 ## Data Model
 
-See the [DATABASE.md file](INSTALL.md)
+See the [DATABASE.md file](DATABASE.md)
 

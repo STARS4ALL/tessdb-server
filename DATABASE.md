@@ -3,7 +3,7 @@
 ## A.1. Dimensional Modelling
 
 The data model follows the [dimensional modelling approach by Ralph Kimball]
-(https://en.wikipedia.org/wiki/Dimensional_modeling). More frerences can also ve found in
+(https://en.wikipedia.org/wiki/Dimensional_modeling). More references can also ve found in
 [Star Schemas](https://en.wikipedia.org/wiki/Star_schema).
 
 ## A.2 The data model
