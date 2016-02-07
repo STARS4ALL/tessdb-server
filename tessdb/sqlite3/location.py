@@ -52,7 +52,7 @@ DEFAULT_LOCATION = [
         "location_id"   : -1, 
         "contact_email" : "Unknown", 
         "site"          : "Unknown", 
-        "postal_code"   : "Unknown", 
+        "zipcode"   : "Unknown", 
         "location"      : "Unknown", 
         "province"      : "Unknown", 
         "country"       : "Unknown"
@@ -76,7 +76,7 @@ def _populateRepl(transaction, rows):
             location_id,
             contact_email,
             site,
-            postal_code,
+            zipcode,
             location,
              province,
             country
@@ -84,7 +84,7 @@ def _populateRepl(transaction, rows):
             :location_id,
             :contact_email,
             :site,
-            :postal_code,
+            :zipcode,
             :location,
             :province,
             :country
@@ -97,15 +97,15 @@ def _populateIgn(transaction, rows):
             location_id,
             contact_email,
             site,
-            postal_code,
+            zipcode,
             location,
-             province,
+            province,
             country
         ) VALUES (
             :location_id,
             :contact_email,
             :site,
-            :postal_code,
+            :zipcode,
             :location,
             :province,
             :country

@@ -97,12 +97,13 @@ def loadCfgFile(path):
     options['log']['max_size'] = parser.getint("log","max_size")
 
     options['mqtt'] = {}
-    options['mqtt']['log_level']  = parser.get("mqtt","log_level")
-    options['mqtt']['validation'] = parser.getboolean("mqtt","validation")
-    options['mqtt']['broker']     = parser.get("mqtt","broker")
-    options['mqtt']['port']       = parser.getint("mqtt","port")
-    options['mqtt']['keepalive']  = parser.getint("mqtt","keepalive")
-    options['mqtt']['topics']     = chop(parser.get("mqtt","topics"),',')
+    options['mqtt']['log_level']      = parser.get("mqtt","log_level")
+    options['mqtt']['validation']     = parser.getboolean("mqtt","validation")
+    options['mqtt']['broker']         = parser.get("mqtt","broker")
+    options['mqtt']['port']           = parser.getint("mqtt","port")
+    options['mqtt']['keepalive']      = parser.getint("mqtt","keepalive")
+    options['mqtt']['topics']         = chop(parser.get("mqtt","topics"),',')
+    options['mqtt']['topic_register'] = parser.get("mqtt","topic_register")
 
     options['dbase'] = {}
     options['dbase']['log_level']         = parser.get("dbase","log_level")

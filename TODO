@@ -5,7 +5,6 @@ Todas y cada una de estas cosas en su rama git
 *) command line tools para dar e alta sobre la marcha Sitios e instrumentos
 (aunque luego deberían estar en el fichero maestro json ...)
 
-*) Separate registry topic property
 *) instrument name UNIQUE NOT NULL
  - refactorizar el registro y sacar las Integrity error como violacion de 
    nombre.
@@ -13,3 +12,7 @@ Todas y cada una de estas cosas en su rama git
 *) backup de la BD con logrotate
   - aprovechando el pause / resume
  *) Libreria MQTT quitar el modulo logger, actualizar ejemplos y pushear y limpiar
+
+ *) Posible bug de la MQTT library en el debug. El resultado es id?
+    2016-02-07T12:56:47+0100 [mqtt#debug] <== UNSUBACK (id=0006)
+    2016-02-07T12:56:47+0100 [mqtt#debug] Unsubscription result=6

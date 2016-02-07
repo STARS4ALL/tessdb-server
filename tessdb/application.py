@@ -114,7 +114,8 @@ class TESSApplication(object):
         config_opts  = loadCfgFile(self.cmdline_opts.config)
         self.mqttService.reloadService(config_opts['mqtt'])
         self.dbaseService.reloadService(config_opts['dbase'])
-        setLogLevel(namespace='tessdb', levelStr=config_opts['tessdb']['log_level'])
+        level = config_opts['tessdb']['log_level']
+        setLogLevel(namespace='tessdb', levelStr=level)
         log.info("new log level is {lvl}", lvl=level)
      
 

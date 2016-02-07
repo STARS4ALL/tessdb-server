@@ -60,13 +60,14 @@ class MQTTService(Service):
 
     def __init__(self, parent, options, **kargs):
         Service.__init__(self)
-        self.parent   = parent
-        self.options  = options
-        self.topics   = []
-        self.nregister = 0
-        self.nreadings = 0
-        self.npublish  = 0
-        self.validate  = options['validation']
+        self.parent     = parent
+        self.options    = options
+        self.topics     = []
+        self.regAllowed = False
+        self.nregister  = 0
+        self.nreadings  = 0
+        self.npublish   = 0
+        self.validate   = options['validation']
         setLogLevel(namespace='mqtt', levelStr=options['log_level'])
     
     def startService(self):
@@ -83,12 +84,13 @@ class MQTTService(Service):
     # Extended Service API
     # --------------------
 
+    @inlineCallbacks
     def reloadService(self, new_options):
         self.validate  = new_options['validation']
         setLogLevel(namespace='mqtt', levelStr=new_options['log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        topics = [ (topic, self.QoS) for topic in new_options['topics'] ]
-        self.subscribe(topics)
+        yield self.subscribe(new_options)
+        self.options = new_options
 
     def pauseService(self):
         pass
@@ -111,14 +113,20 @@ class MQTTService(Service):
         log.debug("Got protocol 2")
         yield self.protocol.connect("TwistedMQTT-subs", keepalive=self.options['keepalive'])
         log.info("Connected to {broker} on port {port}", broker=self.options['broker'], port=self.options['port'])
-        topics = [ (topic, self.QoS) for topic in self.options['topics'] ]
-        yield self.subscribe(topics)
+        yield self.subscribe(self.options)
 
     @inlineCallbacks
-    def subscribe(self, topics):
+    def subscribe(self, options):
         '''
         Smart subscription to a list of (topic, qos) tuples
         '''
+        # Make the list of tuples first
+        topics = [ (topic, self.QoS) for topic in options['topics'] ]
+        if options['topic_register'] != "":
+            self.regAllowed = True
+            topics.append( (options['topic_register'], self.QoS) )
+        else:
+            self.regAllowed = False
         # Unsubscribe first if necessary from old topics
         diff_topics = [ t[0] for t in (set(self.topics) - set(topics)) ]
         if len(diff_topics):
@@ -226,7 +234,7 @@ class MQTTService(Service):
                     log.error('{excp!r}', excp=e)
                     return
             self.parent.queue['readings'].append(row)
-        elif topic.endswith("register"):
+        elif self.regAllowed and topic == self.options["topic_register"]:
             self.nregister += 1
             if self.validate:
                 try:
