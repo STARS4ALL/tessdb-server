@@ -213,6 +213,10 @@ class Instrument(Table):
     def register(self, row):
         '''
         Registers an instrument given its MAC address, friendly name and calibration constant
+        Returns a deferred with the following codes in the result (for unitary testing):
+        0 - Regsitration ok
+        1 - Could not create brand new instrument. Existing instrument with the same name.
+        2 - Could not change name. Existing instrument with the same name
         '''
         instrument = yield self.findMAC(row)
         
