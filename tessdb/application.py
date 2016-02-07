@@ -48,6 +48,9 @@ class TESSApplication(object):
     # Signal handler polling period
     T = 1
 
+    # Periodic task in seconds
+    TLOG = 60
+
     def __init__(self, cmdline_opts, config_opts):
         
         TESSApplication.instance = self
@@ -58,10 +61,18 @@ class TESSApplication(object):
         self.sigresume  = False
         self.task       = task.LoopingCall(self.sighandler)
         self.task.start(self.T, now=False) # call every T seconds
+        self.reportTask   = task.LoopingCall(self.reporter)
         self.mqttService  = MQTTService(self, config_opts['mqtt'])
         self.dbaseService = DBaseService(self, config_opts['dbase'])
         setLogLevel(namespace='tessdb', levelStr=config_opts['tessdb']['log_level'])
        
+
+    def reporter(self):
+        '''
+        Periodic task to log queue size
+        '''
+        log.info("Readings queue size is {size}", size=len(self.queue['readings']))
+
 
     def sighandler(self):
         '''
@@ -77,17 +88,24 @@ class TESSApplication(object):
             self.sigresume = False
             self.resume()
 
+
     def pause(self):
         '''
         Pause application
         '''
         self.dbaseService.pauseService()
+        if not self.reportTask.running:
+            self.reportTask.start(self.TLOG, now=True) # call every T seconds
+
 
     def resume(self):
         '''
         Resume application
         '''
         self.dbaseService.resumeService()
+        if self.reportTask.running:
+            self.reportTask.stop()
+
 
     def reload(self):
         '''
