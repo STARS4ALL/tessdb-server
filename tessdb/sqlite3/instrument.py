@@ -168,7 +168,7 @@ class Instrument(Table):
             CREATE TABLE IF NOT EXISTS instrument_t
             (
             instrument_id      INTEGER PRIMARY KEY AUTOINCREMENT,
-            name               TEXT UNIQUE NOT NULL,
+            name               TEXT,
             mac_address        TEXT, 
             calibration_k      REAL,
             calibrated_since   TEXT,
@@ -214,42 +214,47 @@ class Instrument(Table):
         '''
         Registers an instrument given its MAC address, friendly name and calibration constant
         Returns a deferred with the following codes in the result (for unitary testing):
-        0 - Regsitration ok
-        1 - Could not create brand new instrument. Existing instrument with the same name.
-        2 - Could not change name. Existing instrument with the same name
+        Bit 0 - 1 = Operation was an update. 0 = Operation was a creation.
+        Bit 1 - 1 = Updated name. 0 = Not updated name.
+        Bit 2 - 1 = Updated calib constant. 0 = Not updated calib constant
+        Bit 6 - 1 = Update Error. Existing instrument with the same name.
+        Bit 7 - 1 = Creaiton error. Existing instrument with the same name.
         '''
+
+        ret = 0x00
         instrument = yield self.findMAC(row)
-        
         # if  instrument with that MAC already exists, may be update it ...
         if len(instrument):
+            ret |= 0x01
             instrument = instrument[0]  # Keep only the first row
             # If the new name is not equal to the old one, change it
-            if row['name'] != instrument[0]:
-                try:
+            if row['name']  != instrument[0]:
+            # unless the new name is already being used by another instrument
+                instrument2 = yield self.findName(row)
+                if not len(instrument2):
+                    ret |= 0x02
                     yield self.updateName(row)
-                except sqlite3.IntegrityError as e:
-                    log.error("Trying to change instrument name '{name}' used by another instrument", name=row['name'])
-                except Exception as e:
-                    log.error("An exception occured: {excp!r}", excp=e)
-                else:
                     log.info("Changed instrument name to {name}", name=row['name'])
-          
+                else:
+                    ret |= 0x40
+
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
+                ret |= 0x04
                 yield self.updateCalibration(row)
-                log.info("Changing instrument calibration data to {calib}", calib=row['calib'])
+                log.info("Changed instrument calibration data to {calib}", calib=row['calib'])
         else:
             # Find other posible existing instruments with the same name
             # We require the names to be unique as well.
             # If that condition is met, we add a new instrument
-            try:
-                yield self.addNew(row)
-            except sqlite3.IntegrityError as e:
-                log.error("Trying to add new instrument with the same name '{name}' as another existing instrument", name=row['name'])
-            except Exception as e:
-                log.error("An exception occured: {excp!r}", excp=e)
+            instrument = yield self.findName(row)
+            if len(instrument):
+                log.info("Another instrument already registered with the same name: {name}", name=row['name']) 
+                ret |= 0x80
             else:
-                log.info("Brand new instrument registered: {name}", name=row['name']) 
+                yield self.addNew(row)
+                log.info("Brand new instrument registered: {name}", name=row['name'])
+        returnValue(ret)
 
 
     def findMAC(self, row):
