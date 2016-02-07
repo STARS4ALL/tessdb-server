@@ -16,7 +16,7 @@ to upload them to GitHub and mark releases there as well.
 
 3. Register the new release in PyPi
 
-	`python setup.py register` 
+	`sudo python setup.py register` 
 	
 4. Package and Upload at the same time 
 
@@ -36,3 +36,7 @@ to upload them to GitHub and mark releases there as well.
 3. Push tags
 
 	`git push --tags origin master` 
+
+# Reviewing the package in PyPi
+
+	Use your credentails in ~/.pipyrc

@@ -8,8 +8,3 @@ Todas y cada una de estas cosas en su rama git
 *) logrotate del log
 *) backup de la BD con logrotate
   - aprovechando el pause / resume
- *) Libreria MQTT quitar el modulo logger, actualizar ejemplos y pushear y limpiar
-
- *) Posible bug de la MQTT library en el debug. El resultado es id?
-    2016-02-07T12:56:47+0100 [mqtt#debug] <== UNSUBACK (id=0006)
-    2016-02-07T12:56:47+0100 [mqtt#debug] Unsubscription result=6
