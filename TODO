@@ -1,55 +1,19 @@
 Todas y cada una de estas cosas en su rama git
 =============================================
-*) outrigger de current_loc_id
+*) outrigger de current_loc_id ???
 *) Base de datos fijable pro configuracions (SQLite3, MySQL o Postgres)
 *) command line tools para dar e alta sobre la marcha Sitios e instrumentos
 (aunque luego deberían estar en el fichero maestro json ...)
-*) Coger excepciones de Integridad referencial e imprimir
-*) Contadores de estadisticas en los updates para ir sacando trazas de vez en cuando
-*) La validaciones mejor en MQTT no en la BD
-*) Cola de mensajes (DeferredQueue)
- -) Hacer mi propio Deferredqueue con dequeues ?
- * Hacer una funcion que lea todo el fochero de configuración 
- y lo convierta en un diccionario para luego
-encapsularla con un deferToThread.
 
-
-Signal handling
-> I saw that "_SignalReactorMixin" sets the handlers and that "ReactorBase"
-> defines the default handlers : ...
-> My question is how can I redefine them, other than monkey patching or
-> inheriting the reactor and over-riding them (which I'd rather not do since
-> some of my code uses the windows reactor when on windows since I was having
-> problems with windows event)? Is there such a mechanism, something like
-> setDefaultSig("SIGINT, mySigIntHandler)?
-
-One easy way to do it is to reactor.run(installSignalHandlers=False)
-and then manually install your own signal handlers in the usual way
-(using the python signal library).
-
-Cheers,
-Reza
-If you do this, you'll break spawnProcess.  Fortunately, if you just
-install a SIGINT handler, Twisted won't stomp on it:
-
-    exarkun at charm:~$ python
-    Python 2.5.2 (r252:60911, Jul 31 2008, 17:28:52) 
-    [GCC 4.2.3 (Ubuntu 4.2.3-2ubuntu7)] on linux2
-    Type "help", "copyright", "credits" or "license" for more information.
-    >>> def f(*a):
-    ...     print 'sigint'
-    ... 
-    >>> import signal
-    >>> signal.signal(signal.SIGINT, f)
-    <built-in function default_int_handler>
-    >>> from twisted.internet import reactor
-    >>> reactor.run()
-    sigint
-    sigint
-    sigint
-    Quit
-    exarkun at charm:~$ 
-
-Jean-Paul
-
-
+*) Task de 60 segundos entre pause/resume para imprimir los mensajes en cola
+*) Separate registry topic property
+*) instrument name UNIQUE NOT NULL
+ - refactorizar el registro y sacar las Integrity error como violacion de 
+   nombre.
+ - actualizar el dibujo
+*) logrotate del log
+*) backup de la BD con logrotate
+  - aprovechando el pause / resume
+ *) Libreria MQTT quitar el modulo logger, actualizar ejemplos y pushear y limpiar
+ *) quitar MD del README ya que es redundantes
+ *) Meter la parte de INSTALL enel README, pq es lo que se va a a ver en el PyPi
