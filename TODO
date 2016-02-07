@@ -10,10 +10,7 @@ Todas y cada una de estas cosas en su rama git
 *) instrument name UNIQUE NOT NULL
  - refactorizar el registro y sacar las Integrity error como violacion de 
    nombre.
- - actualizar el dibujo
 *) logrotate del log
 *) backup de la BD con logrotate
   - aprovechando el pause / resume
  *) Libreria MQTT quitar el modulo logger, actualizar ejemplos y pushear y limpiar
- *) quitar MD del README ya que es redundantes
- *) Meter la parte de INSTALL enel README, pq es lo que se va a a ver en el PyPi
