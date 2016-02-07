@@ -51,8 +51,10 @@ classifiers = [
 ]
 
 if os.name == "posix":
+  
+  import shlex
 
-  setup(name             = 'emadb',
+  setup(name             = 'tessdb',
         version          = versioneer.get_version(),
         cmdclass         = versioneer.get_cmdclass(),
         author           = 'Rafael Gonzalez',
@@ -66,12 +68,16 @@ if os.name == "posix":
         packages         = ["tessdb","tessdb.sqlite3"],
         install_requires = ['twisted >= 15.4.0','twisted-mqtt'],
         data_files       = [ 
-          ('/etc/init.d' ,   ['init.d/tessdb']),
-          ('/etc/default',   ['default/tessdb']),
-          ('/etc/tessdb',    ['config/config', 'config/units.json', 'config/instruments.json', 'config/locations.json']),
-          ('/usr/local/bin', ['scripts/tessdb']),
+          ('/etc/init.d' ,     ['init.d/tessdb']),
+          ('/etc/default',     ['default/tessdb']),
+          ('/etc/tessdb',      ['config/config', 'config/units.json', 'config/instruments.json', 'config/locations.json']),
+          ('/usr/local/bin',   ['scripts/tessdb']),
+          ('/etc/logrotate.d', ['logrotate/tessdb']),
           ]
         )
+
+  args = shlex.split( "chmod 644 /etc/logrotate.d/tessdb")
+  subprocess.call(args)
 
 elif os.name == "nt":
 
