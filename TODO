@@ -5,9 +5,6 @@ Todas y cada una de estas cosas en su rama git
 *) command line tools para dar e alta sobre la marcha Sitios e instrumentos
 (aunque luego deberían estar en el fichero maestro json ...)
 
-*) instrument name UNIQUE NOT NULL
- - refactorizar el registro y sacar las Integrity error como violacion de 
-   nombre.
 *) logrotate del log
 *) backup de la BD con logrotate
   - aprovechando el pause / resume

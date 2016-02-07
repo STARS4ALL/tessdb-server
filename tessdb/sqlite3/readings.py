@@ -126,14 +126,17 @@ class Readings(Table):
         - long
         - lat
         - height
+        Returns a Deferred with the following integer resut code as callback value:
+        Bit 0 - 1 = new row inserted, 0 = No row inserted
+        Bit 6 - 1 = duplicate rows
+        Bit 7 - 1 = Other exception
         '''
-      
+        ret = 0
         instrument = yield self.parent.instruments.findName(row)
         log.debug("{instrument!s}", instrument=instrument)
         if not len(instrument):
             log.warn("No instrument {0} registered for this reading !".format(row['name']))
-            returnValue(None)
-
+            returnValue(ret)
         instrument = instrument[0]  # Keep only the first row
         if not 'tstamp' in row:
             now = datetime.datetime.utcnow()
@@ -149,18 +152,17 @@ class Readings(Table):
         n = self.which(row)
         # Get the appropriate decoder function
         myupdater = getattr(self, "update{0}".format(n), None)
-        if myupdater:
-            log.debug("found updater for update{0}".format(n))
-            try:
-                yield myupdater(row)
-            except sqlite3.IntegrityError as e:
-                log.error("Instrument id={id} is sending readings too fast", id=instrument[0])
-            except Exception as e:
-                log.error("An exception occured: {excp!r}", excp=e)
-        else:
-            # No updater
-            log.error("Could not find updater for update{0}".format(n))
-
+        log.debug("found updater for update{0}".format(n))
+        try:
+            yield myupdater(row)
+            ret |= 0x01
+        except sqlite3.IntegrityError as e:
+            log.error("Instrument id={id} is sending readings too fast", id=instrument[0])
+            ret |= 0x40
+        except Exception as e:
+            log.error("exception {excp!s}", excp=e)
+            ret |= 0x80
+        returnValue(ret)
 
     # ==============
     # Helper methods

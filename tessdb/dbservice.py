@@ -69,7 +69,9 @@ class DBaseService(Service):
         self.later = reactor.callLater(2, self.writter)
 
     def stopService(self):
+        self.dbase.pool.close()
         Service.stopService()
+        log.info("Database stopped.")
 
     #---------------------
     # Extended Service API
