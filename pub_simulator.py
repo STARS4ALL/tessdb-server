@@ -16,7 +16,7 @@ from tessdb.logger import startLogging, setLogLevel
 NAME = 'TESS-SIMULATOR'
 MAC = '01:23:45:67:89:AB'
 CALIB = 10.0
-TX_PERIOD = 61
+TX_PERIOD = 60
 PROTOCOL_REVISION = 1
 TOPIC_REGISTER = "STARS4ALL/register"
 TOPIC_READINGS = "STARS4ALL/01/readings"
