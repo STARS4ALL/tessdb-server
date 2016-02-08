@@ -73,9 +73,10 @@ if os.name == "posix":
           ('/etc/tessdb',      ['config/config', 'config/units.json', 'config/instruments.json', 'config/locations.json']),
           ('/usr/local/bin',   ['scripts/tessdb']),
           ('/etc/logrotate.d', ['logrotate/tessdb']),
+          ('/var/dbase',       ['dbase/placeholder.txt']),
           ]
         )
-
+  # Some fixes after setup
   args = shlex.split( "chmod 644 /etc/logrotate.d/tessdb")
   subprocess.call(args)
 

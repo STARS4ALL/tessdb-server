@@ -60,7 +60,7 @@ or from GitHub:
 
 ### Start up Verification
 
-Type `sudo tessdb` to start the service in foreground with console output.
+Type `sudo tessdb -k` to start the service in foreground with console output.
 
 Type `sudo service tessdb start` to start it as a backgroud service.
 Type `sudo update-rc.d tessdb defaults` to start it at boot time.
