@@ -10,3 +10,4 @@ tessdb/*.pyo
 tessdb/*~
 my*
 *.db
+log/*

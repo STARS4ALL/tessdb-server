@@ -38,7 +38,7 @@ if os.name == "nt":
 	if not options.interactive:
 		import winserv_main
 	else:
-		import posix_main
+		import win_main
 elif os.name == "posix":
 	import posix_main
 else:

@@ -9,7 +9,6 @@
 # -------------------
 
 import sys
-import signal
 
 # ---------------
 # Twisted imports
@@ -38,27 +37,6 @@ from .application import TESSApplication
 # Module Utility Functions
 # ------------------------
 
-# SIGNAL HANDLERS
-
-def sigreload(signum, frame):
-   '''
-   Signal handler (SGUHUP only)
-   '''
-   TESSApplication.instance.sigreload = True
-   
-def sigpause(signum, frame):
-   '''
-   Signal handler (SIGUSR1 only)
-   '''
-   TESSApplication.instance.sigpause = True
-
-def sigresume(signum, frame):
-   '''
-   Signal handler (SIGUSR2 only)
-   '''
-   TESSApplication.instance.sigresume = True
-
-
 
 # Read the command line arguments and config file options
 cmdline_opts = cmdline()
@@ -67,10 +45,6 @@ if cmdline_opts.config:
 else:
 	config_opts = None
 
-# Install signal handlers
-signal.signal(signal.SIGHUP,  sigreload)
-signal.signal(signal.SIGUSR1, sigpause)
-signal.signal(signal.SIGUSR2, sigresume)
 
 # Start the logging subsystem
 startLogging(console=cmdline_opts.console, filepath=config_opts['log']['path'])
