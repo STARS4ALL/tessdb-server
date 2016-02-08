@@ -67,10 +67,32 @@ Type `sudo update-rc.d tessdb defaults` to start it at boot time.
 
 ## Windows installation
 
+## Pregrequisites
+
+* Have Python 2.7 for Windows installed.
+* Have the [Microsoft Visual C++ Compiler for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266) installed.
+Systems requirements state for Windows 7+, but it works fine for Windows XP, 32bits. 
+
 ### Installation
 
 1. Open a `CMD.exe` console, **with Administrator privileges for Windows 7 and higher**
-2. Inside this new created folder type:
+2. Inside this console type:
+
+`pip install twisted`
+
+Twisted will install (15.5.0 at this moment)
+
+You can test that this installation went fine by opening a python command line (IDLE or Python CMD)
+and type:
+
+	```
+	>>> import twisted
+	>>> print twisted.__version__
+	15.5.0
+	>>> _
+	```
+
+3. Inside this new created folder type:
 
  `pip install tessdb`
 
