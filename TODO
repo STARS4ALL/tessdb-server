@@ -2,5 +2,3 @@ Todas y cada una de estas cosas en su rama git
 =============================================
 *) outrigger de current_loc_id ???
 *) Base de datos fijable pro configuracions (SQLite3, MySQL o Postgres)
-*) command line tools para dar e alta sobre la marcha Sitios e instrumentos
-(aunque luego deberían estar en el fichero maestro json ...)
