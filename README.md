@@ -35,7 +35,7 @@ See the [DATABASE.md file](DATABASE.md)
 
 The following components are needed and should be installed first:
 
- * python 2.7.x (tested on Ubunti python 2.7.6 & Windows XP python 2.7.10)
+ * python 2.7.x (tested on Ubunti python 2.7.6)
 
 ### Installation
 
@@ -65,10 +65,11 @@ Type `sudo update-rc.d tessdb defaults` to start it at boot time.
 
 ## Pregrequisites
 
+(Tested on Windows XP SP1 & python 2.7.10)
 * Have [Python 2.7 for Windows](https://www.python.org/downloads/windows/) installed.
 * Have [PythonWin extensions](http://sourceforge.net/projects/pywin32/files/pywin32/) installed. select the latest build
 fpr the **Pyhton2.7 version**
-* Have the [Microsoft Visual C++ Compiler for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266) installed. Systems requirements state for Windows 7+, but it works fine for Windows XP, 32bits. 
+* Have the [Microsoft Visual C++ Compiler for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266) installed. Thos is necessary to install `twisted` later on. Systems requirements state for Windows 7+, but it works fine for Windows XP, 32bits. 
 
 ### Installation
 

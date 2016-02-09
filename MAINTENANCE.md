@@ -1,9 +1,9 @@
-# C. OPERATION & MAINTENANCE
+# OPERATION & MAINTENANCE
 
 
-## C.1 Server Start/Stop/Restart
+## Server Start/Stop/Restart
 
-### C.1.1 Linux
+### Under Linux
 
 * Service status: `sudo service emadb status`
 * Start Service:  `sudo service emadb start`
@@ -12,7 +12,7 @@
 
     sudo service emadb reload
 
-### C.2.2 Windows
+### Under Windows
 
 The start/stop/restart/pause operations can be performed with the Windows service GUI tool
 **If the config.ini file is not located in the usual locatioon, you must supply its path to the tool as extra arguments**
@@ -23,7 +23,7 @@ From the command line:
 * Stop Service:   Click on the `stop_service.bat` file
 * Restart Service: `????`. A server restart kills the process and then starts a new one
 
-## C.2 Server Pause
+## Server Pause
 
 The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enquued and not written to the database. This is usefull to perform delicate operations on the database without loss of data. Examples:
 
@@ -31,15 +31,15 @@ The server can be put in *pause mode*, in which will be still receiving incoming
 * Migrating data from tables.
 * etc.
 
-### C.2.1 Linux
+### Under Linux
 
 To pause the server, type: `sudo service emadb pause` and watch the log file output wit `tail -f /var/log/emadb.log`
 
 To resume normal operation type again the same command and observe the same log file.
 
-### C.2.2 Windows
+### Under Windows
 
-## C.3 Service reload
+##  Service reload
 
 During a reloadn the service is not stopped and re-reads the new values form the configuration file and apply the changes. In general, all aspects not related to maintaining the current connection to the MQTT broker can be relaoded. The full list is sescribed in the section B above.
 

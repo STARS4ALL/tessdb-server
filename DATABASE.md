@@ -1,12 +1,12 @@
-# A. DATA MODEL
+# DATA MODEL
 
-## A.1. Dimensional Modelling
+## Dimensional Modelling
 
 The data model follows the [dimensional modelling]
 (https://en.wikipedia.org/wiki/Dimensional_modeling) approach by Ralph Kimball. 
 More references can also be found in [Star Schemas](https://en.wikipedia.org/wiki/Star_schema).
 
-## A.2 The data model
+## The data model
 
 The figure below shows the layout of **tessdb**.
 
@@ -49,7 +49,7 @@ the current measurement units of samples in the fact table. Columns `valid_since
 TESS devices with accelerometer will send `azimuth` and `altitude` values, otherwise they are `NULL`.
 TESS devices with a GPS will send `longitude`, `latitude` and `height` values, otherwise they are `NULL`.
 
-## A.3 Sample queries
+## Sample queries
 
 TBD
 
