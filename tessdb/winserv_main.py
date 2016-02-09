@@ -36,11 +36,11 @@ from twisted.logger import Logger, LogLevel
 # local imports
 # -------------
 
-import tessdb.logger
+from .logger import sysLogInfo, startLogging
 
 from .  import __version__
-from tessdb.config import VERSION_STRING, cmdline, loadCfgFile
-from tessdb.application import TESSApplication
+from .config import VERSION_STRING, cmdline, loadCfgFile
+from .application import TESSApplication
 
 # ----------------
 # Module constants
@@ -70,27 +70,28 @@ class WindowsService(win32serviceutil.ServiceFramework):
 		self.reload  = win32event.CreateEvent(None, 0, 0, None)
 		self.pause  = win32event.CreateEvent(None, 0, 0, None)
 		self.resume = win32event.CreateEvent(None, 0, 0, None)
+		
+		self.config_opts  = loadCfgFile(r"C:\tessdb\config\config.ini")
+		startLogging(console=False, filepath=self.config_opts['log']['path'])
+		log.info("Creating {cls} object instance",cls="WindowsService")
+
 
 	def SvcStop(self):
 		'''Service Stop entry point'''
 		self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-		log.info("Stopping emadb {version} Windows service", version= __version__ )
 		reactor.callFromThread(reactor.stop)
-		logger.sysLogInfo("Stopping emadb %s Windows service" % __version__ )
-		win32event.SetEvent(self.stop)
+		sysLogInfo("Stopping  tessdb {0} Windows service".format( __version__ ))
 
 	def SvcPause(self):
 		'''Service Pause entry point'''
 		self.ReportServiceStatus(win32service.SERVICE_PAUSE_PENDING)
-		log.info("Pausing  emadb {version} Windows service",  version=__version__ )
-		logger.sysLogInfo("Pausing emadb %s Windows service" % __version__ )
+		sysLogInfo("Pausing  tessdb {0} Windows service".format( __version__ ))
 		win32event.SetEvent(self.pause)
 		
 	def SvcContinue(self):
 		'''Service Continue entry point'''
 		self.ReportServiceStatus(win32service.SERVICE_CONTINUE_PENDING)
-		log.info("Resuming emadb %s Windows service", __version__  )
-		logger.sysLogInfo("Resuming emadb %s Windows service" % __version__ )
+		sysLogInfo("Resuming tessdb {0} Windows service".format( __version__ ))
 		win32event.SetEvent(self.resume)
 
 	def SvcOtherEx(self, control, event_type, data):
@@ -102,29 +103,19 @@ class WindowsService(win32serviceutil.ServiceFramework):
 
 
 	def SvcDoReload(self):
-		logger.sysLogInfo("reloading emadb service")
+		sysLogInfo("reloading tessdb service")
 		win32event.SetEvent(self.reload)
 
 
 	def SvcDoRun(self):
 		'''Service Run entry point'''
-		logger.sysLogInfo("Starting tessdb %s Windows service {0}".format( __version__ ))
+		sysLogInfo("Starting tessdb {0} Windows service {0}".format( __version__ ))
 		# initialize your services here
-		# Read the command line arguments and config file options
-		cmdline_opts = cmdline()
-		if cmdline_opts.config:
-			config_opts  = loadCfgFile(cmdline_opts.config)
-		else:
-			config_opts = None
-
-		# Start the logging subsystem
-		startLogging(console=False, filepath=config_opts['log']['path'])
-
+		log.info("Starting windows service {service}", service=VERSION_STRING)
 		sysLogInfo("Starting {0}".format(VERSION_STRING))
-		application = TESSApplication(cmdline_opts, config_opts)
-		application.run()
-		win32event.WaitForSingleObject(self.hWaitStop,win32event.INFINITE)
-		logger.sysLogInfo("tessdb %s Windows service stopped {0}".format( __version__ ))
+		application = TESSApplication(r"C:\tessdb\config\config.ini", self.config_opts)
+		application.run(installSignalHandlers=0)
+		sysLogInfo("tessdb Windows service stopped {0}".format( __version__ ))
 
      
 def ctrlHandler(ctrlType):

@@ -51,10 +51,10 @@ class TESSApplication(object):
     # Periodic task in seconds
     TLOG = 60
 
-    def __init__(self, cmdline_opts, config_opts):
+    def __init__(self, cfgFilePath, config_opts):
         
         TESSApplication.instance = self
-        self.cmdline_opts = cmdline_opts
+        self.cfgFilePath = cfgFilePath
         self.queue  = { 'register':  deque() , 'readings':   deque() }
         self.sigreload  = False
         self.sigpause   = False
@@ -111,7 +111,7 @@ class TESSApplication(object):
         '''
         Reload application parameters
         '''
-        config_opts  = loadCfgFile(self.cmdline_opts.config)
+        config_opts  = loadCfgFile(self.cfgFilePath)
         self.mqttService.reloadService(config_opts['mqtt'])
         self.dbaseService.reloadService(config_opts['dbase'])
         level = config_opts['tessdb']['log_level']
@@ -119,8 +119,8 @@ class TESSApplication(object):
         log.info("new log level is {lvl}", lvl=level)
      
 
-    def run(self):
+    def run(self, installSignalHandlers=1):
         log.info('running {tessdb}', tessdb=VERSION_STRING)
         self.dbaseService.startService()    # This is asynchronous !
         self.mqttService.startService()
-        reactor.run()
+        reactor.run(installSignalHandlers)
