@@ -49,13 +49,13 @@ During a reloadn the service is not stopped and re-reads the new values form the
 In both cases, watch the log file to ensure this is done.
 
   
-## C SQLite Database Maintenance
+## SQLite Database Maintenance
 
-### C.1. Reloadable Parameters
+### Reloadable Parameters
 
 TBD (if ever supported by Twisted)
 
-### C.2 Updating the registered stations list
+### Updating the registered stations list
 
 **tessdb will only insert incoming MQTT data if the TESS instrument is previously registered in the database**. While you can update the database itself using SQL commands, the preferred approach is to edit the master dimension JSON files, usually stored in the `/etc/tessdb` directory (Linux) or `C:\tessdb\config.ini` (Windows).
 
