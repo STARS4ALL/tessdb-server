@@ -77,7 +77,7 @@ signal.signal(signal.SIGUSR2, sigresume)
 startLogging(console=cmdline_opts.console, filepath=config_opts['log']['path'])
 
 sysLogInfo("Starting {0}".format(VERSION_STRING))
-application = TESSApplication(filepath, config_opts)
+application = TESSApplication(config_opts['log']['path'], config_opts)
 application.start()
 reactor.run()
 sysLogInfo("Stopped {0}".format(VERSION_STRING))
