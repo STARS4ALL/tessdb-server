@@ -105,7 +105,7 @@ elif os.name == "nt":
           ]
         )
 
-  args = shlex.split( "python -m tessdb --startup manual install")
+  args = shlex.split( "python -m tessdb --startup auto install")
   subprocess.call(args)
 
 else:

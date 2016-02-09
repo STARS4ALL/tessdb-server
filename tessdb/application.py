@@ -16,7 +16,7 @@ from collections import deque
 # ---------------
 
 from twisted.logger   import Logger, LogLevel
-from twisted.internet import reactor, task
+from twisted.internet import task
 from twisted.internet.defer import inlineCallbacks
 
 #--------------
@@ -119,8 +119,8 @@ class TESSApplication(object):
         log.info("new log level is {lvl}", lvl=level)
      
 
-    def run(self, installSignalHandlers=1):
-        log.info('running {tessdb}', tessdb=VERSION_STRING)
+    def start(self):
+        log.info('starting {tessdb}', tessdb=VERSION_STRING)
         self.dbaseService.startService()    # This is asynchronous !
         self.mqttService.startService()
-        reactor.run(installSignalHandlers)
+       
