@@ -46,9 +46,9 @@ if cmdline_opts.config:
 else:
 	config_opts = None
 
-
+config_file=config_opts['log']['path']
 # Start the logging subsystem
-startLogging(console=cmdline_opts.console, filepath=config_opts['log']['path'])
+startLogging(console=cmdline_opts.console, filepath=configFile)
 
 sysLogInfo("Starting {0}".format(VERSION_STRING))
 application = TESSApplication(config_opts['log']['path'], config_opts)

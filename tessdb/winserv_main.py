@@ -60,19 +60,19 @@ SERVICE_CONTROL_RELOAD = 128
 
 def sigreload():
    '''
-   Signal handler emulator SGUHUP only)
+   Signal handler emulator SIGHUP)
    '''
    TESSApplication.instance.sigreload = True
 
 def sigpause():
    '''
-   Signal handler emulator (SIGUSR1 only)
+   Signal handler emulator (SIGUSR1)
    '''
    TESSApplication.instance.sigpause = True
 
 def sigresume():
    '''
-   Signal handler emulator (SIGUSR2 only)
+   Signal handler emulator (SIGUSR2)
    '''
    TESSApplication.instance.sigresume = True
 
@@ -135,7 +135,8 @@ class TESSWindowsService(win32serviceutil.ServiceFramework):
 		'''Service Run entry point'''
 		# initialize your services here
 		sysLogInfo("Starting {0}".format(VERSION_STRING))
-		startLogging(console=False, filepath=self.config_opts['log']['path'])
+		config_file=self.config_opts['log']['path']
+		startLogging(console=False, filepath=config_file)
 		application = TESSApplication(CONFIG_FILE, self.config_opts)
 		application.start()
 		reactor.run(installSignalHandlers=0)

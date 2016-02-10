@@ -43,19 +43,19 @@ from .application import TESSApplication
 
 def sigreload(signum, frame):
    '''
-   Signal handler (SGUHUP only)
+   Signal handler (SIGHUP)
    '''
    TESSApplication.instance.sigreload = True
    
 def sigpause(signum, frame):
    '''
-   Signal handler (SIGUSR1 only)
+   Signal handler (SIGUSR1)
    '''
    TESSApplication.instance.sigpause = True
 
 def sigresume(signum, frame):
    '''
-   Signal handler (SIGUSR2 only)
+   Signal handler (SIGUSR2)
    '''
    TESSApplication.instance.sigresume = True
 
@@ -73,8 +73,9 @@ signal.signal(signal.SIGHUP,  sigreload)
 signal.signal(signal.SIGUSR1, sigpause)
 signal.signal(signal.SIGUSR2, sigresume)
 
+config_file=config_opts['log']['path']
 # Start the logging subsystem
-startLogging(console=cmdline_opts.console, filepath=config_opts['log']['path'])
+startLogging(console=cmdline_opts.console, filepath=config_file)
 
 sysLogInfo("Starting {0}".format(VERSION_STRING))
 application = TESSApplication(config_opts['log']['path'], config_opts)
