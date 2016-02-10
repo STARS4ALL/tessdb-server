@@ -52,7 +52,7 @@ class ExceptionTestCase(unittest.TestCase):
        pass
     
     def f1(self):
-        raise ReadingKeyError(set(['name', 'seqno']))
+        raise ReadingKeyError(set(['name', 'seq']))
 
     def f2(self):
         raise ReadingTypeError('name', str, type(1))

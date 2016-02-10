@@ -65,7 +65,7 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         Test insert reading with no instrument registered.
         It should not be inserted
         '''
-        row = { 'name': 'test1', 'seqno': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
         res = yield self.db.update(row)
         self.assertEqual(res, 0x00)
 
@@ -92,7 +92,7 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         Test insert a reading with instrument registered.
         It should be inserted
         '''
-        row = { 'name': 'test1', 'seqno': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
         res = yield self.db.update(row)
         self.assertEqual(res, 0x01)
       
@@ -102,10 +102,10 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         Test fast inserting two readings with instrument registered.
         The first one should be inserted, the second one not.
         '''
-        row = { 'name': 'test1', 'seqno': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
         res = yield self.db.update(row)
         self.assertEqual(res, 0x01)
-        row = { 'name': 'test1', 'seqno': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
         res = yield self.db.update(row)
         self.assertEqual(res, 0x40)
 

@@ -26,7 +26,7 @@ class TESS(Service):
 
     def __init__(self):
         Service.__init__(self)
-        self.seqno = -1
+        self.seq   = -1
         self.freq  = 4000 
         self.mag   = 15.0 
         self.tamb  = 3 
@@ -55,13 +55,13 @@ class TESS(Service):
         '''
         returns a fake TESS sample
         '''
-        self.seqno += 1
+        self.seq += 1
         self.freq = round(self.freq + random.uniform(-1,1), 3)
         self.mag  = round(self.mag  + random.uniform(-0.5,0.5), 2)
         self.tamb = round(self.tamb + random.uniform(-2,2), 1)
         self.tsky = self.tamb - 30
         return {  
-                'seqno': self.seqno,
+                'seq': self.seq,
                 'name' : NAME,
                 'freq' : self.freq,
                 'mag'  :  self.mag ,

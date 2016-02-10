@@ -55,7 +55,7 @@ class TESSApplication(object):
         
         TESSApplication.instance = self
         self.cfgFilePath = cfgFilePath
-        self.queue  = { 'register':  deque() , 'readings':   deque() }
+        self.queue  = { 'tess_register':  deque() , 'tess_readings':   deque() }
         self.sigreload  = False
         self.sigpause   = False
         self.sigresume  = False
@@ -71,7 +71,7 @@ class TESSApplication(object):
         '''
         Periodic task to log queue size
         '''
-        log.info("Readings queue size is {size}", size=len(self.queue['readings']))
+        log.info("Readings queue size is {size}", size=len(self.queue['tess_readings']))
 
 
     def sighandler(self):

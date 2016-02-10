@@ -114,7 +114,7 @@ class TESSReadings(Table):
         '''
         Update process
         row is a tuple with the following mandatory keywords:
-        - seqno
+        - seq
         - name
         - freq
         - mag
@@ -208,7 +208,7 @@ class TESSReadings(Table):
                 :instr_id,
                 :loc_id,
                 :units_id,
-                :seqno,
+                :seq,
                 :freq,
                 :mag,
                 :tamb,
@@ -245,7 +245,7 @@ class TESSReadings(Table):
                 :instr_id,
                 :loc_id,
                 :units_id,
-                :seqno,
+                :seq,
                 :freq,
                 :mag,
                 :tamb,
@@ -285,7 +285,7 @@ class TESSReadings(Table):
                 :instr_id,
                 :loc_id,
                 :units_id,
-                :seqno,
+                :seq,
                 :freq,
                 :mag,
                 :tamb,
@@ -328,7 +328,7 @@ class TESSReadings(Table):
                 :instr_id,
                 :loc_id,
                 :units_id,
-                :seqno,
+                :seq,
                 :freq,
                 :mag,
                 :tamb,

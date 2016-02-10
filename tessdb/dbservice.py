@@ -100,11 +100,11 @@ class DBaseService(Service):
         and update them to database
         '''
         if not self.paused:
-            while len(self.parent.queue['register']):
-                row = self.parent.queue['register'].popleft()
+            while len(self.parent.queue['tess_register']):
+                row = self.parent.queue['tess_register'].popleft()
                 yield self.dbase.register(row)
-            while len(self.parent.queue['readings']):
-                row = self.parent.queue['readings'].popleft()
+            while len(self.parent.queue['tess_readings']):
+                row = self.parent.queue['tess_readings'].popleft()
                 yield self.dbase.update(row)
         self.later = reactor.callLater(1,self.writter)
         

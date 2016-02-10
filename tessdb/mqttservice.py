@@ -56,7 +56,7 @@ class MQTTService(Service):
     MANDATORY_REGR = set(['name','mac','calib'])
     
     # Mandatory keys in each reading
-    MANDATORY_READ = set(['seqno','name','freq','mag','tamb','tsky'])
+    MANDATORY_READ = set(['seq','name','freq','mag','tamb','tsky'])
 
     def __init__(self, parent, options, **kargs):
         Service.__init__(self)
@@ -155,7 +155,7 @@ class MQTTService(Service):
         # Mandatory field values
         if not( type(row['name']) == str or type(row['name']) == unicode):
             raise ReadingTypeError('name', str, type(row['name']))
-        if type(row['seqno']) != int:
+        if type(row['seq']) != int:
             raise ReadingTypeError('seq', int, type(row['seq']))
         if type(row['freq']) != float:
             raise ReadingTypeError('freq', float, type(row['freq']))
@@ -224,7 +224,7 @@ class MQTTService(Service):
         row['tstamp'] = now     # As a datetime instead of string
 
         ident = topic.split('/')[1]
-        if topic.endswith("readings"):
+        if topic.endswith("reading"):
             self.nreadings += 1
             if self.validate:
                 try:
@@ -233,7 +233,7 @@ class MQTTService(Service):
                     log.error('Validation error in readings payload={payload!s}', payload=row)
                     log.error('{excp!r}', excp=e)
                     return
-            self.parent.queue['readings'].append(row)
+            self.parent.queue['tess_readings'].append(row)
         elif self.regAllowed and topic == self.options["topic_register"]:
             self.nregister += 1
             if self.validate:
@@ -243,7 +243,7 @@ class MQTTService(Service):
                     log.error('Validation error in registration payload={payload!s}', payload=row)
                     log.error('{excp!r}', excp=e)
                     return
-            self.parent.queue['register'].append(row)
+            self.parent.queue['tess_register'].append(row)
         else:
             log.warn("message received on unexpected topic {topic}", topic=topic)
         self.logStats()
