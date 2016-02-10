@@ -68,12 +68,12 @@ if os.name == "posix":
         packages         = ["tessdb","tessdb.sqlite3"],
         install_requires = ['twisted >= 15.4.0','twisted-mqtt'],
         data_files       = [ 
-          ('/etc/init.d' ,     ['init.d/tessdb']),
-          ('/etc/default',     ['default/tessdb']),
-          ('/etc/tessdb',      ['config/config', 'config/units.json', 'config/instruments.json', 'config/locations.json']),
-          ('/usr/local/bin',   ['scripts/tessdb']),
-          ('/etc/logrotate.d', ['logrotate/tessdb']),
-          ('/var/dbase',       ['dbase/placeholder.txt']),
+          ('/etc/init.d' ,     ['etc/init.d/tessdb']),
+          ('/etc/default',     ['etc/default/tessdb']),
+          ('/etc/tessdb',      ['etc/tessdb/config', 'etc/tessdb/units.json', 'etc/tessdb/instruments.json', 'etc/tessdb/locations.json']),
+          ('/usr/local/bin',   ['usr/local/bin/tessdb']),
+          ('/etc/logrotate.d', ['etc/logrotate.d/tessdb']),
+          ('/var/dbase',       ['var/dbase/placeholder.txt']),
           ]
         )
   # Some fixes after setup
@@ -99,9 +99,9 @@ elif os.name == "nt":
         packages         = ["tessdb","tessdb.sqlite3"],
         install_requires = ['twisted >= 15.4.0','twisted-mqtt'],
         data_files       = [ 
-          (r'C:\tessdb\dbase',   ['dbase\placeholder.txt']),
-          (r'C:\emadb\log',      ['log\placeholder.txt']),
-          (r'C:\emadb\config',   [r'config\config.ini',r'config\units.json', r'config\instruments.json', r'config\locations.json']),
+          (r'C:\tessdb\dbase',    [r'var\dbase\placeholder.txt']),
+          (r'C:\tessdb\log',      [r'var\log\placeholder.txt']),
+          (r'C:\tessdb\config',   [r'etc\tessdb\config.ini',r'etc\tessdb\units.json', r'etc\tessdb\instruments.json', r'etc\tessdb\locations.json']),
           ]
         )
 
