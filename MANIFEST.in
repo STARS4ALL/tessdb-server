@@ -1,10 +1,6 @@
 include versioneer.py
 include tessdb/_version.py
 include README.md
-include init.d/tessdb
-include default/tessdb
-include logrotate/tessdb
-include config/*
-include scripts/*
-include dbase/*
-include log/*
+recursive-include etc *
+recursive-include var *
+recursive-include usr *

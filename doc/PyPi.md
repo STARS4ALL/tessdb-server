@@ -40,13 +40,15 @@ to upload them to GitHub and mark releases there as well.
 	
 	`git tag -a  X.Y.Z`
 
+	(to delete a tag type `git tag -d <tag>`)
+
 3. Register the new release in testing PyPi website
 
-	`sudo python setup.py register -r testpypi`
+	`sudo python setup.py register -r pypitest`
 	
 4. Package and Upload at the same time in testing PyPi website
 
-	`sudo python setup.py sdist upload -r testpypi`
+	`sudo python setup.py sdist upload -r pypitest`
 
 5. Test that you can install it from the Testing PyPi site
 
