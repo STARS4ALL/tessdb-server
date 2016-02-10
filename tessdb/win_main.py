@@ -41,17 +41,18 @@ from .application import TESSApplication
 
 # Read the command line arguments and config file options
 cmdline_opts = cmdline()
-if cmdline_opts.config:
-	config_opts  = loadCfgFile(cmdline_opts.config)
+config_file = cmdline_opts.config
+if config_file:
+	config_opts  = loadCfgFile(config_file)
 else:
 	config_opts = None
 
-config_file=config_opts['log']['path']
+log_file = config_opts['log']['path']
 # Start the logging subsystem
-startLogging(console=cmdline_opts.console, filepath=configFile)
+startLogging(console=cmdline_opts.console, filepath=log_file)
 
 sysLogInfo("Starting {0}".format(VERSION_STRING))
-application = TESSApplication(config_opts['log']['path'], config_opts)
+application = TESSApplication(config_file, config_opts)
 application.start()
 reactor.run()
 sysLogInfo("Stopped {0}".format(VERSION_STRING))

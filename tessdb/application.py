@@ -17,8 +17,8 @@ from collections import deque
 
 from twisted.logger   import Logger, LogLevel
 from twisted.internet import task
-from twisted.internet.defer import inlineCallbacks
-
+from twisted.internet.defer  import inlineCallbacks
+from twisted.internet.threads import deferToThread
 #--------------
 # local imports
 # -------------
@@ -106,17 +106,21 @@ class TESSApplication(object):
         if self.reportTask.running:
             self.reportTask.stop()
 
-
+    @inlineCallbacks
     def reload(self):
         '''
         Reload application parameters
         '''
-        config_opts  = loadCfgFile(self.cfgFilePath)
-        self.mqttService.reloadService(config_opts['mqtt'])
-        self.dbaseService.reloadService(config_opts['dbase'])
-        level = config_opts['tessdb']['log_level']
-        setLogLevel(namespace='tessdb', levelStr=level)
-        log.info("new log level is {lvl}", lvl=level)
+        try:
+            config_opts  = yield deferToThread(loadCfgFile, self.cfgFilePath)
+        except Exception as e:
+            log.error("Error trying to reload: {excp!s}", excp=e)
+        else:
+            self.mqttService.reloadService(config_opts['mqtt'])
+            self.dbaseService.reloadService(config_opts['dbase'])
+            level = config_opts['tessdb']['log_level']
+            setLogLevel(namespace='tessdb', levelStr=level)
+            log.info("new log level is {lvl}", lvl=level)
      
 
     def start(self):

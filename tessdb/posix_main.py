@@ -63,22 +63,25 @@ def sigresume(signum, frame):
 
 # Read the command line arguments and config file options
 cmdline_opts = cmdline()
-if cmdline_opts.config:
-	config_opts  = loadCfgFile(cmdline_opts.config)
+config_file = cmdline_opts.config
+if config_file:
+   config_opts  = loadCfgFile(config_file)
 else:
-	config_opts = None
+   config_opts = None
+
+log_file = config_opts['log']['path']
 
 # Install signal handlers
 signal.signal(signal.SIGHUP,  sigreload)
 signal.signal(signal.SIGUSR1, sigpause)
 signal.signal(signal.SIGUSR2, sigresume)
 
-config_file=config_opts['log']['path']
+config_file=cmdline_opts.config
 # Start the logging subsystem
-startLogging(console=cmdline_opts.console, filepath=config_file)
+startLogging(console=cmdline_opts.console, filepath=log_file)
 
 sysLogInfo("Starting {0}".format(VERSION_STRING))
-application = TESSApplication(config_opts['log']['path'], config_opts)
+application = TESSApplication(config_file, config_opts)
 application.start()
 reactor.run()
 sysLogInfo("Stopped {0}".format(VERSION_STRING))

@@ -135,8 +135,8 @@ class TESSWindowsService(win32serviceutil.ServiceFramework):
 		'''Service Run entry point'''
 		# initialize your services here
 		sysLogInfo("Starting {0}".format(VERSION_STRING))
-		config_file=self.config_opts['log']['path']
-		startLogging(console=False, filepath=config_file)
+		log_file=self.config_opts['log']['path']
+		startLogging(console=False, filepath=log_file)
 		application = TESSApplication(CONFIG_FILE, self.config_opts)
 		application.start()
 		reactor.run(installSignalHandlers=0)
