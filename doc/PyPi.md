@@ -67,13 +67,9 @@ to upload them to GitHub and mark releases there as well.
 	`git checkout master`
 	`git merge develop`
 
-2. Push master branch to GitHub
+2. Push master branch and tags to GitHub
 
-	`git push origin master`
-
-3. Push tags
-
-	`git push --tags origin master` 
+	`git push --tags origin master`
 
 # Reviewing the package in PyPi
 
