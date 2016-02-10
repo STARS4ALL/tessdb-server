@@ -10,7 +10,7 @@ More references can also be found in [Star Schemas](https://en.wikipedia.org/wik
 
 The figure below shows the layout of **tessdb**.
 
-![TESS Database Model](doc/tessdb-full.png)
+![TESS Database Model](tessdb-full.png)
 
 ### Dimension Tables
 
