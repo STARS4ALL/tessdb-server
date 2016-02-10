@@ -25,14 +25,13 @@ The figure below shows the layout of **tessdb**.
 This dimension holds the current list of TESS instruments. 
 
 * The real key is an artificial key `tess_id` linked to the Fact table.
-* The `mac_address` is the natural key.
-* The `name` attribute is an alternative key. 
-* An instrument name can be changed as log as there is no other instrument with the same name.
+* The `mac_address` could be the natural key if it weren't for the calibration constant history tracking.
+* The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name.
+* A TESS instrument name can be changed as long as there is no other instrument with the same name.
 * The `current_loc_id` is a reference to the current location assigned to the instrument.
 * Location id -1 denotes the "Unknown" location.
 * The `calibration_k` holds the current value of the instrument calibration constant.
-* A history of calibration constant changes are maintained in the `tess_t` table
-if the instrument is ever recalibrated. 
+* A history of calibration constant changes are maintained in the `tess_t` table if the instrument is ever recalibrated. 
 * Columns `calibrated_since` and `calibrated_until`hold the timestamps where the calibration constant is valid. 
 * Column `calibrated_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
 * The current calibration constant has its indicator set to `Current` and the expiration date in a far away future (Y2999).
