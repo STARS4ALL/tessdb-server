@@ -49,11 +49,11 @@ keepalive = 60
 # MQTT Topic to subscribe for automatic registration
 # Leave blank to disable automatic registration
 # Reloadable property
-topic_register = STARS4ALL/register
+tess_topic_register = STARS4ALL/register
 
 # MQTT topics to subscribe for readings
 # Reloadable property
-topics = STARS4ALL/+/readings
+tess_topics = STARS4ALL/+/readings
 
 # MQTT payload validation
 # Reloadable property

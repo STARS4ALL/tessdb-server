@@ -102,8 +102,8 @@ def loadCfgFile(path):
     options['mqtt']['broker']         = parser.get("mqtt","broker")
     options['mqtt']['port']           = parser.getint("mqtt","port")
     options['mqtt']['keepalive']      = parser.getint("mqtt","keepalive")
-    options['mqtt']['topics']         = chop(parser.get("mqtt","topics"),',')
-    options['mqtt']['topic_register'] = parser.get("mqtt","topic_register")
+    options['mqtt']['tess_topics']    = chop(parser.get("mqtt","tess_topics"),',')
+    options['mqtt']['topic_register'] = parser.get("mqtt","tess_topic_register")
 
     options['dbase'] = {}
     options['dbase']['log_level']         = parser.get("dbase","log_level")

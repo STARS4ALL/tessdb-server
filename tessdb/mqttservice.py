@@ -33,6 +33,7 @@ from mqtt.client.factory import MQTTFactory
 
 from .error import ValidationError, ReadingKeyError, ReadingTypeError
 from .logger import setLogLevel
+from .utils  import chop
 
 # ----------------
 # Module constants
@@ -69,6 +70,9 @@ class MQTTService(Service):
         self.npublish   = 0
         self.validate   = options['validation']
         setLogLevel(namespace='mqtt', levelStr=options['log_level'])
+
+        self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
+        self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
     
     def startService(self):
         log.info("starting MQTT Client Service")
@@ -91,6 +95,8 @@ class MQTTService(Service):
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
         yield self.subscribe(new_options)
         self.options = new_options
+        self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
+        self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
 
     def pauseService(self):
         pass
@@ -121,7 +127,7 @@ class MQTTService(Service):
         Smart subscription to a list of (topic, qos) tuples
         '''
         # Make the list of tuples first
-        topics = [ (topic, self.QoS) for topic in options['topics'] ]
+        topics = [ (topic, self.QoS) for topic in options['tess_topics'] ]
         if options['topic_register'] != "":
             self.regAllowed = True
             topics.append( (options['topic_register'], self.QoS) )
@@ -223,8 +229,10 @@ class MQTTService(Service):
             return
         row['tstamp'] = now     # As a datetime instead of string
 
-        ident = topic.split('/')[1]
-        if topic.endswith("reading"):
+        # Handle incoming TESS Data
+        topic_part  = topic.split('/')
+
+        if topic_part[0] in self.tess_heads and topic_part[2] in self.tess_tails:
             self.nreadings += 1
             if self.validate:
                 try:
@@ -234,7 +242,7 @@ class MQTTService(Service):
                     log.error('{excp!r}', excp=e)
                     return
             self.parent.queue['tess_readings'].append(row)
-        elif self.regAllowed and topic == self.options["topic_register"]:
+        elif self.regAllowed and topic == self.options["tess_topic_register"]:
             self.nregister += 1
             if self.validate:
                 try:
