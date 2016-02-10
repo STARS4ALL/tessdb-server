@@ -6,7 +6,10 @@ TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www
 ## Description
 
 **tessdb** is a software package that collects measurements from one or several
-TESS instruments into a SQLite Database. 
+TESS instruments into a SQLite Database.  
+
+It is a [Python Twisted Application](https://twistedmatrix.com/trac/)
+that uses a [custom Twisted library implementing the MQTT protocol](https://github.com/astrorafael/twisted-mqtt)
 
 Desktop applicatons may query the database to generate reports and graphs
 using the accumulated, historic data.

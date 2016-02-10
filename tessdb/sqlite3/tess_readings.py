@@ -62,7 +62,7 @@ log = Logger(namespace='dbase')
 #                   REAL TIME TESS READNGS (PERIODIC SNAPSHOT FACT TABLE)
 # ============================================================================ #
 
-class Readings(Table):
+class TESSReadings(Table):
 
    
     def __init__(self, pool, parent):
@@ -83,7 +83,7 @@ class Readings(Table):
             (
             date_id             INTEGER NOT NULL REFERENCES date_t(date_id), 
             time_id             INTEGER NOT NULL REFERENCES time_t(time_id), 
-            tess_id       INTEGER NOT NULL REFERENCES tess_t(tess_id),
+            tess_id             INTEGER NOT NULL REFERENCES tess_t(tess_id),
             location_id         INTEGER NOT NULL REFERENCES location_t(location_id),
             units_id            INTEGER NOT NULL REFERENCES tess_units_t(units_id),
             sequence_number     INTEGER,
@@ -132,12 +132,12 @@ class Readings(Table):
         Bit 7 - 1 = Other exception
         '''
         ret = 0
-        instrument = yield self.parent.instruments.findName(row)
-        log.debug("{instrument!s}", instrument=instrument)
-        if not len(instrument):
-            log.warn("No instrument {0} registered for this reading !".format(row['name']))
+        tess = yield self.parent.tess.findName(row)
+        log.debug("{tess!s}", tess=tess)
+        if not len(tess):
+            log.warn("No tess {0} registered for this reading !".format(row['name']))
             returnValue(ret)
-        instrument = instrument[0]  # Keep only the first row
+        tess = tess[0]  # Keep only the first row
         if not 'tstamp' in row:
             now = datetime.datetime.utcnow()
             row['tstamp'] = now.strftime(TSTAMP_FORMAT)
@@ -145,9 +145,9 @@ class Readings(Table):
             now = row['tstamp']
             row['tstamp'] = row['tstamp'].strftime(TSTAMP_FORMAT)
         row['date_id'], row['time_id'] = roundDateTime(now)
-        row['instr_id'] = instrument[0]
-        row['loc_id']   = instrument[3]
-        row['units_id'] = yield self.parent.units.latest()
+        row['instr_id'] = tess[0]
+        row['loc_id']   = tess[3]
+        row['units_id'] = yield self.parent.tess_units.latest()
         log.debug("{row!s}", row=row)
         n = self.which(row)
         # Get the appropriate decoder function
@@ -157,7 +157,7 @@ class Readings(Table):
             yield myupdater(row)
             ret |= 0x01
         except sqlite3.IntegrityError as e:
-            log.error("Instrument id={id} is sending readings too fast", id=instrument[0])
+            log.error("tess id={id} is sending readings too fast", id=tess[0])
             ret |= 0x40
         except Exception as e:
             log.error("exception {excp!s}", excp=e)

@@ -147,12 +147,12 @@ def _updateCalibration(cursor, row):
         ''',  row)
 
 # ============================================================================ #
-#                               INSTRUMENT TABLE (DIMENSION)
+#                              TESS INSTRUMENT TABLE (DIMENSION)
 # ============================================================================ #
 
-class Instrument(Table):
+class TESS(Table):
 
-    FILE = 'instruments.json'
+    FILE = 'tess.json'
 
     def __init__(self, pool, validate=False):
         Table.__init__(self, pool)
@@ -167,7 +167,7 @@ class Instrument(Table):
             '''
             CREATE TABLE IF NOT EXISTS tess_t
             (
-            tess_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            tess_id            INTEGER PRIMARY KEY AUTOINCREMENT,
             name               TEXT,
             mac_address        TEXT, 
             calibration_k      REAL,
@@ -198,7 +198,7 @@ class Instrument(Table):
 
     def rows(self):
         '''Generate a list of rows to inject in SQLite APIfor schema generation'''
-        return fromJSON( os.path.join(self.json_dir, Instrument.FILE), DEFAULT_INSTRUMENT)
+        return fromJSON( os.path.join(self.json_dir, TESS.FILE), DEFAULT_INSTRUMENT)
 
 
     # =======

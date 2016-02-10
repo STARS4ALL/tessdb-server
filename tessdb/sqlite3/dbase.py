@@ -22,12 +22,12 @@ from twisted.enterprise import adbapi
 # -------------
 
 
-from .date       import Date
-from .time       import TimeOfDay
-from .units      import Units
-from .location   import Location
-from .instrument import Instrument
-from .readings   import Readings
+from .date          import Date
+from .time          import TimeOfDay
+from .tess_units    import TESSUnits
+from .location      import Location
+from .tess          import TESS
+from .tess_readings import TESSReadings
 
 # ----------------
 # Module constants
@@ -53,10 +53,10 @@ class DBase(object):
 
    def __init__(self, *args, **kargs):
       kargs['check_same_thread']=False
-      self.pool = adbapi.ConnectionPool("sqlite3", *args, **kargs)
-      self.instruments = Instrument(self.pool)
-      self.units       = Units(self.pool)
-      self.readings    = Readings(self.pool, self)
+      self.pool          = adbapi.ConnectionPool("sqlite3", *args, **kargs)
+      self.tess          = TESS(self.pool)
+      self.tess_units    = TESSUnits(self.pool)
+      self.tess_readings = TESSReadings(self.pool, self)
 
    # ---------------------
    # SCHEMA GENERATION API
@@ -71,9 +71,9 @@ class DBase(object):
       yield Date(self.pool).schema(date_fmt, year_start, year_end, replace)
       yield TimeOfDay(self.pool).schema(json_dir, replace)
       yield Location(self.pool).schema(json_dir, replace)
-      yield self.instruments.schema(json_dir, replace)
-      yield self.units.schema(json_dir, replace)
-      yield self.readings.schema(json_dir, replace)
+      yield self.tess.schema(json_dir, replace)
+      yield self.tess_units.schema(json_dir, replace)
+      yield self.tess_readings.schema(json_dir, replace)
 
    # ---------------
    # OPERATIONAL API
@@ -84,13 +84,13 @@ class DBase(object):
       Registers an instrument given its MAC address, friendly name and calibration constant.
       Returns a Deferred
       '''
-      return self.instruments.register(row)
+      return self.tess.register(row)
 
    def update(self, row):
       '''
       Update readngs table
       Returns a Deferred 
       '''
-      return self.readings.update(row)
+      return self.tess_readings.update(row)
 
   

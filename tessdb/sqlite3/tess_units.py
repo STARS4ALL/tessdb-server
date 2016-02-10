@@ -149,9 +149,9 @@ def _populateIgn(transaction, rows):
 #                               UNITS TABLE (DIMENSION)
 # ============================================================================ #
 
-class Units(Table):
+class TESSUnits(Table):
 
-    FILE = 'units.json'
+    FILE = 'tess_units.json'
     
     def __init__(self, pool):
         '''Create and populate the SQLite Units Table'''
@@ -209,7 +209,7 @@ class Units(Table):
 
     def rows(self):
         '''Generate a list of rows to inject in SQLite API'''
-        return fromJSON( os.path.join(self.json_dir, Units.FILE), DEFAULT_UNITS)
+        return fromJSON( os.path.join(self.json_dir, TESSUnits.FILE), DEFAULT_UNITS)
 
    # ================
    # OPERATIONAL API
