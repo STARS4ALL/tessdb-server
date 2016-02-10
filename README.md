@@ -21,11 +21,11 @@ The sampling period should be >= 1 min.
 
 ## Operation & Maintenance
 
-See the [MAINTENANCE.md file](MAINTENANCE.md)
+See the [MAINTENANCE.md file](doc/MAINTENANCE.md)
 
 ## Data Model
 
-See the [DATABASE.md file](DATABASE.md)
+See the [DATABASE.md file](doc/DATABASE.md)
 
 # INSTALLATION
     
