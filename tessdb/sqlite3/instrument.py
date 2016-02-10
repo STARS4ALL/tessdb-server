@@ -65,8 +65,8 @@ log = Logger(namespace='dbase')
 def _populateRepl(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
-        '''INSERT OR REPLACE INTO instrument_t (
-            instrument_id,
+        '''INSERT OR REPLACE INTO tess_t (
+            tess_id,
             name,
             mac_address,
             calibration_k,
@@ -75,7 +75,7 @@ def _populateRepl(transaction, rows):
             calibrated_state,
             current_loc_id
         ) VALUES(
-            :instrument_id,
+            :tess_id,
             :name,
             :mac_address,
             :calibration_k,
@@ -90,8 +90,8 @@ def _populateRepl(transaction, rows):
 def _populateIgn(transaction, rows):
     '''Dimension initial data loading (ignore flavour)'''
     transaction.executemany(
-        '''INSERT OR IGNORE INTO instrument_t (
-            instrument_id,
+        '''INSERT OR IGNORE INTO tess_t (
+            tess_id,
             name,
             mac_address,
             calibration_k,
@@ -100,7 +100,7 @@ def _populateIgn(transaction, rows):
             calibrated_state,
             current_loc_id
         ) VALUES(
-            :instrument_id,
+            :tess_id,
             :name,
             :mac_address,
             :calibration_k,
@@ -124,12 +124,12 @@ def _updateCalibration(cursor, row):
 
     cursor.execute(
         '''
-        UPDATE instrument_t SET calibrated_until = :eff_date, calibrated_state = :calib_expired
+        UPDATE tess_t SET calibrated_until = :eff_date, calibrated_state = :calib_expired
         WHERE mac_address == :mac AND calibrated_state == :calib_flag
         ''', row)
     cursor.execute(
         '''
-        INSERT INTO instrument_t (
+        INSERT INTO tess_t (
             name,
             mac_address, 
             calibration_k,
@@ -162,12 +162,12 @@ class Instrument(Table):
         Create the SQLite Units table.
         Returns a Deferred
         '''
-        log.info("Creating instrument_t Table if not exists")
+        log.info("Creating tess_t Table if not exists")
         return self.pool.runOperation(
             '''
-            CREATE TABLE IF NOT EXISTS instrument_t
+            CREATE TABLE IF NOT EXISTS tess_t
             (
-            instrument_id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            tess_id      INTEGER PRIMARY KEY AUTOINCREMENT,
             name               TEXT,
             mac_address        TEXT, 
             calibration_k      REAL,
@@ -267,7 +267,7 @@ class Instrument(Table):
         return self.pool.runQuery(
             '''
             SELECT name, mac_address, calibration_k 
-            FROM instrument_t 
+            FROM tess_t 
             WHERE mac_address == :mac
             AND calibrated_state == :calib_flag
             ''', row)
@@ -282,8 +282,8 @@ class Instrument(Table):
         row['calib_flag'] = CURRENT
         return self.pool.runQuery(
             '''
-            SELECT instrument_id, mac_address, calibration_k, current_loc_id 
-            FROM instrument_t 
+            SELECT tess_id, mac_address, calibration_k, current_loc_id 
+            FROM tess_t 
             WHERE name == :name
             AND calibrated_state == :calib_flag 
             ''', row)
@@ -301,7 +301,7 @@ class Instrument(Table):
         row['calib_flag'] = CURRENT
         return self.pool.runOperation( 
             '''
-            INSERT INTO instrument_t (
+            INSERT INTO tess_t (
                 name,
                 mac_address,
                 calibration_k,
@@ -327,7 +327,7 @@ class Instrument(Table):
         '''
         return self.pool.runOperation( 
             '''
-            UPDATE instrument_t SET name=:name
+            UPDATE tess_t SET name=:name
             WHERE mac_address == :mac 
             ''', row)
 
@@ -340,7 +340,7 @@ class Instrument(Table):
         '''
         return self.pool.runOperation( 
             '''
-            UPDATE instrument_t SET current_loc_id=:loc_id
+            UPDATE tess_t SET current_loc_id=:loc_id
             WHERE mac_address == :mac 
             ''', row )
 

@@ -76,16 +76,16 @@ class Readings(Table):
         Create the SQLite TESS Readings table.
         Returns a Deferred
         '''
-        log.info("Creating readings_t Table if not exists")
+        log.info("Creating tess_readings_t Table if not exists")
         return self.pool.runOperation(
             '''
-            CREATE TABLE IF NOT EXISTS readings_t
+            CREATE TABLE IF NOT EXISTS tess_readings_t
             (
             date_id             INTEGER NOT NULL REFERENCES date_t(date_id), 
             time_id             INTEGER NOT NULL REFERENCES time_t(time_id), 
-            instrument_id       INTEGER NOT NULL REFERENCES instrument_t(instrument_id),
+            tess_id       INTEGER NOT NULL REFERENCES tess_t(tess_id),
             location_id         INTEGER NOT NULL REFERENCES location_t(location_id),
-            units_id            INTEGER NOT NULL REFERENCES units_t(units_id),
+            units_id            INTEGER NOT NULL REFERENCES tess_units_t(units_id),
             sequence_number     INTEGER,
             frequency           REAL,
             magnitude           REAL,
@@ -97,7 +97,7 @@ class Readings(Table):
             latitude            REAL,
             height              REAL,
             timestamp           TEXT,
-            PRIMARY KEY (date_id, time_id, instrument_id)
+            PRIMARY KEY (date_id, time_id, tess_id)
             );
             '''
         )
@@ -190,10 +190,10 @@ class Readings(Table):
         '''
         return self.pool.runOperation( 
             '''
-            INSERT INTO readings_t (
+            INSERT INTO tess_readings_t (
                 date_id,
                 time_id,
-                instrument_id,
+                tess_id,
                 location_id,
                 units_id,
                 sequence_number,
@@ -225,10 +225,10 @@ class Readings(Table):
         '''
         return self.pool.runOperation( 
             '''
-            INSERT INTO readings_t (
+            INSERT INTO tess_readings_t (
                 date_id,
                 time_id,
-                instrument_id,
+                tess_id,
                 location_id,
                 units_id,
                 sequence_number,
@@ -264,10 +264,10 @@ class Readings(Table):
         '''
         return self.pool.runOperation( 
             '''
-            INSERT INTO readings_t (
+            INSERT INTO tess_readings_t (
                 date_id,
                 time_id,
-                instrument_id,
+                tess_id,
                 location_id,
                 units_id,
                 sequence_number,
@@ -305,10 +305,10 @@ class Readings(Table):
 
         return self.pool.runOperation( 
             '''
-            INSERT INTO readings_t (
+            INSERT INTO tess_readings_t (
                 date_id,
                 time_id,
-                instrument_id,
+                tess_id,
                 location_id,
                 units_id,
                 sequence_number,

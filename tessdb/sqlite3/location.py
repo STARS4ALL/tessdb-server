@@ -133,7 +133,7 @@ class Location(Table):
         Create the SQLite Location table
         Returns a Deferred
         '''
-        log.info("Creating units_t Table if not exists")
+        log.info("Creating tess_units_t Table if not exists")
         return self.pool.runOperation(
             '''
             CREATE TABLE IF NOT EXISTS location_t

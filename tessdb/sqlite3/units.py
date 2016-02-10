@@ -78,7 +78,7 @@ log = Logger(namespace='dbase')
 def _populateRepl(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
-        '''INSERT OR REPLACE INTO units_t (
+        '''INSERT OR REPLACE INTO tess_units_t (
             units_id,
             frequency_units,
             magnitude_units,
@@ -112,7 +112,7 @@ def _populateRepl(transaction, rows):
 def _populateIgn(transaction, rows):
     '''Dimension initial data loading (ignore flavour)'''
     transaction.executemany(
-    '''INSERT OR IGNORE INTO units_t (
+    '''INSERT OR IGNORE INTO tess_units_t (
             units_id,
             frequency_units,
             magnitude_units,
@@ -164,10 +164,10 @@ class Units(Table):
         Create the SQLite Units table.
         Returns a Deferred
         '''
-        log.info("Creating units_t Table if not exists")
+        log.info("Creating tess_units_t Table if not exists")
         return self.pool.runOperation(
             '''
-            CREATE TABLE IF NOT EXISTS units_t
+            CREATE TABLE IF NOT EXISTS tess_units_t
             (
             units_id                  INTEGER PRIMARY KEY AUTOINCREMENT, 
             frequency_units           REAL,
@@ -223,7 +223,7 @@ class Units(Table):
             row = {'valid_state': CURRENT }
             return dbpool.runQuery(
             '''
-            SELECT units_id FROM units_t WHERE valid_state == :valid_state
+            SELECT units_id FROM tess_units_t WHERE valid_state == :valid_state
             ''', row)
 
         if self.id is None:
