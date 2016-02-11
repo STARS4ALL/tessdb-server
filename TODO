@@ -2,3 +2,7 @@ Todas y cada una de estas cosas en su rama git
 =============================================
 *) outrigger de current_loc_id ???
 *) Base de datos fijable pro configuracions (SQLite3, MySQL o Postgres)
+*) Etiquetas UNKNOWN, CURRENT, EXPIRED configurables por idoioma en
+una sección [locale] del fichero de configuracion
+*) Actualizar doc de oepracion
+*) Embeber servidor web de twisted.

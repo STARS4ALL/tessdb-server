@@ -1,4 +1,4 @@
-# Uploading to PyPi
+# PyPi Cheatsheet
 
 How to upload a new package release into PyPi
 
@@ -74,6 +74,15 @@ to upload them to GitHub and mark releases there as well.
 # Reviewing the package in PyPi
 
 	Use your credentails in ~/.pipyrc
+
+# Remove named tags 
+
+	- This wil delete the tag in your local repo: `git tag -d 12345`
+
+	- And this will delete it from GitHub: 
+	
+	`git tag -d 12345`
+	`git push origin :refs/tags/12345`
 
 # See also
 
