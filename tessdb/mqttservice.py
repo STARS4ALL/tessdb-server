@@ -128,9 +128,9 @@ class MQTTService(Service):
         '''
         # Make the list of tuples first
         topics = [ (topic, self.QoS) for topic in options['tess_topics'] ]
-        if options['topic_register'] != "":
+        if options['tess_topic_register'] != "":
             self.regAllowed = True
-            topics.append( (options['topic_register'], self.QoS) )
+            topics.append( (options['tess_topic_register'], self.QoS) )
         else:
             self.regAllowed = False
         # Unsubscribe first if necessary from old topics
@@ -232,17 +232,8 @@ class MQTTService(Service):
         # Handle incoming TESS Data
         topic_part  = topic.split('/')
 
-        if topic_part[0] in self.tess_heads and topic_part[2] in self.tess_tails:
-            self.nreadings += 1
-            if self.validate:
-                try:
-                    self.validateReadings(row)
-                except ValidationError as e:
-                    log.error('Validation error in readings payload={payload!s}', payload=row)
-                    log.error('{excp!r}', excp=e)
-                    return
-            self.parent.queue['tess_readings'].append(row)
-        elif self.regAllowed and topic == self.options["tess_topic_register"]:
+        # Registration
+        if self.regAllowed and topic == self.options["tess_topic_register"]:
             self.nregister += 1
             if self.validate:
                 try:
@@ -252,6 +243,17 @@ class MQTTService(Service):
                     log.error('{excp!r}', excp=e)
                     return
             self.parent.queue['tess_register'].append(row)
+        # Data
+        elif topic_part[0] in self.tess_heads and topic_part[-1] in self.tess_tails:
+            self.nreadings += 1
+            if self.validate:
+                try:
+                    self.validateReadings(row)
+                except ValidationError as e:
+                    log.error('Validation error in readings payload={payload!s}', payload=row)
+                    log.error('{excp!r}', excp=e)
+                    return
+            self.parent.queue['tess_readings'].append(row)
         else:
             log.warn("message received on unexpected topic {topic}", topic=topic)
         self.logStats()
