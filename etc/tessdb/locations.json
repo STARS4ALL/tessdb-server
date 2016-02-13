@@ -32,14 +32,5 @@
         "location"      : "Unknown", 
         "province"      : "Unknown", 
         "country"       : "Unknown"
-    }, 
-    {
-        "location_id"   : 1, 
-        "contact_email" : "cristogg@yahoo.es",
-        "site"          : "Laboratorio de Cristobal Garcia", 
-        "zipcode"       : "28822", 
-        "location"      : "Coslada", 
-        "province"      : "Madrid", 
-        "country"       : "Espana"
     }
 ]
