@@ -1,8 +1,20 @@
 Todas y cada una de estas cosas en su rama git
 =============================================
 *) outrigger de current_loc_id ???
+*) Indices de name y mac en la BD de instrumentos
 *) Base de datos fijable pro configuracions (SQLite3, MySQL o Postgres)
 *) Etiquetas UNKNOWN, CURRENT, EXPIRED configurables por idoioma en
 una sección [locale] del fichero de configuracion
 *) Actualizar doc de oepracion
 *) Embeber servidor web de twisted.
+*) sunrise / sunset (del tessdb o de los instrumentos?)
+*) Control dethreads con suggestThreadPool
+*) Control del crecimeinto de la cola. 
+  si average > 0 + 3*stddev => log warn.
+    from __future__ import division
+	def average(L):
+		return sum(L) / len(L)
+
+	def variance(L, average):
+		return  sum((average - value) ** 2 for value in L) / len(L)-1
+
