@@ -53,7 +53,7 @@ tess_topic_register = STARS4ALL/register
 
 # MQTT topics to subscribe for readings
 # Reloadable property
-tess_topics = STARS4ALL/+/readings
+tess_topics = STARS4ALL/+/reading
 
 # MQTT payload validation
 # Reloadable property
