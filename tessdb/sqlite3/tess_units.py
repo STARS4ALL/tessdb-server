@@ -40,6 +40,7 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
+# -- beware of absolute_import in Python 3 when doing import utils
 import utils
 from .utils import Table, fromJSON
 
@@ -221,7 +222,7 @@ class TESSUnits(Table):
     def latest(self):
 
         def queryLatest(dbpool):
-            row = {'valid_state': CURRENT }
+            row = {'valid_state': utils.CURRENT }
             return dbpool.runQuery(
             '''
             SELECT units_id FROM tess_units_t WHERE valid_state == :valid_state

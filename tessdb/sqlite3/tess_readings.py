@@ -40,7 +40,10 @@ from twisted.logger         import Logger
 #--------------
 # local imports
 # -------------
-from .utils import Table, TSTAMP_FORMAT, roundDateTime
+
+# -- beware of absolute_import in Python 3 when doing import utils
+import utils
+from .utils import Table, roundDateTime
 from ..error import ReadingKeyError, ReadingTypeError
 # ----------------
 # Module Constants
@@ -140,10 +143,10 @@ class TESSReadings(Table):
         tess = tess[0]  # Keep only the first row
         if not 'tstamp' in row:
             now = datetime.datetime.utcnow()
-            row['tstamp'] = now.strftime(TSTAMP_FORMAT)
+            row['tstamp'] = now.strftime(utils.TSTAMP_FORMAT)
         else:
             now = row['tstamp']
-            row['tstamp'] = row['tstamp'].strftime(TSTAMP_FORMAT)
+            row['tstamp'] = row['tstamp'].strftime(utils.TSTAMP_FORMAT)
         row['date_id'], row['time_id'] = roundDateTime(now)
         row['instr_id'] = tess[0]
         row['loc_id']   = tess[3]
@@ -152,7 +155,6 @@ class TESSReadings(Table):
         n = self.which(row)
         # Get the appropriate decoder function
         myupdater = getattr(self, "update{0}".format(n), None)
-        log.debug("found updater for update{0}".format(n))
         try:
             yield myupdater(row)
             ret |= 0x01

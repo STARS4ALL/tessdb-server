@@ -41,6 +41,7 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
+# -- beware of absolute_import in Python 3 when doing import utils
 import utils
 from .utils import Table
 

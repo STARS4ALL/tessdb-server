@@ -41,7 +41,9 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-from .utils import Table, fromJSON, UNKNOWN, EXPIRED, CURRENT, INFINITE_TIME, TSTAMP_FORMAT
+# -- beware of absolute_import in Python 3 when doing import utils
+import utils
+from .utils import Table, fromJSON
 from ..error import ReadingKeyError, ReadingTypeError
 
 # ----------------
@@ -117,10 +119,10 @@ def _updateCalibration(cursor, row):
     row is a dictionary with at least the following keys: 'name', 'mac', 'calib'
     Returns a Deferred.
     '''
-    row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
-    row['exp_date']      = INFINITE_TIME
-    row['calib_expired'] = EXPIRED
-    row['calib_flag']    = CURRENT
+    row['eff_date']      = datetime.datetime.utcnow().strftime(utils.TSTAMP_FORMAT)
+    row['exp_date']      = utils.INFINITE_TIME
+    row['calib_expired'] = utils.EXPIRED
+    row['calib_flag']    = utils.CURRENT
 
     cursor.execute(
         '''
@@ -279,7 +281,7 @@ class TESS(Table):
         row is a dictionary with at least the following keys: 'mac'
         Returns a Deferred.
         '''
-        row['calib_flag'] = CURRENT
+        row['calib_flag'] = utils.CURRENT
         return self.pool.runQuery(
             '''
             SELECT name, mac_address, calibration_k 
@@ -295,7 +297,7 @@ class TESS(Table):
         row is a dictionary with at least the following keys: 'name'
         Returns a Deferred.
         '''
-        row['calib_flag'] = CURRENT
+        row['calib_flag'] = utils.CURRENT
         return self.pool.runQuery(
             '''
             SELECT tess_id, mac_address, calibration_k, current_loc_id 
@@ -312,9 +314,9 @@ class TESS(Table):
         row is a dictionary with the following keys: 'name', 'mac', 'calib'
         Returns a Deferred.
         '''
-        row['eff_date']   = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-        row['exp_date']   = INFINITE_TIME
-        row['calib_flag'] = CURRENT
+        row['eff_date']   = datetime.datetime.utcnow().strftime(utils.TSTAMP_FORMAT)
+        row['exp_date']   = utils.INFINITE_TIME
+        row['calib_flag'] = utils.CURRENT
         return self.pool.runOperation( 
             '''
             INSERT INTO tess_t (
