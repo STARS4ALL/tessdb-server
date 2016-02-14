@@ -28,11 +28,18 @@ How to upload a new package release into PyPi
 
 ## Steps
 
-1. List your current tags
+1. Merge your branch into master
+  (you want tags to be point t a commit in master)
+
+	`git checkout master`
+	`git merge develop`
+
+2. List your current tags
 
 	`git tag`
 
-2. tag the current X.Y.Z release. We use the annotated tags
+
+3. tag the current X.Y.Z release. We use the annotated tags
 to upload them to GitHub and mark releases there as well.
 
 	- If it is a bug, then increment Z. 
@@ -42,19 +49,19 @@ to upload them to GitHub and mark releases there as well.
 
 	(to delete a tag type `git tag -d <tag>`)
 
-3. Register the new release in testing PyPi website
+4. Register the new release in testing PyPi website
 
 	`sudo python setup.py register -r pypitest`
 	
-4. Package and Upload at the same time in testing PyPi website
+5. Package and Upload at the same time in testing PyPi website
 
 	`sudo python setup.py sdist upload -r pypitest`
 
-5. Test that you can install it from the Testing PyPi site
+6. Test that you can install it from the Testing PyPi site
 
 	`sudo pip install -i https://testpypi.python.org/pypi <package name>`
 
-6. Do 3 through 5 with the normal PyPi website
+7. Do 3 through 5 with the normal PyPi website
 
 	`sudo python setup.py register` 
 	`sudo python setup.py sdist upload`
@@ -62,12 +69,7 @@ to upload them to GitHub and mark releases there as well.
 
 # Updating GitHub repo
 
-1. Merge your branch into master
-
-	`git checkout master`
-	`git merge develop`
-
-2. Push master branch and tags to GitHub
+1. Push master branch and tags to GitHub
 
 	`git push --tags origin master`
 
