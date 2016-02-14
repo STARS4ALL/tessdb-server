@@ -21,13 +21,12 @@ import json
 from twisted.logger import Logger, LogLevel
 from twisted.internet import reactor
 from twisted.application.service import Service
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks, returnValue
 
 #--------------
 # local imports
 # -------------
 
-from .sqlite3 import DBase
 from .logger import setLogLevel
 
 # ----------------
@@ -56,6 +55,11 @@ class DBaseService(Service):
 
     @inlineCallbacks
     def startService(self):
+        if self.options['type'] == "sqlite3":
+            from .sqlite3 import DBase
+        else:
+            msg = "No database driver found for '{0}'".format(self.options['type'])
+            raise ImportError( msg )
         log.info("starting DBase Service")
         self.dbase    = DBase(self.options['connection_string'])
         yield self.dbase.schema(

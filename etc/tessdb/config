@@ -68,7 +68,9 @@ log_level = info
 # Database configuration section
 [dbase]
 
-# All items in this section are reconfigurable by reload
+# Database tyoe. Cyrrently it only supports sqlite3
+# Not reloadable property
+type = sqlite3
 
 # For SQLite, this is the full path name to the database file
 # Not reloadable property
