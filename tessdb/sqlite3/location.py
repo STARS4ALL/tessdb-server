@@ -40,7 +40,8 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-from .utils import Table, fromJSON, UNKNOWN
+import utils
+from .utils import Table, fromJSON
 
 # ----------------
 # Module Constants
@@ -50,12 +51,12 @@ from .utils import Table, fromJSON, UNKNOWN
 DEFAULT_LOCATION = [
     {
         "location_id"   : -1, 
-        "contact_email" : "Unknown", 
-        "site"          : "Unknown", 
-        "zipcode"   : "Unknown", 
-        "location"      : "Unknown", 
-        "province"      : "Unknown", 
-        "country"       : "Unknown"
+        "contact_email" : utils.UNKNOWN, 
+        "site"          : utils.UNKNOWN, 
+        "zipcode"       : utils.UNKNOWN, 
+        "location"      : utils.UNKNOWN, 
+        "province"      : utils.UNKNOWN, 
+        "country"       : utils.UNKNOWN
     }, 
 ]
 

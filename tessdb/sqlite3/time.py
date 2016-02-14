@@ -41,7 +41,8 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-from .utils import Table,  UNKNOWN
+import utils
+from .utils import Table
 
 # ----------------
 # Module Constants
@@ -129,10 +130,10 @@ class TimeOfDay(Table):
         timeList = [
             (
                 -1,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
+                utils.UNKNOWN,
+                utils.UNKNOWN,
+                utils.UNKNOWN,
+                utils.UNKNOWN,
             )
         ]
         while time <= TimeOfDay.END_TIME:
