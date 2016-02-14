@@ -146,6 +146,14 @@ def _updateCalibration(cursor, row):
         )
         ''',  row)
 
+def _createIndices(cursor):
+    '''
+    Create table Indices
+    '''
+    cursor.execute("CREATE INDEX IF NOT EXISTS tess_name_i ON tess_t(name);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
+
+
 # ============================================================================ #
 #                              TESS INSTRUMENT TABLE (DIMENSION)
 # ============================================================================ #
@@ -178,6 +186,14 @@ class TESS(Table):
             );
             '''
         )
+
+    def index(self):
+        '''
+        Create the SQLite Units table.
+        Returns a Deferred
+        '''
+        log.info("Creating tess_t Indexes if not exists")
+        return self.pool.runInteraction(_createIndices)
 
 
     def populate(self, replace):

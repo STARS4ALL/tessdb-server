@@ -17,7 +17,7 @@ import datetime
 # Twisted imports
 # ---------------
 
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.defer import inlineCallbacks, returnValue, succeed
 from twisted.logger   import Logger
     
 #--------------
@@ -81,6 +81,12 @@ class Table(object):
         '''Create a table and stores a pool reference to the database'''
         self.pool = pool
 
+    def index(self):
+        '''
+        Default index creation implementation for those tables
+        that do not create indices
+        '''
+        return succeed(None)
 
     @inlineCallbacks
     def schema(self, json_dir, replace):
@@ -90,4 +96,5 @@ class Table(object):
         '''
         self.json_dir = json_dir
         yield self.table()
+        yield self.index()
         yield self.populate(replace)
