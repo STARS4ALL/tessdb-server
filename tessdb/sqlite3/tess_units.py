@@ -40,7 +40,8 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-from .utils import Table, fromJSON, UNKNOWN, CURRENT
+import utils
+from .utils import Table, fromJSON
 
 # ----------------
 # Module Constants
@@ -59,9 +60,9 @@ DEFAULT_UNITS = [
     "longitude_units"           : "degrees",
     "latitude_units"            : "degrees",
     "height_units"              : "m",
-    "valid_since"               : "2016-01-01 00:00:00",
-    "valid_until"               : "2999-12-31 23:59:59",
-    "valid_state"               : "Current"
+    "valid_since"               : utils.START_TIME,
+    "valid_until"               : utils.INFINITE_TIME,
+    "valid_state"               : utils.CURRENT
     }
 ]
 

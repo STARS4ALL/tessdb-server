@@ -29,6 +29,7 @@ from twisted.logger   import Logger
 # ----------------
 
 UNKNOWN       = 'Unknown'
+START_TIME    = "2016-01-01 00:00:00"
 INFINITE_TIME = "2999-12-31 23:59:59"
 EXPIRED       = "Expired"
 CURRENT       = "Current"
