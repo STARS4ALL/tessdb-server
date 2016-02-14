@@ -21,7 +21,7 @@ How to upload a new package release into PyPi
 
 	[pypi]
 	repository = https://pypi.python.org/pypi
-	username = <my username>
+	username = <my pypi username>
 	password = <my pypi password>
 
 	```
