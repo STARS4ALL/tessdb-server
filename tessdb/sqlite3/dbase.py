@@ -93,4 +93,17 @@ class DBase(object):
       '''
       return self.tess_readings.update(row)
 
-  
+   # -------------
+   # log stats API
+   # -------------
+
+   def resetCounters(self):
+      '''Resets stat counters'''
+      self.tess_readings.resetCounters()
+      self.tess.resetCounters()
+
+   def logCounters(self):
+      '''log stat counters'''
+      self.tess_readings.logCounters()
+      self.tess.logCounters()
+   

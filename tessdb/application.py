@@ -51,6 +51,9 @@ class TESSApplication(object):
     # Periodic task in seconds
     TLOG = 60
 
+    # Stats period task in seconds
+    T_STAT = 3600
+
     def __init__(self, cfgFilePath, config_opts):
         
         TESSApplication.instance = self
@@ -62,6 +65,7 @@ class TESSApplication(object):
         self.task       = task.LoopingCall(self.sighandler)
         self.task.start(self.T, now=False) # call every T seconds
         self.reportTask   = task.LoopingCall(self.reporter)
+        self.statsTask    = task.LoopingCall(self.logCounters)
         self.mqttService  = MQTTService(self, config_opts['mqtt'])
         self.dbaseService = DBaseService(self, config_opts['dbase'])
         setLogLevel(namespace='tessdb', levelStr=config_opts['tessdb']['log_level'])
@@ -127,4 +131,19 @@ class TESSApplication(object):
         log.info('starting {tessdb}', tessdb=VERSION_STRING)
         self.dbaseService.startService()    # This is asynchronous !
         self.mqttService.startService()
-       
+        self.statsTask.start(self.T_STAT, now=False) # call every T seconds
+    
+    # -------------
+    # log stats API
+    # -------------
+
+    def resetCounters(self):
+        '''Resets stat counters'''
+        self.mqttService.resetCounters()
+        self.dbaseService.resetCounters()
+
+    def logCounters(self):
+        '''log stat counters'''
+        self.mqttService.logCounters()
+        self.dbaseService.logCounters()
+        self.resetCounters()

@@ -72,6 +72,7 @@ class TESSReadings(Table):
         '''Create the SQLite TESS Readings table'''
         Table.__init__(self, pool)
         self.parent = parent
+        self.resetCounters()
 
 
     def table(self):
@@ -108,6 +109,21 @@ class TESSReadings(Table):
     def populate(self, replace):
         return succeed(None)
 
+    # -------------
+    # log stats API
+    # -------------
+
+    def resetCounters(self):
+        '''Resets stat counters'''
+        self.nreadings = 0
+        self.nrejected = 0
+
+    def logCounters(self):
+        '''log stat counters'''
+        log.info("Readings (Total/Accepted/Rejected) = ({total}/{accepted}/{rejected})", 
+                total=self.nreadings, accepted=self.nreadings-self.nrejected, rejected=self.nrejected)
+
+
     # ===============
     # OPERATIONAL API
     # ===============
@@ -134,11 +150,13 @@ class TESSReadings(Table):
         Bit 6 - 1 = duplicate rows
         Bit 7 - 1 = Other exception
         '''
+        self.nreadings += 1
         ret = 0
         tess = yield self.parent.tess.findName(row)
         log.debug("{tess!s}", tess=tess)
         if not len(tess):
             log.warn("No tess {0} registered for this reading !".format(row['name']))
+            self.nrejected += 1
             returnValue(ret)
         tess = tess[0]  # Keep only the first row
         if not 'tstamp' in row:
@@ -160,9 +178,11 @@ class TESSReadings(Table):
             ret |= 0x01
         except sqlite3.IntegrityError as e:
             log.error("tess id={id} is sending readings too fast", id=tess[0])
+            self.nrejected += 1
             ret |= 0x40
         except Exception as e:
             log.error("exception {excp!s}", excp=e)
+            self.nrejected += 1
             ret |= 0x80
         returnValue(ret)
 

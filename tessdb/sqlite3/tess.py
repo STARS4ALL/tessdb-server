@@ -166,6 +166,7 @@ class TESS(Table):
 
     def __init__(self, pool, validate=False):
         Table.__init__(self, pool)
+        self.resetCounters()
 
     def table(self):
         '''
@@ -210,6 +211,22 @@ class TESS(Table):
             log.info("Populating Instruments Table if empty")
             return self.pool.runInteraction( _populateIgn, self.rows() )
 
+    # -------------
+    # log stats API
+    # -------------
+
+    def resetCounters(self):
+        '''Resets stat counters'''
+        self.nregister = 0
+        self.nrejected = 0
+    
+
+    def logCounters(self):
+        '''log stat counters'''
+        log.info("Instruments (Total/Accepted/Rejected) = ({total}/{accepted}/{rejected})", 
+                total=self.nregister, accepted=self.nregister-self.nrejected, rejected=self.nrejected)
+
+
     # --------------
     # Helper methods
     # --------------
@@ -239,6 +256,7 @@ class TESS(Table):
         Bit 7 - 1 = Creaiton error. Existing instrument with the same name.
         '''
 
+        self.nregister += 1
         ret = 0x00
         instrument = yield self.findMAC(row)
         # if  instrument with that MAC already exists, may be update it ...
@@ -255,6 +273,7 @@ class TESS(Table):
                     log.info("Changed instrument name to {name}", name=row['name'])
                 else:
                     ret |= 0x40
+                    self.nrejected += 1
 
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
@@ -269,6 +288,7 @@ class TESS(Table):
             if len(instrument):
                 log.info("Another instrument already registered with the same name: {name}", name=row['name']) 
                 ret |= 0x80
+                self.nrejected += 1
             else:
                 yield self.addNew(row)
                 log.info("Brand new instrument registered: {name}", name=row['name'])

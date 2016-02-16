@@ -39,8 +39,6 @@ from .utils  import chop
 # Module constants
 # ----------------
 
-NSTATS = 100
-
 # -----------------------
 # Module global variables
 # -----------------------
@@ -65,14 +63,13 @@ class MQTTService(Service):
         self.options    = options
         self.topics     = []
         self.regAllowed = False
-        self.nregister  = 0
-        self.nreadings  = 0
-        self.npublish   = 0
         self.validate   = options['validation']
         setLogLevel(namespace='mqtt', levelStr=options['log_level'])
-
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
+        self.resetCounters()
+
+
     
     def startService(self):
         log.info("starting MQTT Client Service")
@@ -103,6 +100,22 @@ class MQTTService(Service):
 
     def resumeService(self):
         pass
+
+    # -------------
+    # log stats API
+    # -------------
+
+    def logCounters(self):
+        '''log stat counters'''
+        log.info("MQTT (Total/Readings/Registrations) = ({total}/{nreadings}/{nregister})", 
+                total=self.npublish, nreadings=self.nreadings, nregister=self.nregister)
+
+
+    def resetCounters(self):
+        '''Resets stat counters'''
+        self.npublish  = 0
+        self.nreadings = 0
+        self.nregister = 0
 
     # --------------
     # Helper methods
@@ -203,18 +216,10 @@ class MQTTService(Service):
             raise ReadingTypeError('channel', float, type(row['channel']))
 
 
-    def logStats(self):
-        '''
-        Log basic stats on received messages
-        '''
-        if self.npublish % NSTATS == 0:
-            log.info("(Total/Readings/Registrations) = ({total}/{nreadings}/{nregister})", 
-                total=self.npublish, nreadings=self.nreadings, nregister=self.nregister)
-
 
     def onPublish(self, topic, payload, qos, dup, retain, msgId):
         '''
-        MQTT Pubish message Handler
+        MQTT Publish message Handler
         '''
         now = datetime.datetime.utcnow()
         self.npublish += 1
@@ -256,4 +261,3 @@ class MQTTService(Service):
             self.parent.queue['tess_readings'].append(row)
         else:
             log.warn("message received on unexpected topic {topic}", topic=topic)
-        self.logStats()

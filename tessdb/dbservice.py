@@ -93,6 +93,19 @@ class DBaseService(Service):
         log.info('TESS database writer resumed')
         self.paused = False
 
+    # -------------
+    # log stats API
+    # -------------
+
+    def resetCounters(self):
+        '''Resets stat counters'''
+        self.dbase.resetCounters()
+
+
+    def logCounters(self):
+        '''log stat counters'''
+        self.dbase.logCounters()
+
     # --------------
     # Helper methods
     # ---------------
