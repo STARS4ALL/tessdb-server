@@ -28,7 +28,7 @@ This dimension holds the current list of TESS instruments.
 * The `mac_address` could be the natural key if it weren't for the calibration constant history tracking.
 * The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name.
 * A TESS instrument name can be changed as long as there is no other instrument with the same name.
-* The `current_loc_id` is a reference to the current location assigned to the instrument.
+* The `location_id` is a reference to the current location assigned to the instrument.
 * Location id -1 denotes the "Unknown" location.
 * The `calibration_k` holds the current value of the instrument calibration constant.
 * A history of calibration constant changes are maintained in the `tess_t` table if the instrument is ever recalibrated. 

@@ -75,8 +75,8 @@ def _populateRepl(transaction, rows):
             calibrated_since,
             calibrated_until,
             calibrated_state,
-            current_loc_id
-        ) VALUES(
+            location_id
+        ) VALUES (
             :tess_id,
             :name,
             :mac_address,
@@ -84,7 +84,7 @@ def _populateRepl(transaction, rows):
             :calibrated_since,
             :calibrated_until,
             :calibrated_state,
-            :current_loc_id
+            :location_id
         )
         ''', rows)
 
@@ -100,8 +100,8 @@ def _populateIgn(transaction, rows):
             calibrated_since,
             calibrated_until,
             calibrated_state,
-            current_loc_id
-        ) VALUES(
+            location_id
+        ) VALUES (
             :tess_id,
             :name,
             :mac_address,
@@ -109,7 +109,7 @@ def _populateIgn(transaction, rows):
             :calibrated_since,
             :calibrated_until,
             :calibrated_state,
-            :current_loc_id
+            :location_id
         )
         ''', rows)
 
@@ -156,6 +156,33 @@ def _createIndices(cursor):
     cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
 
 
+def _createViews(cursor):
+    '''
+    Create Views
+    '''
+    # This is the  outrigger to Location dimension
+    cursor.execute(
+        '''
+        CREATE VIEW IF NOT EXISTS tess_v 
+        AS SELECT
+            tess_t.tess_id,
+            tess_t.name,
+            tess_t.mac_address,
+            tess_t.calibration_k,
+            tess_t.calibrated_since,
+            tess_t.calibrated_until,
+            tess_t.calibrated_state,
+            location_t.contact_email,
+            location_t.site,
+            location_t.zipcode,
+            location_t.location,
+            location_t.province,
+            location_t.country
+        FROM tess_t JOIN location_t USING (location_id);
+        '''
+        )
+
+
 # ============================================================================ #
 #                              TESS INSTRUMENT TABLE (DIMENSION)
 # ============================================================================ #
@@ -185,18 +212,26 @@ class TESS(Table):
             calibrated_since   TEXT,
             calibrated_until   TEXT,
             calibrated_state   TEXT,
-            current_loc_id     INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id)
+            location_id     INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id)
             );
             '''
         )
 
-    def index(self):
+    def indices(self):
         '''
-        Create the SQLite Units table.
+        Create indices to SQLite Units table.
         Returns a Deferred
         '''
         log.info("Creating tess_t Indexes if not exists")
         return self.pool.runInteraction(_createIndices)
+
+    def views(self):
+        '''
+        Create Views associated to this dimension.
+        Returns a Deferred
+        '''
+        log.info("Creating tess_t Views if not exists")
+        return self.pool.runInteraction(_createViews)
 
 
     def populate(self, replace):
@@ -251,7 +286,7 @@ class TESS(Table):
         Returns a deferred with the following codes in the result (for unitary testing):
         Bit 0 - 1 = Operation was an update. 0 = Operation was a creation.
         Bit 1 - 1 = Updated name. 0 = Not updated name.
-        Bit 2 - 1 = Updated calib constant. 0 = Not updated calib constant
+        Bit 2 - 1 = Updated calib constantess_t. 0 = Not updated calib constant
         Bit 6 - 1 = Update Error. Existing instrument with the same name.
         Bit 7 - 1 = Creaiton error. Existing instrument with the same name.
         '''
@@ -282,7 +317,7 @@ class TESS(Table):
                 log.info("Changed instrument calibration data to {calib}", calib=row['calib'])
         else:
             # Find other posible existing instruments with the same name
-            # We require the names to be unique as well.
+            # We require the names to be unique as wellocation_t.
             # If that condition is met, we add a new instrument
             instrument = yield self.findName(row)
             if len(instrument):
@@ -320,7 +355,7 @@ class TESS(Table):
         row['calib_flag'] = utils.CURRENT
         return self.pool.runQuery(
             '''
-            SELECT tess_id, mac_address, calibration_k, current_loc_id 
+            SELECT tess_id, mac_address, calibration_k, location_id 
             FROM tess_t 
             WHERE name == :name
             AND calibrated_state == :calib_flag 
@@ -378,7 +413,7 @@ class TESS(Table):
         '''
         return self.pool.runOperation( 
             '''
-            UPDATE tess_t SET current_loc_id=:loc_id
+            UPDATE tess_t SET location_id=:loc_id
             WHERE mac_address == :mac 
             ''', row )
 

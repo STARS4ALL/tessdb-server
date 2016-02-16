@@ -80,7 +80,7 @@ def _populateRepl(transaction, rows):
             site,
             zipcode,
             location,
-             province,
+            province,
             country
         ) VALUES (
             :location_id,

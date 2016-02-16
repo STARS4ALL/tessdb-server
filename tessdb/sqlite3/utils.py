@@ -82,10 +82,16 @@ class Table(object):
         '''Create a table and stores a pool reference to the database'''
         self.pool = pool
 
-    def index(self):
+    def indices(self):
         '''
         Default index creation implementation for those tables
         that do not create indices
+        '''
+        return succeed(None)
+
+    def views(self):
+        '''
+        Create views for outrigger dimensions if neccessary
         '''
         return succeed(None)
 
@@ -97,5 +103,6 @@ class Table(object):
         '''
         self.json_dir = json_dir
         yield self.table()
-        yield self.index()
+        yield self.indices()
+        yield self.views()
         yield self.populate(replace)
