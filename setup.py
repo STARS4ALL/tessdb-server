@@ -66,7 +66,7 @@ if os.name == "posix":
         url              = 'http://github.com/astrorafael/tessdb/',
         classifiers      = classifiers,
         packages         = ["tessdb","tessdb.sqlite3"],
-        install_requires = ['twisted >= 15.4.0','twisted-mqtt'],
+        install_requires = ['twisted >= 15.4.0','twisted-mqtt','pyephem >= 3.7.6'],
         data_files       = [ 
           ('/etc/init.d' ,     ['etc/init.d/tessdb']),
           ('/etc/default',     ['etc/default/tessdb']),
@@ -97,7 +97,7 @@ elif os.name == "nt":
         url              = 'http://github.com/astrorafael/tessdb/',
         classifiers      = classifiers,
         packages         = ["tessdb","tessdb.sqlite3"],
-        install_requires = ['twisted >= 15.4.0','twisted-mqtt'],
+        install_requires = ['twisted >= 15.4.0','twisted-mqtt','pyephem >= 3.7.6'],
         data_files       = [ 
           (r'C:\tessdb',          [r'usr\local\bin\tessdb.bat']),
           (r'C:\tessdb\dbase',    [r'var\dbase\placeholder.txt']),
