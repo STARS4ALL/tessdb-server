@@ -67,6 +67,9 @@ class MQTTService(Service):
         setLogLevel(namespace='mqtt', levelStr=options['log_level'])
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
+        if self.options['username'] == "":
+            self.options['username'] = None
+            self.options['password'] = None
         self.resetCounters()
 
 
@@ -126,11 +129,11 @@ class MQTTService(Service):
         '''
         Connect to MQTT broker
         '''
-        log.debug("Got protocol 1")
         self.protocol = protocol
         self.protocol.setPublishHandler(self.onPublish)
-        log.debug("Got protocol 2")
-        yield self.protocol.connect("TwistedMQTT-subs", keepalive=self.options['keepalive'])
+        yield self.protocol.connect("TwistedMQTT-subs", 
+            username=self.options['username'], password=self.options['password'], 
+            keepalive=self.options['keepalive'])
         log.info("Connected to {broker} on port {port}", broker=self.options['broker'], port=self.options['port'])
         yield self.subscribe(self.options)
 
