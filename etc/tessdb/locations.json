@@ -9,6 +9,7 @@
 #
 # A list of location entries. 
 # Each location is a list with the following fields:
+# Longitude/latitude are used in tessdb for sunrise/sunset calculation
 # ----------------------------
 #    [
 #           location_id             INTEGER PRIMARY KEY,
@@ -16,6 +17,7 @@
 #            site                    TEXT,
 #            longitude               REAL, (in degrees)
 #            latitude                REAL, (in degrees)
+#			 elevation               REAL, (in meters)
 #            ziopcode                TEXT,
 #            location                TEXT,
 #            province                TEXT,
@@ -32,6 +34,7 @@
         "site"          : "Unknown",
         "longitude"     : "Unknown",
         "latitude"      : "Unknown",
+        "elevation"     : "Unknown",
         "zipcode"       : "Unknown", 
         "location"      : "Unknown", 
         "province"      : "Unknown", 
