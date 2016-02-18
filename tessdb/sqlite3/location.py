@@ -49,7 +49,8 @@ from .utils import Table, fromJSON
 # Module Constants
 # ----------------
 
-# default location if no JSNON file is found 
+# default location if no JSON file is found 
+# Longitude/latitude are used in tessdb for sunrise/sunset calculation
 DEFAULT_LOCATION = [
     {
         "location_id"   : -1, 
