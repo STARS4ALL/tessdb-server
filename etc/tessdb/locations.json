@@ -14,7 +14,9 @@
 #           location_id             INTEGER PRIMARY KEY,
 #            contact_email           TEXT,
 #            site                    TEXT,
-#            ziopcode               TEXT,
+#            longitude               REAL, (in degrees)
+#            latitude                REAL, (in degrees)
+#            ziopcode                TEXT,
 #            location                TEXT,
 #            province                TEXT,
 #            country                 TEXT
@@ -27,7 +29,9 @@
     {
         "location_id"   : -1, 
         "contact_email" : "Unknown", 
-        "site"          : "Unknown", 
+        "site"          : "Unknown",
+        "longitude"     : "Unknown",
+        "latitude"      : "Unknown",
         "zipcode"       : "Unknown", 
         "location"      : "Unknown", 
         "province"      : "Unknown", 

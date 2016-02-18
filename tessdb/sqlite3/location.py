@@ -28,6 +28,7 @@
 # -------------------
 
 import os
+from ephem import cities
 
 # ---------------
 # Twisted imports
@@ -54,6 +55,8 @@ DEFAULT_LOCATION = [
         "location_id"   : -1, 
         "contact_email" : utils.UNKNOWN, 
         "site"          : utils.UNKNOWN, 
+        "longitude"     : utils.UNKNOWN, 
+        "latitude"      : utils.UNKNOWN, 
         "zipcode"       : utils.UNKNOWN, 
         "location"      : utils.UNKNOWN, 
         "province"      : utils.UNKNOWN, 
@@ -78,6 +81,8 @@ def _populateRepl(transaction, rows):
             location_id,
             contact_email,
             site,
+            longitude,
+            latitude,
             zipcode,
             location,
             province,
@@ -85,6 +90,8 @@ def _populateRepl(transaction, rows):
         ) VALUES (
             :location_id,
             :contact_email,
+            :longitude,
+            :latitude,
             :site,
             :zipcode,
             :location,
@@ -95,10 +102,12 @@ def _populateRepl(transaction, rows):
 def _populateIgn(transaction, rows):
     '''Dimension initial data loading (ignore flavour)'''
     transaction.executemany(
-        '''INSERT OR REPLACE INTO location_t (
+        '''INSERT OR IGNORE INTO location_t (
             location_id,
             contact_email,
             site,
+            longitude,
+            latitude,
             zipcode,
             location,
             province,
@@ -107,6 +116,8 @@ def _populateIgn(transaction, rows):
             :location_id,
             :contact_email,
             :site,
+            :longitude,
+            :latitude,
             :zipcode,
             :location,
             :province,
@@ -143,6 +154,8 @@ class Location(Table):
             location_id             INTEGER PRIMARY KEY,
             contact_email           TEXT,
             site                    TEXT,
+            longitude               REAL,
+            latitude                REAL,
             zipcode                 TEXT,
             location                TEXT,
             province                TEXT,
