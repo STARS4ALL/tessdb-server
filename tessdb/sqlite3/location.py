@@ -157,7 +157,7 @@ class Location(Table):
             '''
             CREATE TABLE IF NOT EXISTS location_t
             (
-            location_id             INTEGER PRIMARY KEY,
+            location_id             INTEGER PRIMARY KEY AUTOINCREMENT,
             contact_email           TEXT,
             site                    TEXT,
             longitude               REAL,
@@ -166,7 +166,9 @@ class Location(Table):
             zipcode                 TEXT,
             location                TEXT,
             province                TEXT,
-            country                 TEXT
+            country                 TEXT,
+            sunrise                 TEXT,
+            sunset                  TEXT
             );
             '''
         )

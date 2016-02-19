@@ -3,7 +3,10 @@ Todas y cada una de estas cosas en su rama git
 *) Actualizar doc de oepracion
 *) sunrise / sunset especifico por instrumento
 - flag deshabilitadora del filtro
-- umbral de sunrise/sunset
+- umbral de horizonte de sunrise/sunset
+- generar un conjunto de prueba de location_t
+- ¿ donde guardo elsunries/sunset ? ¿ en su tabla o en una tabla auxiliar ?)
+
 - ¿ que hacer con las loacation cuyas coordenadas no conocemos ?
 - Scheduling ¿ una vez al día ? ¿ cada hora ? ¿ todas a la vez ? ¿ poco a poco ? ¿ de cuantos hacemos el lote ?
 *) Control dethreads con suggestThreadPool
