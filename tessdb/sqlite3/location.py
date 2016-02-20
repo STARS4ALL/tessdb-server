@@ -271,12 +271,12 @@ class Location(Table):
             if self.validPosition(location):
                 observer.lon       = math.radians(location[1])
                 observer.lat       = math.radians(location[2])
-                observer.elevation = location[3] or 0.0
-                row = {}
-                row['id']      = location[0]
-                row['sunrise'] = str(observer.previous_rising(sun, use_center=True))
-                row['sunset']  = str(observer.next_setting(sun, use_center=True))
-                rows.append(row)
+                observer.elevation = location[3]
+                rows.append ({ 
+                    'id'     : location[0], 
+                    'sunrise': str(observer.previous_rising(sun, use_center=True)),
+                    'sunset' : str(observer.next_setting(sun, use_center=True))
+                })
         return rows
 
 
