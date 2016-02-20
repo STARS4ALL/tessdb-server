@@ -25,6 +25,7 @@ from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.defer import inlineCallbacks
 
 from mqtt import v311
+from mqtt.error  import MQTTStateError
 from mqtt.client.factory import MQTTFactory
 
 #--------------
@@ -131,11 +132,17 @@ class MQTTService(Service):
         '''
         self.protocol = protocol
         self.protocol.setPublishHandler(self.onPublish)
-        yield self.protocol.connect("TwistedMQTT-subs", 
-            username=self.options['username'], password=self.options['password'], 
-            keepalive=self.options['keepalive'])
-        log.info("Connected to {broker} on port {port}", broker=self.options['broker'], port=self.options['port'])
-        yield self.subscribe(self.options)
+        try:
+            yield self.protocol.connect("TwistedMQTT-subs", 
+                username=self.options['username'], password=self.options['password'], 
+                keepalive=self.options['keepalive'])
+            yield self.subscribe(self.options)
+        except Exception as e:
+            log.error("Connecting to {broker} on port {port} raised {excp!s}", 
+               broker=self.options['broker'], port=self.options['port'], excp=e)
+        else:
+            log.info("Connected to {broker} on port {port}", broker=self.options['broker'], port=self.options['port'])
+       
 
     @inlineCallbacks
     def subscribe(self, options):
