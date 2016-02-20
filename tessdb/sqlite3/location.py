@@ -167,7 +167,7 @@ class Location(Table):
         Create the SQLite Location table
         Returns a Deferred
         '''
-        log.info("Creating tess_units_t Table if not exists")
+        log.info("Creating location_t Table if not exists")
         return self.pool.runOperation(
             '''
             CREATE TABLE IF NOT EXISTS location_t
@@ -244,6 +244,12 @@ class Location(Table):
         return self.pool.runInteraction( _updateSunrise, rows )
 
 
+    def validPosition(self, location):
+        '''
+        Test for valid longitude,latitude elevation in result set.
+        '''
+        return location[1] and location[1] != utils.UNKNOWN and  location[2] and location[2] != utils.UNKNOWN and location[3] and location[2] != utils.UNKNOWN
+    
     def computeSunrise(self, locations, sun, noon, horizon):
         '''
         Computes sunrise/sunset for a given list of locations.
@@ -262,14 +268,15 @@ class Location(Table):
         observer.date      = noon
         rows = []
         for location in locations:
-            observer.lon       = math.radians(location[1])
-            observer.lat       = math.radians(location[2])
-            observer.elevation = location[3]
-            row = {}
-            row['id']      = location[0]
-            row['sunrise'] = str(observer.previous_rising(sun, use_center=True))
-            row['sunset']  = str(observer.next_setting(sun, use_center=True))
-            rows.append(row)
+            if self.validPosition(location):
+                observer.lon       = math.radians(location[1])
+                observer.lat       = math.radians(location[2])
+                observer.elevation = location[3] or 0.0
+                row = {}
+                row['id']      = location[0]
+                row['sunrise'] = str(observer.previous_rising(sun, use_center=True))
+                row['sunset']  = str(observer.next_setting(sun, use_center=True))
+                rows.append(row)
         return rows
 
 
