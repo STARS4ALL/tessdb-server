@@ -131,7 +131,14 @@ def _populateIgn(transaction, rows):
         )''', rows)
     
 
-
+def _updateSunrise(transaction, rows):
+    '''Update sunrise/sunset in given rows'''
+    transaction.executemany(
+        '''
+        UPDATE location_t SET sunrise = :sunrise, sunset = :sunset
+        WHERE location_id == :id
+        ''', rows)
+       
 # ============================================================================ #
 #                               LOCATION TABLE (DIMENSION)
 # ============================================================================ #
@@ -146,6 +153,10 @@ class Location(Table):
     def __init__(self, pool):
         '''Create and populate the SQLite Location Table'''
         Table.__init__(self, pool)
+
+    # ==========
+    # SCHEMA API
+    # ==========
 
     def table(self):
         '''
@@ -197,3 +208,33 @@ class Location(Table):
         return fromJSON( os.path.join(self.json_dir, Location.FILE), DEFAULT_LOCATION)
 
 
+    # ===============
+    # OPERATIONAL API
+    # ===============
+
+    def getLocations(self, index, count):
+        '''
+        Get 'count' locations starting from 'index'
+        This query is optimized for SQLite.
+        Returns a Deferred.
+        '''
+        param = {'id': index, 'count': count }
+        return self.pool.runQuery(
+            '''
+            SELECT location_id, longitude, latitude, elevation 
+            FROM location_t 
+            WHERE location_id >= :id
+            ORDER BY location_id
+            LIMIT :count 
+            ''', param)
+
+    def updateSunrise(self, rows):
+        '''
+        Update sunrise/sunset in given rows.
+        Rows is a dictionary with at least the following keys:
+        - 'id'
+        - 'sunrise'
+        - 'sunset'
+        Returns a Deferred.
+        '''
+        return self.pool.runInteraction( _updateSunrise, rows )

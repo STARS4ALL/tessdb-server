@@ -57,6 +57,7 @@ class DBase(object):
       self.tess          = TESS(self.pool)
       self.tess_units    = TESSUnits(self.pool)
       self.tess_readings = TESSReadings(self.pool, self)
+      self.tess_locations = Location(self.pool)
 
    # ---------------------
    # SCHEMA GENERATION API
@@ -70,7 +71,7 @@ class DBase(object):
       '''
       yield Date(self.pool).schema(date_fmt, year_start, year_end, replace)
       yield TimeOfDay(self.pool).schema(json_dir, replace)
-      yield Location(self.pool).schema(json_dir, replace)
+      yield self.tess_locations.schema(json_dir, replace)
       yield self.tess.schema(json_dir, replace)
       yield self.tess_units.schema(json_dir, replace)
       yield self.tess_readings.schema(json_dir, replace)
