@@ -62,7 +62,7 @@ DEFAULT_LOCATION = [
         "site"          : utils.UNKNOWN, 
         "longitude"     : utils.UNKNOWN, 
         "latitude"      : utils.UNKNOWN, 
-        "elevaion"      : utils.UNKNOWN, 
+        "elevation"     : utils.UNKNOWN, 
         "zipcode"       : utils.UNKNOWN, 
         "location"      : utils.UNKNOWN, 
         "province"      : utils.UNKNOWN, 
