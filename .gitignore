@@ -8,6 +8,7 @@ dist
 tessdb/*.pyc
 tessdb/*.pyo
 tessdb/*~
+*.txt
 my*
 *.db
 
