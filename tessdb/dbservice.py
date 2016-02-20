@@ -13,13 +13,13 @@ import errno
 import sys
 import datetime
 import json
-
+import ephem
 # ---------------
 # Twisted imports
 # ---------------
 
 from twisted.logger import Logger, LogLevel
-from twisted.internet import reactor
+from twisted.internet import reactor, task
 from twisted.application.service import Service
 from twisted.internet.defer import inlineCallbacks, returnValue
 
@@ -39,14 +39,38 @@ from .logger import setLogLevel
 
 log = Logger(namespace='dbase')
 
+# ------------------------
+# Module Utility Functions
+# ------------------------
+
+def utcnoon():
+    '''Returns the ephem Date object at today's noon'''
+    return ephem.Date(datetime.datetime.utcnow().replace(hour=12, minute=0, second=0,microsecond=0))
+
+def utcmidnight():
+    '''Returns the ephem Date object at today's midnight'''
+    return ephem.Date(datetime.datetime.utcnow().replace(hour=0, minute=0, second=0,microsecond=0))
+
+def utcnow():
+    '''Returns now's ephem Date object '''
+    return ephem.Date(datetime.datetime.utcnow())
+ 
+# --------------
+# Module Classes
+# --------------
+
 class DBaseService(Service):
 
+    # Sunrise/Sunset Task period in seconds
+    T_SUNRISE = 3600
 
     def __init__(self, parent, options, **kargs):
         Service.__init__(self)
         self.parent   = parent
         self.options  = options
         self.paused   = False
+        self.onBoot   = True
+        self.sunriseTask  = task.LoopingCall(self.sunrise)
         setLogLevel(namespace='dbase', levelStr=options['log_level'])
       
     #------------
@@ -71,6 +95,7 @@ class DBaseService(Service):
         Service.startService(self)
         log.info("Database operational.")
         self.later = reactor.callLater(2, self.writter)
+        self.sunriseTask.start(self.T_SUNRISE, now=True)
 
     def stopService(self):
         self.dbase.pool.close()
@@ -106,10 +131,14 @@ class DBaseService(Service):
         '''log stat counters'''
         self.dbase.logCounters()
 
-    # --------------
-    # Helper methods
-    # ---------------
+    # =============
+    # Twisted Tasks
+    # =============
    
+    # ---------------------
+    # Database writter task
+    # ---------------------
+
     @inlineCallbacks
     def writter(self):
         '''
@@ -125,4 +154,28 @@ class DBaseService(Service):
                 yield self.dbase.update(row)
         self.later = reactor.callLater(1,self.writter)
         
+
+    # ---------------------
+    # sunrise periodic Task
+    # ---------------------
+
+    @inlineCallbacks
+    def sunrise(self):
+        if self.paused or not self.options['location_filter']:
+            returnValue(None)
+
+        log.info("ON BOOT = {onboot}", onboot=self.onBoot)
+        # Only compute Sunrise/Sunset once a day around midnight
+        # with sampling resolution given by T_SUNRISE
+        if  not self.onBoot and utcnow() - utcmidnight() > self.T_SUNRISE * ephem.second:
+              returnValue(None)
+        self.onBoot    = False  
+        batch_perc     = self.options['location_batch_size']
+        batch_min_size = self.options['location_minimun_batch_size']
+        horizon        = self.options['location_horizon']
+        pause          = self.options['location_pause']
+        yield self.dbase.tess_locations.sunrise(batch_perc=batch_perc, 
+            batch_min_size=batch_min_size, horizon=horizon, pause=pause)
+      
+   
 

@@ -10,7 +10,6 @@
 
 import sys
 from collections import deque
-import ephem
 
 # ---------------
 # Twisted imports
@@ -63,14 +62,13 @@ class TESSApplication(object):
         self.sigreload  = False
         self.sigpause   = False
         self.sigresume  = False
-        self.task         = task.LoopingCall(self.sighandler)
+        self.reloadTask   = task.LoopingCall(self.sighandler)
         self.reportTask   = task.LoopingCall(self.reporter)
         self.statsTask    = task.LoopingCall(self.logCounters)
-        self.sunsetTask   = task.LoopingCall(self.sunset)
         self.mqttService  = MQTTService(self, config_opts['mqtt'])
         self.dbaseService = DBaseService(self, config_opts['dbase'])
         setLogLevel(namespace='tessdb', levelStr=config_opts['tessdb']['log_level'])
-        self.task.start(self.T, now=False) # call every T seconds
+        self.reloadTask.start(self.T, now=False) # call every T seconds
 
     def reporter(self):
         '''
@@ -133,7 +131,6 @@ class TESSApplication(object):
         yield self.dbaseService.startService()    # This is asynchronous !
         self.mqttService.startService()
         self.statsTask.start(self.T_STAT, now=False) # call every T seconds
-        self.sunsetTask.start(120, now=True)
     
     # -------------
     # log stats API
@@ -150,19 +147,4 @@ class TESSApplication(object):
         self.dbaseService.logCounters()
         self.resetCounters()
 
-    # -------------
-    # sunset  API
-    # -------------
-
-    @inlineCallbacks
-    def sunset(self):
-        if not self.dbaseService.options['location_filter']:
-            returnValue(None)
-        batch_perc     = self.dbaseService.options['location_batch_size']
-        batch_min_size = self.dbaseService.options['location_minimun_batch_size']
-        horizon        = self.dbaseService.options['location_horizon']
-        pause          = self.dbaseService.options['location_pause']
-        yield self.dbaseService.dbase.tess_locations.sunrise(batch_perc=batch_perc, 
-            batch_min_size=batch_min_size, horizon=horizon, pause=pause)
-        
-
+    

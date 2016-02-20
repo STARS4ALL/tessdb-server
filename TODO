@@ -2,13 +2,11 @@ Todas y cada una de estas cosas en su rama git
 =============================================
 *) Actualizar doc de oepracion
 *) sunrise / sunset especifico por instrumento
-- flag deshabilitadora del filtro
-- umbral de horizonte de sunrise/sunset
-- generar un conjunto de prueba de location_t
-- ¿ donde guardo elsunries/sunset ? ¿ en su tabla o en una tabla auxiliar ?)
+-comprobar la vercadidad de los calculos
+- que pasa con los nulos de longitude, latitude elevation
+*) Bug de MQTT. Se muere la factoría del protocolo.
 
-- ¿ que hacer con las loacation cuyas coordenadas no conocemos ?
-- Scheduling ¿ una vez al día ? ¿ cada hora ? ¿ todas a la vez ? ¿ poco a poco ? ¿ de cuantos hacemos el lote ?
+
 *) Control dethreads con suggestThreadPool
 *) Control del crecimeinto de la cola. 
   si average > 0 + 3*stddev => log warn.

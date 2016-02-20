@@ -294,7 +294,7 @@ class Location(Table):
             if len(locations) :
                 rows = yield deferToThread(self.computeSunrise, locations, sun, noon, horizon)
                 yield self.updateSunrise(rows)
-                log.info("done with index {i}",i=index)
+                log.debug("done with index {i}",i=index)
                 index += count
                 # Pause for some time to smooth I/O & CPU peaks
                 yield deferLater(reactor, pause, lambda: None)
