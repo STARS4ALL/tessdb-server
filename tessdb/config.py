@@ -121,7 +121,7 @@ def loadCfgFile(path):
     options['dbase']['location_horizon']    = parser.get("dbase","location_horizon")
     options['dbase']['location_batch_size'] = parser.getfloat("dbase","location_batch_size")
     options['dbase']['location_pause']      = parser.getint("dbase","location_pause")
-    options['dbase']['location_minimun_batch_size']  = parser.get("dbase","location_minimun_batch_size")
+    options['dbase']['location_minimun_batch_size']  = parser.getint("dbase","location_minimun_batch_size")
 
 
     return options

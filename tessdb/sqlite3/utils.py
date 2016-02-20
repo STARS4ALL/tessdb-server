@@ -12,6 +12,7 @@
 import os
 import json
 import datetime
+import ephem
 
 # ---------------
 # Twisted imports
@@ -70,6 +71,15 @@ def fromJSON(file_path, default_var):
             if not line.startswith('#'):
                 lines.append(line)
     return  json.loads('\n'.join(lines))
+
+def utcnoon():
+    '''Returns the ephem Date object at today's noon'''
+    return ephem.Date(datetime.datetime.utcnow().replace(hour=12, minute=0, second=0,microsecond=0))
+
+
+def utcnow():
+    '''Returns now's ephem Date object '''
+    return ephem.Date(datetime.datetime.utcnow())
 
 # ----------------------
 # Module Utility Classes

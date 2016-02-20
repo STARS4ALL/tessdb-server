@@ -18,7 +18,7 @@ import ephem
 
 from twisted.logger   import Logger, LogLevel
 from twisted.internet import task
-from twisted.internet.defer  import inlineCallbacks
+from twisted.internet.defer  import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
 #--------------
 # local imports
@@ -28,7 +28,6 @@ from .config import VERSION_STRING, loadCfgFile
 from .mqttservice import MQTTService
 from .dbservice   import DBaseService
 from .logger import setLogLevel
-from .sunset import utcnoon, sunLimits
 
 # ----------------
 # Module constants
@@ -157,22 +156,13 @@ class TESSApplication(object):
 
     @inlineCallbacks
     def sunset(self):
-        log.info("BEGIN SUNSET TASK")
-        finished = False
-        index = 0
-        count = 1000
-        sun   = ephem.Sun()
-        noon  = ephem.Date(utcnoon())
-        while not finished:
-            locations = yield self.dbaseService.dbase.tess_locations.getLocations(index,count)
-            if len(locations) :
-                rows = yield deferToThread(sunLimits, locations, sun, noon)
-                yield self.dbaseService.dbase.tess_locations.updateSunrise(rows)
-                log.info("done with index {i}",i=index)
-                index += count
-            else:
-                finished = True
-        log.info("END SUNSET TASK")
-
-
+        if not self.dbaseService.options['location_filter']:
+            returnValue(None)
+        batch_perc     = self.dbaseService.options['location_batch_size']
+        batch_min_size = self.dbaseService.options['location_minimun_batch_size']
+        horizon        = self.dbaseService.options['location_horizon']
+        pause          = self.dbaseService.options['location_pause']
+        yield self.dbaseService.dbase.tess_locations.sunrise(batch_perc=batch_perc, 
+            batch_min_size=batch_min_size, horizon=horizon, pause=pause)
+        
 
