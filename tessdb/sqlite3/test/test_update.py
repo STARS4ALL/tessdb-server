@@ -27,6 +27,7 @@
 
 import os
 import sys
+import datetime
 
 # ---------------
 # Twisted imports
@@ -65,8 +66,9 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         Test insert reading with no instrument registered.
         It should not be inserted
         '''
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
-        res = yield self.db.update(row)
+        now = datetime.datetime.utcnow() 
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        res = yield self.db.update(row, False)
         self.assertEqual(res, 0x00)
 
 class UpdateRegisteredTestCase(unittest.TestCase):
@@ -92,8 +94,9 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         Test insert a reading with instrument registered.
         It should be inserted
         '''
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
-        res = yield self.db.update(row)
+        now = datetime.datetime.utcnow() 
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        res = yield self.db.update(row, False)
         self.assertEqual(res, 0x01)
       
     @inlineCallbacks
@@ -102,10 +105,11 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         Test fast inserting two readings with instrument registered.
         The first one should be inserted, the second one not.
         '''
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
-        res = yield self.db.update(row)
+        now = datetime.datetime.utcnow() 
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        res = yield self.db.update(row, False)
         self.assertEqual(res, 0x01)
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12}
-        res = yield self.db.update(row)
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        res = yield self.db.update(row, False)
         self.assertEqual(res, 0x40)
 

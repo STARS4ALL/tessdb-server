@@ -216,7 +216,7 @@ class Location(Table):
     # OPERATIONAL API
     # ===============
 
-    def findLocationSunrise(self, ident):
+    def findSunrise(self, ident):
         '''
         Find location given by 'ident'
         Returns a Deferred.

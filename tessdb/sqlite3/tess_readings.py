@@ -165,7 +165,7 @@ class TESSReadings(Table):
         # Also filters if lacking enough data.
         # It is very important to assing an instrument a location asap
         # The Unknown location has no sunrise/sunset data
-        sunrise = yield self.parent.tess_location.findSunrise(tess[3])
+        sunrise = yield self.parent.tess_locations.findSunrise(tess[3])
         sunrise = sunrise[0]  # Keep only the first row
         if locationFilter and not sunrise[0]:
             log.debug("reading rejected by lack of sunrise/sunset data")

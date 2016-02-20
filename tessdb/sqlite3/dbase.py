@@ -87,12 +87,12 @@ class DBase(object):
       '''
       return self.tess.register(row)
 
-   def update(self, row):
+   def update(self, row, location_filter_flag):
       '''
       Update readngs table
       Returns a Deferred 
       '''
-      return self.tess_readings.update(row)
+      return self.tess_readings.update(row, location_filter_flag)
 
    # -------------
    # log stats API
