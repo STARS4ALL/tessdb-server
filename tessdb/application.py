@@ -10,6 +10,7 @@
 
 import sys
 from collections import deque
+import ephem
 
 # ---------------
 # Twisted imports
@@ -27,6 +28,7 @@ from .config import VERSION_STRING, loadCfgFile
 from .mqttservice import MQTTService
 from .dbservice   import DBaseService
 from .logger import setLogLevel
+from .sunset import utcnoon, sunLimits
 
 # ----------------
 # Module constants
@@ -62,14 +64,14 @@ class TESSApplication(object):
         self.sigreload  = False
         self.sigpause   = False
         self.sigresume  = False
-        self.task       = task.LoopingCall(self.sighandler)
-        self.task.start(self.T, now=False) # call every T seconds
+        self.task         = task.LoopingCall(self.sighandler)
         self.reportTask   = task.LoopingCall(self.reporter)
         self.statsTask    = task.LoopingCall(self.logCounters)
+        self.sunsetTask   = task.LoopingCall(self.sunset)
         self.mqttService  = MQTTService(self, config_opts['mqtt'])
         self.dbaseService = DBaseService(self, config_opts['dbase'])
         setLogLevel(namespace='tessdb', levelStr=config_opts['tessdb']['log_level'])
-       
+        self.task.start(self.T, now=False) # call every T seconds
 
     def reporter(self):
         '''
@@ -125,13 +127,14 @@ class TESSApplication(object):
             level = config_opts['tessdb']['log_level']
             setLogLevel(namespace='tessdb', levelStr=level)
             log.info("new log level is {lvl}", lvl=level)
-     
-
+    
+    @inlineCallbacks
     def start(self):
         log.info('starting {tessdb}', tessdb=VERSION_STRING)
-        self.dbaseService.startService()    # This is asynchronous !
+        yield self.dbaseService.startService()    # This is asynchronous !
         self.mqttService.startService()
         self.statsTask.start(self.T_STAT, now=False) # call every T seconds
+        self.sunsetTask.start(120, now=True)
     
     # -------------
     # log stats API
@@ -147,3 +150,29 @@ class TESSApplication(object):
         self.mqttService.logCounters()
         self.dbaseService.logCounters()
         self.resetCounters()
+
+    # -------------
+    # sunset  API
+    # -------------
+
+    @inlineCallbacks
+    def sunset(self):
+        log.info("BEGIN SUNSET TASK")
+        finished = False
+        index = 0
+        count = 1000
+        sun   = ephem.Sun()
+        noon  = ephem.Date(utcnoon())
+        while not finished:
+            locations = yield self.dbaseService.dbase.tess_locations.getLocations(index,count)
+            if len(locations) :
+                rows = yield deferToThread(sunLimits, locations, sun, noon)
+                yield self.dbaseService.dbase.tess_locations.updateSunrise(rows)
+                log.info("done with index {i}",i=index)
+                index += count
+            else:
+                finished = True
+        log.info("END SUNSET TASK")
+
+
+
