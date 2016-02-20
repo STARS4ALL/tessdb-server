@@ -216,6 +216,19 @@ class Location(Table):
     # OPERATIONAL API
     # ===============
 
+    def findLocationSunrise(self, ident):
+        '''
+        Find location given by 'ident'
+        Returns a Deferred.
+        '''
+        param = {'id': ident }
+        return self.pool.runQuery(
+            '''
+            SELECT location_id, sunrise, sunset 
+            FROM location_t 
+            WHERE location_id == :id
+            ''', param)
+
     def getLocations(self, index, count):
         '''
         Get 'count' locations starting from 'index'

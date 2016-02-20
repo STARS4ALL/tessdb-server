@@ -151,7 +151,7 @@ class DBaseService(Service):
                 yield self.dbase.register(row)
             while len(self.parent.queue['tess_readings']):
                 row = self.parent.queue['tess_readings'].popleft()
-                yield self.dbase.update(row)
+                yield self.dbase.update(row, self.options['location_filter'])
         self.later = reactor.callLater(1,self.writter)
         
 

@@ -1,11 +1,7 @@
 Todas y cada una de estas cosas en su rama git
 =============================================
 *) Actualizar doc de oepracion
-*) sunrise / sunset especifico por instrumento
--comprobar la vercadidad de los calculos
-- que pasa con los nulos de longitude, latitude elevation
-*) Bug de MQTT. Se muere la factoría del protocolo.
-
+*) Testear filtro sunruse/sunset enviando falsas muestras
 
 *) Control dethreads con suggestThreadPool
 *) Control del crecimeinto de la cola. 

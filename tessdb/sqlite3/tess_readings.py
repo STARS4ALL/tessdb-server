@@ -43,7 +43,7 @@ from twisted.logger         import Logger
 
 # -- beware of absolute_import in Python 3 when doing import utils
 import utils
-from .utils import Table, roundDateTime
+from .utils import Table, roundDateTime, isDaytime
 from ..error import ReadingKeyError, ReadingTypeError
 # ----------------
 # Module Constants
@@ -73,7 +73,6 @@ class TESSReadings(Table):
         Table.__init__(self, pool)
         self.parent = parent
         self.resetCounters()
-
 
     def table(self):
         '''
@@ -129,7 +128,7 @@ class TESSReadings(Table):
     # ===============
 
     @inlineCallbacks
-    def update(self, row):
+    def update(self, row, locationFilter):
         '''
         Update process
         row is a tuple with the following mandatory keywords:
@@ -147,6 +146,8 @@ class TESSReadings(Table):
         - height
         Returns a Deferred with the following integer resut code as callback value:
         Bit 0 - 1 = new row inserted, 0 = No row inserted
+        Bit 4 - 1 = rejected by lack of sunrise/sunset value when filter activated.
+        Bit 5 - 1 = rejected by sunrise/sunset value
         Bit 6 - 1 = duplicate rows
         Bit 7 - 1 = Other exception
         '''
@@ -159,13 +160,26 @@ class TESSReadings(Table):
             self.nrejected += 1
             returnValue(ret)
         tess = tess[0]  # Keep only the first row
-        if not 'tstamp' in row:
-            now = datetime.datetime.utcnow()
-            row['tstamp'] = now.strftime(utils.TSTAMP_FORMAT)
-        else:
-            now = row['tstamp']
-            row['tstamp'] = row['tstamp'].strftime(utils.TSTAMP_FORMAT)
-        row['date_id'], row['time_id'] = roundDateTime(now)
+       
+        # Filter for Daytime if this filter is activated
+        # Also filters if lacking enough data.
+        # It is very important to assing an instrument a location asap
+        # The Unknown location has no sunrise/sunset data
+        sunrise = yield self.parent.tess_location.findSunrise(tess[3])
+        sunrise = sunrise[0]  # Keep only the first row
+        if locationFilter and not sunrise[0]:
+            log.debug("reading rejected by lack of sunrise/sunset data")
+            self.nrejected += 1
+            ret |= 0x10
+            returnValue(ret)
+        if locationFilter and isDaytime(sunrise[0], sunrise[1]):
+            log.debug("reading rejected by daytime")
+            self.nrejected += 1
+            ret |= 0x20
+            returnValue(ret)
+
+        row['date_id'], row['time_id'] = roundDateTime(row['tstamp'])
+        row['tstamp']   = row['tstamp'].strftime(utils.TSTAMP_FORMAT)
         row['instr_id'] = tess[0]
         row['loc_id']   = tess[3]
         row['units_id'] = yield self.parent.tess_units.latest()
