@@ -250,6 +250,7 @@ class Location(Table):
         '''
         return location[1] and location[1] != utils.UNKNOWN and  location[2] and location[2] != utils.UNKNOWN and location[3] and location[2] != utils.UNKNOWN
     
+
     def computeSunrise(self, locations, sun, noon, horizon):
         '''
         Computes sunrise/sunset for a given list of locations.
@@ -257,7 +258,7 @@ class Location(Table):
         'locations' is a list of tuples (id,longitude,latitude,elevation)
         returned by getLocations() method
         Returns a list of dictionaries ready to be written back to location_t 
-        with the following keys:
+        table with the following keys:
         - id
         - 'sunrise'
         - 'sunset'
