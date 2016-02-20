@@ -141,7 +141,7 @@ class MQTTService(Service):
             log.error("Connecting to {broker} on port {port} raised {excp!s}", 
                broker=self.options['broker'], port=self.options['port'], excp=e)
         else:
-            log.info("Connected to {broker} on port {port}", broker=self.options['broker'], port=self.options['port'])
+            log.info("Connected and subscribed to {broker} on port {port}", broker=self.options['broker'], port=self.options['port'])
        
 
     @inlineCallbacks
