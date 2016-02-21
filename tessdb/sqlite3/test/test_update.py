@@ -69,7 +69,7 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         now = datetime.datetime.utcnow() 
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
         res = yield self.db.update(row, False)
-        self.assertEqual(res, 0x00)
+        self.assertEqual(res, 0x01)
 
 class UpdateRegisteredTestCase(unittest.TestCase):
 
@@ -97,7 +97,7 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         now = datetime.datetime.utcnow() 
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
         res = yield self.db.update(row, False)
-        self.assertEqual(res, 0x01)
+        self.assertEqual(res, 0x00)
       
     @inlineCallbacks
     def test_updateTooFast(self):
@@ -108,7 +108,7 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         now = datetime.datetime.utcnow() 
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
         res = yield self.db.update(row, False)
-        self.assertEqual(res, 0x01)
+        self.assertEqual(res, 0x00)
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
         res = yield self.db.update(row, False)
         self.assertEqual(res, 0x40)
