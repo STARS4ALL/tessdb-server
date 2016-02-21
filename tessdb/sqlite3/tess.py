@@ -292,6 +292,8 @@ class TESS(Table):
         Bit 2 - 1 = Updated calib constantess_t. 0 = Not updated calib constant
         Bit 6 - 1 = Update Error. Existing instrument with the same name.
         Bit 7 - 1 = Creaiton error. Existing instrument with the same name.
+        These return codes are only necessary for unitary testing. We do not need them
+        in normal operation.
         '''
 
         self.nregister += 1

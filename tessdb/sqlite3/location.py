@@ -97,10 +97,10 @@ def _populateRepl(transaction, rows):
         ) VALUES (
             :location_id,
             :contact_email,
+            :site,
             :longitude,
             :latitude,
             :elevation,
-            :site,
             :zipcode,
             :location,
             :province,
@@ -224,7 +224,7 @@ class Location(Table):
         param = {'id': ident }
         return self.pool.runQuery(
             '''
-            SELECT location_id, sunrise, sunset 
+            SELECT sunrise, sunset 
             FROM location_t 
             WHERE location_id == :id
             ''', param)
@@ -295,7 +295,7 @@ class Location(Table):
 
 
     @inlineCallbacks
-    def sunrise(self, batch_perc, batch_min_size, horizon, pause):
+    def sunrise(self, batch_perc=0, batch_min_size=1, horizon='-0:34', pause=0, today=utcnoon()):
         '''
         This is the long running process that iterates all locations in the table
         computing their sunrise/sunset and storing them back to the database.
@@ -309,11 +309,11 @@ class Location(Table):
         count = int( batch_perc * 0.01 * nlocations[0][0] )
         count = max(count,  batch_min_size)
         sun   = ephem.Sun()
-        noon  = ephem.Date(utcnoon())
+        today = ephem.Date(today)
         while not self.finished:
             locations = yield self.getLocations(index, count)
             if len(locations) :
-                rows = yield deferToThread(self.computeSunrise, locations, sun, noon, horizon)
+                rows = yield deferToThread(self.computeSunrise, locations, sun, today, horizon)
                 yield self.updateSunrise(rows)
                 log.debug("done with index {i}",i=index)
                 index += count

@@ -68,7 +68,7 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         '''
         now = datetime.datetime.utcnow() 
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row, False)
+        res = yield self.db.update(row, True)
         self.assertEqual(res, 0x01)
 
 class UpdateRegisteredTestCase(unittest.TestCase):

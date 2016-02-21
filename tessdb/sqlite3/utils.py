@@ -82,13 +82,15 @@ def utcnow():
     return ephem.Date(datetime.datetime.utcnow())
 
 
-def isDaytime(sunrise, sunset):
+def isDaytime(sunrise, sunset, now):
     '''
     Test if it is daytime for a given observer
-    'sunrise' and 'sunset' are timestamp strings
+    'sunrise' and 'sunset' are timestamp strings.
+    'now' is a datetime.datetime object or timestamp string
     '''
-    sunset, sunrise = sunLimits(observer)
-    return ephem.Date(sunrise) < utcnow() < ephem.Date(sunset)
+    # sunrise, sunset comes from the DB and are UNICODE strings
+    # epehm doesn't like unicode strings
+    return  ephem.Date(str(sunrise)) < ephem.Date(now)  < ephem.Date(str(sunset))
 
 # ----------------------
 # Module Utility Classes

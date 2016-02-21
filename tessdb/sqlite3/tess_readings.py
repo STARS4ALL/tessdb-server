@@ -145,12 +145,16 @@ class TESSReadings(Table):
         - lat
         - height
         Returns a Deferred with the following integer resut code as callback value:
-        Bit 0 - 1 = new row inserted, 0 = No row inserted
+        All bts to zero => row inserted.
+        Bit 0 - 1 = rejected by non registered instrument,
         Bit 4 - 1 = rejected by lack of sunrise/sunset value when filter activated.
         Bit 5 - 1 = rejected by sunrise/sunset value
         Bit 6 - 1 = duplicate rows
         Bit 7 - 1 = Other exception
+        These return codes are only necessary for unitary testing. We do not need them
+        in normal operation.
         '''
+        now = row['tstamp'] 
         self.nreadings += 1
         ret = 0
         tess = yield self.parent.tess.findName(row)
@@ -158,6 +162,7 @@ class TESSReadings(Table):
         if not len(tess):
             log.warn("No tess {0} registered for this reading !".format(row['name']))
             self.nrejected += 1
+            ret |= 0x01
             returnValue(ret)
         tess = tess[0]  # Keep only the first row
        
@@ -165,21 +170,25 @@ class TESSReadings(Table):
         # Also filters if lacking enough data.
         # It is very important to assing an instrument a location asap
         # The Unknown location has no sunrise/sunset data
-        sunrise = yield self.parent.tess_locations.findSunrise(tess[3])
-        sunrise = sunrise[0]  # Keep only the first row
-        if locationFilter and not sunrise[0]:
-            log.debug("reading rejected by lack of sunrise/sunset data")
-            self.nrejected += 1
-            ret |= 0x10
-            returnValue(ret)
-        if locationFilter and isDaytime(sunrise[0], sunrise[1]):
-            log.debug("reading rejected by daytime")
-            self.nrejected += 1
-            ret |= 0x20
-            returnValue(ret)
+        
+        if locationFilter:
+            sunrise = yield self.parent.tess_locations.findSunrise(tess[3])
+            sunrise = sunrise[0]  # Keep only the first row
+            log.debug("Testing sunrise({sunrise!s}) <  now({now!s}) < sunset({sunset!s})", 
+                sunrise=sunrise[0], sunset=sunrise[1], now=now)
+            if not sunrise[0]:
+                log.debug("reading rejected by lack of sunrise/sunset data")
+                self.nrejected += 1
+                ret |= 0x10
+                returnValue(ret)
+            if  isDaytime(sunrise[0], sunrise[1], now):
+                log.debug("reading rejected by being at daytime")
+                self.nrejected += 1
+                ret |= 0x20
+                returnValue(ret)
 
-        row['date_id'], row['time_id'] = roundDateTime(row['tstamp'])
-        row['tstamp']   = row['tstamp'].strftime(utils.TSTAMP_FORMAT)
+        row['date_id'], row['time_id'] = roundDateTime(now)
+        row['tstamp']   = now.strftime(utils.TSTAMP_FORMAT)
         row['instr_id'] = tess[0]
         row['loc_id']   = tess[3]
         row['units_id'] = yield self.parent.tess_units.latest()
@@ -189,7 +198,6 @@ class TESSReadings(Table):
         myupdater = getattr(self, "update{0}".format(n), None)
         try:
             yield myupdater(row)
-            ret |= 0x01
         except sqlite3.IntegrityError as e:
             log.error("tess id={id} is sending readings too fast", id=tess[0])
             self.nrejected += 1
