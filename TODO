@@ -1,5 +1,10 @@
 Todas y cada una de estas cosas en su rama git
 =============================================
+*) Filtrpo sunrise/sunset para TESS moviles
+- caso de prueba clase aparte (tessfixed.db y tessmobile.db) en el mismo fichero
+- implementar funcionalidad
+*) Utilidad tess de asignacion de locationa instruments
+ - hacerla con subcomandos
 *) Actualizar doc de oepracion
 
 *) Control del crecimeinto de la cola. 

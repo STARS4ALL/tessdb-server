@@ -115,20 +115,30 @@ TEST_LOCATIONS = [
 # UTC time
 TODAY = datetime.datetime(2016, 02, 21, 12, 00, 00)
 
-class UpdateFilteredTestCase(unittest.TestCase):
+class FixedInstrumentTestCase(unittest.TestCase):
 
  
     @inlineCallbacks
     def setUp(self):
         try:
-            os.remove('tesoro.db')
+            os.remove('fixed.db')
         except OSError as e:
             pass
-        self.db = DBase("tesoro.db")
+        self.db = DBase("fixed.db")
         yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
         yield self.insertLocations()
         yield self.registerInstruments()
         yield self.assignLocations()
+        
+        self.row1 = { 'name': 'TESS-AH',  'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
+        self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
+
+    def tearDown(self):
+        self.db.pool.close()
+
+    # --------------
+    # Helper methods
+    # --------------
 
     @inlineCallbacks
     def registerInstruments(self):
@@ -153,9 +163,9 @@ class UpdateFilteredTestCase(unittest.TestCase):
         ]
         return self.db.pool.runInteraction( _assignLocations, assign )
 
-
-    def tearDown(self):
-        self.db.pool.close()
+    # ----------
+    # Test cases
+    # ----------
 
     @inlineCallbacks
     def test_updateAtDaytime(self):
@@ -164,11 +174,11 @@ class UpdateFilteredTestCase(unittest.TestCase):
         is always at day, no matter the day of the year
         '''
         now = datetime.datetime(2016, 02, 21, 13, 00, 00)
-        row = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row, True)
+        self.row1['tstamp'] = now
+        res = yield self.db.update(self.row1, True)
         self.assertEqual(res, 0x20)
-        row = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row, True)
+        self.row2['tstamp'] = now
+        res = yield self.db.update(self.row2, True)
         self.assertEqual(res, 0x20)
 
     @inlineCallbacks
@@ -178,11 +188,11 @@ class UpdateFilteredTestCase(unittest.TestCase):
         is always at night, no matter the day of the year
         '''
         now = datetime.datetime(2016, 02, 21, 22, 00, 00)
-        row = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row, True)
+        self.row1['tstamp'] = now
+        res = yield self.db.update(self.row1, True)
         self.assertEqual(res, 0x00)
-        row = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row, True)
+        self.row2['tstamp'] = now
+        res = yield self.db.update(self.row2, True)
         self.assertEqual(res, 0x00)
 
     @inlineCallbacks
@@ -192,11 +202,91 @@ class UpdateFilteredTestCase(unittest.TestCase):
         AH observatory at day -> rejected
         '''
         now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
-        row = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row, True)
+        self.row1['tstamp'] = now
+        res = yield self.db.update(self.row1, True)
         self.assertEqual(res, 0x20)
-        row = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row, True)
+        self.row2['tstamp'] = now
+        res = yield self.db.update(self.row2, True)
         self.assertEqual(res, 0x00)
 
+
+
+class MobileInstrumentTestCase(unittest.TestCase):
+
+ 
+    @inlineCallbacks
+    def setUp(self):
+        try:
+            os.remove('mobile.db')
+        except OSError as e:
+            pass
+        self.db = DBase("mobile.db")
+        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
+        yield self.registerInstruments()
+
+    def tearDown(self):
+        self.db.pool.close()
+
+    # --------------
+    # Helper methods
+    # --------------
+
+    @inlineCallbacks
+    def registerInstruments(self):
+        tess1 = { 'name': 'TESS-AH',  'mac': '12:34:56:78:90:AB', 'calib': 10.0}
+        tess2 = { 'name': 'TESS-OAM', 'mac': '21:34:56:78:90:AB', 'calib': 10.0}
+        res = yield self.db.register(tess1)
+        res = yield self.db.register(tess2)
+        self.row1 = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
+            'lat': 40.418561, 'long': -3.551502, 'height': 650.0}
+        self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
+            'lat': 39.64269, 'long': 2.950533, 'height': 100.0}
+
+    # ----------
+    # Test cases
+    # ----------
+
+    @inlineCallbacks
+    def test_updateAtDaytime(self):
+        '''
+        Both will be rejected, since the timestamp at both locations 
+        is always at day, no matter the day of the year
+        '''
+        now = datetime.datetime(2016, 02, 21, 13, 00, 00)
+        self.row1['tstamp'] = now
+        res = yield self.db.update(self.row1, True)
+        self.assertEqual(res, 0x20)
+        self.row2['tstamp'] = now
+        res = yield self.db.update(self.row2, True)
+        self.assertEqual(res, 0x20)
+
+    @inlineCallbacks
+    def test_updateAtNight(self):
+        '''
+        Both will be accepted, since the timestamp at both locations
+        is always at night, no matter the day of the year
+        '''
+        now = datetime.datetime(2016, 02, 21, 22, 00, 00)
+        self.row1['tstamp'] = now
+        res = yield self.db.update(self.row1, True)
+        self.assertEqual(res, 0x00)
+        self.row2['tstamp'] = now
+        res = yield self.db.update(self.row2, True)
+        self.assertEqual(res, 0x00)
+
+    @inlineCallbacks
+    def test_updateAtTwilight(self):
+        '''
+        OAM observatory at night -> acepted
+        AH observatory at day -> rejected
+        '''
+        now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
+        self.row1['tstamp'] = now
+        res = yield self.db.update(self.row1, True)
+        self.assertEqual(res, 0x20)
+        self.row2['tstamp'] = now
+        res = yield self.db.update(self.row2, True)
+        self.assertEqual(res, 0x00)
+
+  
   
