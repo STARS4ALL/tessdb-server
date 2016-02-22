@@ -86,6 +86,7 @@ class DBaseService(Service):
             raise ImportError( msg )
         log.info("starting DBase Service")
         self.dbase    = DBase(self.options['connection_string'])
+        self.dbase.tess_readings.setOptions(filter=self.options['location_filter'],horizon=self.options['location_horizon'])
         yield self.dbase.schema(
             json_dir=self.options['json_dir'], 
             date_fmt=self.options['date_fmt'], 
@@ -109,6 +110,7 @@ class DBaseService(Service):
     def reloadService(self, new_options):
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
+        self.dbase.tess_readings.setOptions(filter=new_options['location_filter'],horizon=new_options['location_horizon'])
 
     def pauseService(self):
         log.info('TESS database writer paused')

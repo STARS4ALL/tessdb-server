@@ -125,6 +125,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         except OSError as e:
             pass
         self.db = DBase("fixed.db")
+        self.db.tess_readings.setOptions(filter_flag=True, horizon='-0:34')
         yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
         yield self.insertLocations()
         yield self.registerInstruments()
@@ -175,10 +176,10 @@ class FixedInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 13, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1, True)
+        res = yield self.db.update(self.row1)
         self.assertEqual(res, 0x20)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2, True)
+        res = yield self.db.update(self.row2)
         self.assertEqual(res, 0x20)
 
     @inlineCallbacks
@@ -189,10 +190,10 @@ class FixedInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 22, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1, True)
+        res = yield self.db.update(self.row1)
         self.assertEqual(res, 0x00)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2, True)
+        res = yield self.db.update(self.row2)
         self.assertEqual(res, 0x00)
 
     @inlineCallbacks
@@ -203,10 +204,10 @@ class FixedInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1, True)
+        res = yield self.db.update(self.row1)
         self.assertEqual(res, 0x20)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2, True)
+        res = yield self.db.update(self.row2)
         self.assertEqual(res, 0x00)
 
 
@@ -221,6 +222,7 @@ class MobileInstrumentTestCase(unittest.TestCase):
         except OSError as e:
             pass
         self.db = DBase("mobile.db")
+        self.db.tess_readings.setOptions(filter_flag=True, horizon='-0:34')
         yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
         yield self.registerInstruments()
 
@@ -254,10 +256,10 @@ class MobileInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 13, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1, True)
+        res = yield self.db.update(self.row1)
         self.assertEqual(res, 0x20)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2, True)
+        res = yield self.db.update(self.row2)
         self.assertEqual(res, 0x20)
 
     @inlineCallbacks
@@ -268,10 +270,10 @@ class MobileInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 22, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1, True)
+        res = yield self.db.update(self.row1)
         self.assertEqual(res, 0x00)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2, True)
+        res = yield self.db.update(self.row2)
         self.assertEqual(res, 0x00)
 
     @inlineCallbacks
@@ -282,11 +284,9 @@ class MobileInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1, True)
+        res = yield self.db.update(self.row1)
         self.assertEqual(res, 0x20)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2, True)
+        res = yield self.db.update(self.row2)
         self.assertEqual(res, 0x00)
 
-  
-  

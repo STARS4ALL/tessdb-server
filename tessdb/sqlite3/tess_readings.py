@@ -29,6 +29,8 @@
 
 import datetime
 import sqlite3
+import math
+import ephem
 
 # ---------------
 # Twisted imports
@@ -72,6 +74,7 @@ class TESSReadings(Table):
         '''Create the SQLite TESS Readings table'''
         Table.__init__(self, pool)
         self.parent = parent
+        self.setOptions(filter_flag=True)
         self.resetCounters()
 
     def table(self):
@@ -128,7 +131,7 @@ class TESSReadings(Table):
     # ===============
 
     @inlineCallbacks
-    def update(self, row, locationFilter):
+    def update(self, row):
         '''
         Update process
         row is a tuple with the following mandatory keywords:
@@ -166,26 +169,36 @@ class TESSReadings(Table):
             returnValue(ret)
         tess = tess[0]  # Keep only the first row
        
+        # --------------------------------------------------------------
         # Filter for Daytime if this filter is activated
         # Also filters if lacking enough data.
         # It is very important to assing an instrument a location asap
         # The Unknown location has no sunrise/sunset data
+        # --------------------------------------------------------------
         
-        if locationFilter:
-            sunrise = yield self.parent.tess_locations.findSunrise(tess[3])
-            sunrise = sunrise[0]  # Keep only the first row
-            log.debug("Testing sunrise({sunrise!s}) <  now({now!s}) < sunset({sunset!s})", 
-                sunrise=sunrise[0], sunset=sunrise[1], now=now)
-            if not sunrise[0]:
-                log.debug("reading rejected by lack of sunrise/sunset data")
-                self.nrejected += 1
-                ret |= 0x10
-                returnValue(ret)
-            if  isDaytime(sunrise[0], sunrise[1], now):
-                log.debug("reading rejected by being at daytime")
-                self.nrejected += 1
-                ret |= 0x20
-                returnValue(ret)
+        if self.locationFilter:
+            if  'lat' in row:   # mobile instrument
+                self.computeSunrise(row, now)
+                if  isDaytime(row['sunrise'], row['sunset'], now):
+                    log.debug("reading rejected by being at daytime")
+                    self.nrejected += 1
+                    ret |= 0x20
+                    returnValue(ret)
+            else:               # fixed instrument assigned to location
+                sunrise = yield self.parent.tess_locations.findSunrise(tess[3])
+                sunrise = sunrise[0]  # Keep only the first row
+                log.debug("Testing sunrise({sunrise!s}) <  now({now!s}) < sunset({sunset!s})", 
+                    sunrise=sunrise[0], sunset=sunrise[1], now=now)
+                if not sunrise[0]:
+                    log.debug("reading rejected by lack of sunrise/sunset data")
+                    self.nrejected += 1
+                    ret |= 0x10
+                    returnValue(ret)
+                if  isDaytime(sunrise[0], sunrise[1], now):
+                    log.debug("reading rejected by being at daytime")
+                    self.nrejected += 1
+                    ret |= 0x20
+                    returnValue(ret)
 
         row['date_id'], row['time_id'] = roundDateTime(now)
         row['tstamp']   = now.strftime(utils.TSTAMP_FORMAT)
@@ -212,7 +225,30 @@ class TESSReadings(Table):
     # Helper methods
     # ==============
 
+    def setOptions(self, filter_flag=True, horizon='-0:34'):
+        '''
+        Set option for sunrise/sunset filtering
+        '''
+        self.locationFilter = filter_flag
+        self.horizon        = horizon
 
+    def computeSunrise(self, row, now):
+        '''
+        Computes sunrise/sunset for a given mobile instrument reading 'row'.
+        Leaves the result in the same row of readings, ready to pass the snrise/sunset filter.
+        '''
+        now = now.replace(hour=12, minute=0, second=0,microsecond=0)
+        sun = ephem.Sun(now)
+        observer           = ephem.Observer()
+        observer.pressure  = 0      # disable refraction calculation
+        observer.horizon   = self.horizon
+        observer.date      = now
+        observer.lon       = math.radians(row['long'])
+        observer.lat       = math.radians(row['lat'])
+        observer.elevation = row['height']
+        row['sunrise']     = observer.previous_rising(sun, use_center=True)
+        row['sunset']      = observer.next_setting(sun, use_center=True)
+    
 
     def which(self, row):
         '''Find which updateN method must be used'''

@@ -308,8 +308,8 @@ class Location(Table):
         index = 0
         count = int( batch_perc * 0.01 * nlocations[0][0] )
         count = max(count,  batch_min_size)
-        sun   = ephem.Sun()
         today = ephem.Date(today)
+        sun   = ephem.Sun(today)
         while not self.finished:
             locations = yield self.getLocations(index, count)
             if len(locations) :
