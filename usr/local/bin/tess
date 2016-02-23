@@ -1,0 +1,181 @@
+#!/usr/bin/env python
+
+# ----------------------------------------------------------------------
+# Copyright (c) 2014 Rafael Gonzalez.
+#
+# See the LICENSE file for details
+# ----------------------------------------------------------------------
+
+#--------------------
+# System wide imports
+# -------------------
+
+import sys
+import argparse
+import sqlite3
+import os
+import os.path
+
+#--------------
+# other imports
+# -------------
+
+import tabulate
+
+# ----------------
+# Module constants
+# ----------------
+
+
+if os.name == "nt":
+    DEFAULT_DBASE = r"C:\tesdb\dbase\tess.db"
+else:
+    DEFAULT_DBASE = "/var/dbase/tess.db"
+
+# -----------------------
+# Module global variables
+# -----------------------
+
+# -----------------------
+# Module global functions
+# -----------------------
+
+def createParser():
+    # create the top-level parser
+    parser = argparse.ArgumentParser(prog=sys.argv[0])
+
+    subparser = parser.add_subparsers()
+
+    # --------------------------
+    # Create first level parsers
+    # --------------------------
+    parser_instrument = subparser.add_parser('instrument', help='instrument commands')
+    parser_location   = subparser.add_parser('location', help='location commands')
+
+    # ------------------------------------------
+    # Create second level parsers for 'location'
+    # ------------------------------------------
+    # Choices:
+    #   tess location list
+    #
+    subparser = parser_location.add_subparsers()
+    lp = subparser.add_parser('list', help='list locations')
+    lp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    lp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    # --------------------------------------------
+    # Create second level parsers for 'instrument'
+    # --------------------------------------------
+    # Choices:
+    #   tess instrument list
+    #   tess instrument assign <instrument name> <location name>
+    #
+    subparser = parser_instrument.add_subparsers()
+    parser_instrument_assign = subparser.add_parser('assign', help='assign instrument to location')
+    parser_instrument_assign.add_argument('instrument', metavar='<instrument>', help='TESS instrument name')
+    parser_instrument_assign.add_argument('location',   metavar='<location>',   help='Location name')
+    parser_instrument_assign.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ip = subparser.add_parser('list', help='list instruments')
+    ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    return parser
+
+def main():
+    '''
+    Utility entry point
+    '''
+    options = createParser().parse_args(sys.argv[1:])
+    connection = open_database(options)
+    if   sys.argv[1] == 'instrument' and sys.argv[2] == 'list':
+        instrument_list(connection, options)
+    elif sys.argv[1] == 'instrument' and sys.argv[2] == 'assign':
+        instrument_assign(connection, options)
+    elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
+        location_list(connection, options)
+
+# ==============
+# DATABASE STUFF
+# ==============
+
+def open_database(options):
+    if not os.path.exists(options.dbase):
+        print("No SQLite3 Database file found in {0}. Exiting ...".format(options.dbase))
+        sys.exit(1)
+    try:
+        return sqlite3.connect(options.dbase)
+    except sqlite3.Error as e:
+        print(e)
+        sys.exit(1)
+
+
+def instrument_assign(connection, options):
+    cursor = connection.cursor()
+    row = {'site': options.location, 'tess': options.instrument}
+    cursor.execute("SELECT location_id FROM location_t WHERE site == :site",row)
+    res =  cursor.fetchone()
+    if not res:
+        print("Location not found by {0}".format(row['site']))
+        sys.exit(1)
+    row['ident'] = res[0]
+    cursor.execute(
+        '''
+        UPDATE tess_t SET location_id = :ident
+        WHERE name == :tess
+        ''', row)
+    cursor.execute(
+        '''
+        SELECT name,site,longitude,latitude,elevation 
+        FROM tess_v
+        WHERE calibrated_state == "Current"
+        AND name = :tess
+        ''',row)
+    paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
+    connection.commit()    
+
+
+def instrument_list(connection, options):
+    cursor = connection.cursor()
+    cursor.execute(
+            '''
+            SELECT name,site,longitude,latitude,elevation 
+            FROM tess_v
+            WHERE calibrated_state == "Current" 
+            ORDER BY name ASC;
+            ''')
+    paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
+
+
+def location_list(connection, options):
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT site,longitude,latitude,elevation 
+        FROM location_t 
+        WHERE location_id > -1 
+        ORDER BY location_id ASC
+        ''')
+    paging(cursor,["Name","Longitude","Latitude","Elevation"])
+   
+ 
+def paging(cursor, headers):
+    '''
+    Pages query output and displays in tabular format
+    '''
+    while True:
+        result = cursor.fetchmany(size=10)
+        print tabulate.tabulate(result, headers=headers, tablefmt='grid')
+        if len(result) < 10:
+            break
+        else:
+            try:
+                raw_input("Press Enter to continue [Ctrl-C to abort] ...")
+            except KeyboardInterrupt:
+                print("")
+                break
+
+
+
+
+main()
