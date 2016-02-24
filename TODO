@@ -1,15 +1,16 @@
 Todas y cada una de estas cosas en su rama git
 =============================================
 *) Actualizar doc de oepracion
+*) FICHEROS JSON
+- Renombralos a xxx.example.json porque si no machacan las modificadiones
+- implementar plenamente reload a las tablas
+- recargar implica populate ahora
 
-*) Control del crecimeinto de la cola. 
-  si average > 0 + 3*stddev => log warn.
-    from __future__ import division
-	def average(L):
-		return sum(L) / len(L)
-
-	def variance(L, average):
-		return  sum((average - value) ** 2 for value in L) / len(L)-1
+*) Estadisticas bonitas en el logfile con tabulate
+	-) Estadisticas de lenado de cola
+	-) ReturnValue ahora no develovera un codigo
+	   esto hay que implementarlo en contadores
+	-) se rompen los unitary tests, refactorizar
 *) Logrotate en la Pi al mediodia
 Con muy baja prioridad si es que es interesante:
 *) Etiquetas UNKNOWN, CURRENT, EXPIRED configurables por idoioma en una sección [locale] del fichero de configuracion
