@@ -21,6 +21,7 @@ import os.path
 # -------------
 
 import tabulate
+from tessdb.sqlite3.utils import CURRENT, UNKNOWN
 
 # ----------------
 # Module constants
@@ -51,6 +52,7 @@ def createParser():
     # --------------------------
     parser_instrument = subparser.add_parser('instrument', help='instrument commands')
     parser_location   = subparser.add_parser('location', help='location commands')
+    parser_readings   = subparser.add_parser('readings', help='readings commands')
 
     # ------------------------------------------
     # Create second level parsers for 'location'
@@ -62,6 +64,19 @@ def createParser():
     lp = subparser.add_parser('list', help='list locations')
     lp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     lp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+
+
+    # ------------------------------------------
+    # Create second level parsers for 'readings'
+    # ------------------------------------------
+    # Choices:
+    #   tess location list
+    #
+    subparser = parser_readings.add_subparsers()
+    rp = subparser.add_parser('list', help='list readings')
+    rp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    rp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     # --------------------------------------------
     # Create second level parsers for 'instrument'
@@ -86,14 +101,21 @@ def main():
     '''
     Utility entry point
     '''
-    options = createParser().parse_args(sys.argv[1:])
-    connection = open_database(options)
-    if   sys.argv[1] == 'instrument' and sys.argv[2] == 'list':
-        instrument_list(connection, options)
-    elif sys.argv[1] == 'instrument' and sys.argv[2] == 'assign':
-        instrument_assign(connection, options)
-    elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
-        location_list(connection, options)
+    try:
+        options = createParser().parse_args(sys.argv[1:])
+        connection = open_database(options)
+        if   sys.argv[1] == 'instrument' and sys.argv[2] == 'list':
+            instrument_list(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'assign':
+            instrument_assign(connection, options)
+        elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
+            location_list(connection, options)
+        elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
+            readings_list(connection, options)
+    except KeyboardInterrupt:
+        print('')
+    except Exception as e:
+        print("Error => {0}".format(e))
 
 # ==============
 # DATABASE STUFF
@@ -101,18 +123,25 @@ def main():
 
 def open_database(options):
     if not os.path.exists(options.dbase):
-        print("No SQLite3 Database file found in {0}. Exiting ...".format(options.dbase))
-        sys.exit(1)
-    try:
-        return sqlite3.connect(options.dbase)
-    except sqlite3.Error as e:
-        print(e)
-        sys.exit(1)
+        raise IOError("No SQLite3 Database file found in {0}. Exiting ...".format(options.dbase))
+    return sqlite3.connect(options.dbase)
+ 
 
+def paging(cursor, headers):
+    '''
+    Pages query output and displays in tabular format
+    '''
+    while True:
+        result = cursor.fetchmany(size=10)
+        print tabulate.tabulate(result, headers=headers, tablefmt='grid')
+        if len(result) < 10:
+            break
+        raw_input("Press Enter to continue [Ctrl-C to abort] ...")
+   
 
 def instrument_assign(connection, options):
     cursor = connection.cursor()
-    row = {'site': options.location, 'tess': options.instrument}
+    row = {'site': options.location, 'tess': options.instrument, 'state': CURRENT}
     cursor.execute("SELECT location_id FROM location_t WHERE site == :site",row)
     res =  cursor.fetchone()
     if not res:
@@ -128,7 +157,7 @@ def instrument_assign(connection, options):
         '''
         SELECT name,site,longitude,latitude,elevation 
         FROM tess_v
-        WHERE calibrated_state == "Current"
+        WHERE calibrated_state == :state
         AND name = :tess
         ''',row)
     paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
@@ -137,13 +166,14 @@ def instrument_assign(connection, options):
 
 def instrument_list(connection, options):
     cursor = connection.cursor()
+    row = {'state': CURRENT}
     cursor.execute(
             '''
             SELECT name,site,longitude,latitude,elevation 
             FROM tess_v
-            WHERE calibrated_state == "Current" 
+            WHERE calibrated_state == :state
             ORDER BY name ASC;
-            ''')
+            ''', row)
     paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
 
 
@@ -158,24 +188,20 @@ def location_list(connection, options):
         ''')
     paging(cursor,["Name","Longitude","Latitude","Elevation"])
    
- 
-def paging(cursor, headers):
-    '''
-    Pages query output and displays in tabular format
-    '''
-    while True:
-        result = cursor.fetchmany(size=10)
-        print tabulate.tabulate(result, headers=headers, tablefmt='grid')
-        if len(result) < 10:
-            break
-        else:
-            try:
-                raw_input("Press Enter to continue [Ctrl-C to abort] ...")
-            except KeyboardInterrupt:
-                print("")
-                break
 
-
+def readings_list(connection, options):
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT r.timestamp, i.name, l.site, r.frequency, r.magnitude
+        FROM tess_readings_t as r 
+        NATURAL JOIN location_t as l
+        NATURAL JOIN tess_t as i
+        ORDER BY r.timestamp ASC
+        LIMIT 100
+        ''')
+    paging(cursor,["Timestammp","TESS","Location","Frequency","Magnitude"])
+   
 
 
 main()
