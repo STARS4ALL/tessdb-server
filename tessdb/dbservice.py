@@ -86,7 +86,7 @@ class DBaseService(Service):
             raise ImportError( msg )
         log.info("starting DBase Service")
         self.dbase    = DBase(self.options['connection_string'])
-        self.dbase.tess_readings.setOptions(filter=self.options['location_filter'],horizon=self.options['location_horizon'])
+        self.dbase.tess_readings.setOptions(filter_flag=self.options['location_filter'],horizon=self.options['location_horizon'])
         yield self.dbase.schema(
             json_dir=self.options['json_dir'], 
             date_fmt=self.options['date_fmt'], 
