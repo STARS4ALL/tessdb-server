@@ -189,28 +189,30 @@ class Location(Table):
         )
 
 
+    @inlineCallbacks
     def populate(self, replace):
         '''
         Populate the SQLite Location Table
         Returns a Deferred
         '''
-
+        read_rows = yield self.rows()
         if replace:
             log.info("Replacing Units Table data")
-            return self.pool.runInteraction( _populateRepl, self.rows() )
+            yield self.pool.runInteraction( _populateRepl, read_rows )
         else:
             log.info("Populating Units Table if empty")
-            return self.pool.runInteraction( _populateIgn, self.rows() )
+            yield self.pool.runInteraction( _populateIgn, read_rows )
 
 
     # --------------
     # Helper methods
     # --------------
 
+    @inlineCallbacks
     def rows(self):
         '''Generate a list of rows to inject in SQLite API'''
-        return fromJSON( os.path.join(self.json_dir, Location.FILE), DEFAULT_LOCATION)
-
+        read_rows = yield deferToThread(fromJSON, os.path.join(self.json_dir, Location.FILE), DEFAULT_LOCATION)
+        returnValue(read_rows)
 
     # ===============
     # OPERATIONAL API
