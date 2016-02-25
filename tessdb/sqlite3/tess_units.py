@@ -34,6 +34,7 @@ import os
 # ---------------
 
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.threads import deferToThread
 from twisted.logger         import Logger
 
 #--------------
@@ -189,29 +190,31 @@ class TESSUnits(Table):
         )
 
 
+    @inlineCallbacks
     def populate(self, replace):
         '''
         Populate the SQLite Units Table.
         Returns a Deferred
         '''
         
-        
+        read_rows = yield self.rows()
         if replace:
             log.info("Replacing Units Table data")
-            return self.pool.runInteraction( _populateRepl, self.rows() )
+            yield self.pool.runInteraction( _populateRepl,read_rows )
         else:
             log.info("Populating Units Table if empty")
-            return self.pool.runInteraction( _populateIgn, self.rows() )
-
+            yield self.pool.runInteraction( _populateIgn, read_rows )
 
     
     # --------------
     # Helper methods
     # --------------
 
+    @inlineCallbacks
     def rows(self):
         '''Generate a list of rows to inject in SQLite API'''
-        return fromJSON( os.path.join(self.json_dir, TESSUnits.FILE), DEFAULT_UNITS)
+        read_rows = yield deferToThread(fromJSON, os.path.join(self.json_dir, TESSUnits.FILE), DEFAULT_UNITS)
+        returnValue(read_rows)
 
    # ================
    # OPERATIONAL API
