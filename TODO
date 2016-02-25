@@ -2,12 +2,6 @@ Todas y cada una de estas cosas en su rama git
 =============================================
 *) Actualizar doc de oepracion
 *) FICHEROS JSON
-- Renombralos a xxx.example.json porque si no machacan las modificadiones
-- tiene que haber valores por defecto para la primera vez dentro del codigo
-  locations.json ->
-  tess.json ->
-  tess_units.json ->
-  tess_location.example.json ->
 - implementar plenamente reload a las tablas
 - recargar implica populate ahora
 
