@@ -5,22 +5,17 @@
 # ----------------------------------------------------------------------
 
 
-# INSTRUMENTS FILE FORMAT
+# DEPLOYMENT OF INSTRUMENTS INTO LOCATIONS FILE FORMAT
 #
 # A list of instrument entries. 
 # Each instrument is a list with the following fields:
 # ----------------------------
 #    [
-#            tess_id           INTEGER PRIMARY KEY,
 #            name                    TEXT,
-#            mac_address             TEXT, 
-#            calibration_k           REAL,
-#            effective_date          TEXT,
-#            expiration_date         TEXT,
-#            calibration_indicator   TEXT,
-#            location_id             INTEGER NOT NULL REFERENCES location_t(location_id)
+#            site             		 TEXT
 #    ], 
 # ----------------------------
 
 [
+	{ "name": "TESS-01", "site": "Centro Civico el Cerro" }
 ]

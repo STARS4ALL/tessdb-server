@@ -70,7 +70,7 @@ if os.name == "posix":
         data_files       = [ 
           ('/etc/init.d' ,     ['etc/init.d/tessdb']),
           ('/etc/default',     ['etc/default/tessdb']),
-          ('/etc/tessdb',      ['etc/tessdb/config', 'etc/tessdb/tess_units.example.json', 'etc/tessdb/tess.example.json', 'etc/tessdb/locations.example.json']),
+          ('/etc/tessdb',      ['etc/tessdb/config', 'etc/tessdb/tess_units.example.json', 'etc/tessdb/tess_location.example.json', 'etc/tessdb/locations.example.json']),
           ('/usr/local/bin',   ['usr/local/bin/tessdb','usr/local/bin/tess']),
           ('/etc/logrotate.d', ['etc/logrotate.d/tessdb']),
           ('/var/dbase',       ['var/dbase/placeholder.txt']),
@@ -102,7 +102,7 @@ elif os.name == "nt":
           (r'C:\tessdb',          [r'usr\local\bin\tessdb.bat',r'usr\local\bin\tess']),
           (r'C:\tessdb\dbase',    [r'var\dbase\placeholder.txt']),
           (r'C:\tessdb\log',      [r'var\log\placeholder.txt']),
-          (r'C:\tessdb\config',   [r'etc\tessdb\config.ini',r'etc\tessdb\tess_units.example.json', r'etc\tessdb\tess.example.json', r'etc\tessdb\locations.example.json']),
+          (r'C:\tessdb\config',   [r'etc\tessdb\config.ini',r'etc\tessdb\tess_units.example.json', r'etc\tessdb\tess_location.example.json', r'etc\tessdb\locations.example.json']),
           ]
         )
 

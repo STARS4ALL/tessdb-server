@@ -54,6 +54,9 @@ from ..error import ReadingKeyError, ReadingTypeError
 # No pre-registerd instruments by default
 DEFAULT_INSTRUMENT = []
 
+# No predefined deployment of TESS instruments to Loacations
+DEFAULT_DEPLOYMENT = []
+
 # -----------------------
 # Module Global Variables
 # -----------------------
@@ -113,6 +116,19 @@ def _populateIgn(transaction, rows):
             :location_id
         )
         ''', rows)
+
+
+def _deployInstr(transaction, rows):
+    '''Update location id of given TESS instruments'''
+    transaction.executemany(
+        '''UPDATE tess_t SET location_id = (
+            SELECT location_id FROM location_t
+            WHERE  location_t.site == :site
+           )
+           WHERE name == :name
+        ''', rows)
+
+
 
 def _updateCalibration(cursor, row):
     '''
@@ -193,7 +209,8 @@ def _createViews(cursor):
 
 class TESS(Table):
 
-    FILE = 'tess.json'
+    FILE      = 'tess.json'
+    DEPL_FILE = 'tess_location.json'
 
     def __init__(self, pool, validate=False):
         Table.__init__(self, pool)
@@ -237,19 +254,16 @@ class TESS(Table):
         log.info("Creating tess_t Views if not exists")
         return self.pool.runInteraction(_createViews)
 
+
     @inlineCallbacks
     def populate(self, replace):
         '''
         Populate the SQLite Instruments Table.
         Returns a Deferred
         '''
-        read_rows = yield self.rows()
-        if replace:
-            log.info("Replacing Instruments Table data")
-            yield self.pool.runInteraction( _populateRepl, read_rows )
-        else:
-            log.info("Populating Instruments Table if empty")
-            yield self.pool.runInteraction( _populateIgn, read_rows )
+        log.info("Assigning locations to instruments")
+        read_rows = yield deferToThread(fromJSON, os.path.join(self.json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
+        yield self.pool.runInteraction( _deployInstr, read_rows )
 
 
     # -------------
@@ -266,17 +280,6 @@ class TESS(Table):
         '''log stat counters'''
         log.info("Instruments (Total/Accepted/Rejected) = ({total}/{accepted}/{rejected})", 
                 total=self.nregister, accepted=self.nregister-self.nrejected, rejected=self.nrejected)
-
-
-    # --------------
-    # Helper methods
-    # --------------
-
-    @inlineCallbacks
-    def rows(self):
-        '''Generate a list of rows to inject in SQLite APIfor schema generation'''
-        read_rows = yield deferToThread(fromJSON, os.path.join(self.json_dir, TESS.FILE), DEFAULT_INSTRUMENT)
-        returnValue(read_rows)
 
 
     # =======
