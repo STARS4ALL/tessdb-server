@@ -130,8 +130,7 @@ class TESSApplication(object):
         log.info('starting {tessdb}', tessdb=VERSION_STRING)
         yield self.dbaseService.startService()    # This is asynchronous !
         self.mqttService.startService()
-        #self.statsTask.start(self.T_STAT, now=False) # call every T seconds
-        self.statsTask.start(60, now=False) # call every T seconds
+        self.statsTask.start(self.T_STAT, now=False) # call every T seconds
     
     # -------------
     # log stats API
