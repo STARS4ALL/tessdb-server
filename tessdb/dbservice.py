@@ -92,6 +92,8 @@ class DBaseService(Service):
             date_fmt=self.options['date_fmt'], 
             year_start=self.options['year_start'], 
             year_end=self.options['year_end'], 
+            location_filter=self.options['location_filter'],
+            location_horizon=self.options['location_horizon'],
             replace=True)
         Service.startService(self)
         log.info("Database operational.")
@@ -110,7 +112,14 @@ class DBaseService(Service):
     def reloadService(self, new_options):
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.dbase.tess_readings.setOptions(filter=new_options['location_filter'],horizon=new_options['location_horizon'])
+        self.dbase.reload(
+            json_dir=new_options['json_dir'], 
+            date_fmt=new_options['date_fmt'], 
+            year_start=new_options['year_start'], 
+            year_end=new_options['year_end'],
+            location_filter=new_options['location_filter'],
+            location_horizon=new_options['location_horizon'],
+            replace=True)
 
     def pauseService(self):
         log.info('TESS database writer paused')

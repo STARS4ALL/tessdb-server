@@ -122,8 +122,7 @@ class Table(object):
         Generates a table, taking an open data connection
         and a replace flag.
         '''
-        self.json_dir = json_dir
         yield self.table()
         yield self.indices()
         yield self.views()
-        yield self.populate(replace)
+        yield self.populate(json_dir, replace)

@@ -191,13 +191,13 @@ class TESSUnits(Table):
 
 
     @inlineCallbacks
-    def populate(self, replace):
+    def populate(self, json_dir, replace):
         '''
         Populate the SQLite Units Table.
         Returns a Deferred
         '''
         
-        read_rows = yield self.rows()
+        read_rows = yield self.rows(json_dir)
         if replace:
             log.info("Replacing Units Table data")
             yield self.pool.runInteraction( _populateRepl,read_rows )
@@ -211,9 +211,9 @@ class TESSUnits(Table):
     # --------------
 
     @inlineCallbacks
-    def rows(self):
+    def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = yield deferToThread(fromJSON, os.path.join(self.json_dir, TESSUnits.FILE), DEFAULT_UNITS)
+        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESSUnits.FILE), DEFAULT_UNITS)
         returnValue(read_rows)
 
    # ================

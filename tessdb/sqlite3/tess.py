@@ -256,13 +256,13 @@ class TESS(Table):
 
 
     @inlineCallbacks
-    def populate(self, replace):
+    def populate(self, json_dir, replace):
         '''
         Populate the SQLite Instruments Table.
         Returns a Deferred
         '''
         log.info("Assigning locations to instruments")
-        read_rows = yield deferToThread(fromJSON, os.path.join(self.json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
+        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
         yield self.pool.runInteraction( _deployInstr, read_rows )
 
 

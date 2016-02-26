@@ -107,10 +107,10 @@ class TimeOfDay(Table):
 
 
 
-    def populate(self, replace):
+    def populate(self, json_dir, replace):
         '''
         Populate the SQLite Time Table.
-        Retuens a Deferred.
+        Returns a Deferred.
         '''
         if replace:
             log.info("Replacing Time Table data")
