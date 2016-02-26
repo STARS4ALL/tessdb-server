@@ -273,14 +273,23 @@ class TESS(Table):
     def resetCounters(self):
         '''Resets stat counters'''
         self.nregister = 0
-        self.nrejected = 0
+        self.nCreation = 0
+        self.nUpdNameChange  = 0
+        self.nUpdCalibChange = 0 
+        self.rejUpdDupName   = 0
+        self.rejCreaDupName  = 0 
     
 
-    def logCounters(self):
-        '''log stat counters'''
-        log.info("Instruments (Total/Accepted/Rejected) = ({total}/{accepted}/{rejected})", 
-                total=self.nregister, accepted=self.nregister-self.nrejected, rejected=self.nrejected)
-
+    def getCounters(self):
+        '''get stat counters'''
+        return [ 
+                self.nregister, 
+                self.nCreation,
+                self.nUpdNameChange, 
+                self.nUpdCalibChange, 
+                self.rejUpdDupName,
+                self.rejCreaDupName, 
+                ]
 
     # =======
     # OPERATIONAL API
@@ -294,53 +303,43 @@ class TESS(Table):
     def register(self, row):
         '''
         Registers an instrument given its MAC address, friendly name and calibration constant
-        Returns a deferred with the following codes in the result (for unitary testing):
-        Bit 0 - 1 = Operation was an update. 0 = Operation was a creation.
-        Bit 1 - 1 = Updated name. 0 = Not updated name.
-        Bit 2 - 1 = Updated calib constantess_t. 0 = Not updated calib constant
-        Bit 6 - 1 = Update Error. Existing instrument with the same name.
-        Bit 7 - 1 = Creaiton error. Existing instrument with the same name.
-        These return codes are only necessary for unitary testing. We do not need them
-        in normal operation.
+        Returns a Deferred.
         '''
 
         self.nregister += 1
-        ret = 0x00
         instrument = yield self.findMAC(row)
         # if  instrument with that MAC already exists, may be update it ...
         if len(instrument):
-            ret |= 0x01
             instrument = instrument[0]  # Keep only the first row
             # If the new name is not equal to the old one, change it
             if row['name']  != instrument[0]:
             # unless the new name is already being used by another instrument
                 instrument2 = yield self.findName(row)
                 if not len(instrument2):
-                    ret |= 0x02
+                    self.nUpdNameChange += 1
                     yield self.updateName(row)
                     log.info("Changed instrument name to {name}", name=row['name'])
                 else:
-                    ret |= 0x40
-                    self.nrejected += 1
+                    self.rejUpdDupName += 1
 
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
-                ret |= 0x04
                 yield self.updateCalibration(row)
+                self.nUpdCalibChange += 1
                 log.info("Changed instrument calibration data to {calib}", calib=row['calib'])
         else:
             # Find other posible existing instruments with the same name
             # We require the names to be unique as wellocation_t.
             # If that condition is met, we add a new instrument
-            instrument = yield self.findName(row)
+            instrument = yield self.findName(row) 
             if len(instrument):
                 log.info("Another instrument already registered with the same name: {name}", name=row['name']) 
-                ret |= 0x80
-                self.nrejected += 1
+                self.rejCreaDupName += 1
             else:
                 yield self.addNew(row)
+                self.nCreation += 1
                 log.info("Brand new instrument registered: {name}", name=row['name'])
-        returnValue(ret)
+        
 
 
     def findMAC(self, row):

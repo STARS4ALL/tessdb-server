@@ -55,50 +55,74 @@ class RegistryNominalTestCase(unittest.TestCase):
             pass
         self.db = DBase("tesoro.db")
         yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
+        self.db.tess.resetCounters()
 
     def tearDown(self):
         self.db.pool.close()
     
     @inlineCallbacks
-    def test_register1(self):
+    def test_registerOneInstrument(self):
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.register(row)
+        self.assertEqual(self.db.tess.nregister, 1)
+        self.assertEqual(self.db.tess.nCreation, 1)
+        self.assertEqual(self.db.tess.rejCreaDupName, 0)
+        self.assertEqual(self.db.tess.nUpdNameChange, 0)
+        self.assertEqual(self.db.tess.rejUpdDupName,  0)
+        self.assertEqual(self.db.tess.nUpdCalibChange,0)
 
     @inlineCallbacks
-    def test_register2(self):
+    def test_registerSameInstrTwice(self):
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x01)
+        yield self.db.register(row)
+        yield self.db.register(row)
+        self.assertEqual(self.db.tess.nregister, 2)
+        self.assertEqual(self.db.tess.nCreation, 1)
+        self.assertEqual(self.db.tess.rejCreaDupName, 0)
+        self.assertEqual(self.db.tess.nUpdNameChange, 0)
+        self.assertEqual(self.db.tess.rejUpdDupName,  0)
+        self.assertEqual(self.db.tess.nUpdCalibChange,0)
+
 
     @inlineCallbacks
     def test_changeNameOnly(self):
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.register(row)
         row = { 'name': 'test2', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x01 | 0x02)
+        yield self.db.register(row)
+        self.assertEqual(self.db.tess.nregister, 2)
+        self.assertEqual(self.db.tess.nCreation, 1)
+        self.assertEqual(self.db.tess.rejCreaDupName, 0)
+        self.assertEqual(self.db.tess.nUpdNameChange, 1)
+        self.assertEqual(self.db.tess.rejUpdDupName,  0)
+        self.assertEqual(self.db.tess.nUpdCalibChange,0)
     
     @inlineCallbacks
     def test_changeConstantOnly(self):
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
-        row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 18.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x01 | 0x04)
+        yield self.db.register(row)
+        row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 17.0}
+        yield self.db.register(row)
+        #self.assertEqual(res, 0x01 | 0x04)
+        self.assertEqual(self.db.tess.nregister, 2)
+        self.assertEqual(self.db.tess.nCreation, 1)
+        self.assertEqual(self.db.tess.rejCreaDupName, 0)
+        self.assertEqual(self.db.tess.nUpdNameChange, 0)
+        self.assertEqual(self.db.tess.rejUpdDupName,  0)
+        self.assertEqual(self.db.tess.nUpdCalibChange,1)
     
     @inlineCallbacks
     def test_changeNameAndConstant(self):
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
-        row = { 'name': 'test2', 'mac': '12:34:56:78:90:AB', 'calib': 18.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x01 | 0x02 | 0x04)
+        yield self.db.register(row)
+        row = { 'name': 'test2', 'mac': '12:34:56:78:90:AB', 'calib': 17.0}
+        yield self.db.register(row)
+        self.assertEqual(self.db.tess.nregister, 2)
+        self.assertEqual(self.db.tess.nCreation, 1)
+        self.assertEqual(self.db.tess.rejCreaDupName, 0)
+        self.assertEqual(self.db.tess.nUpdNameChange, 1)
+        self.assertEqual(self.db.tess.rejUpdDupName,  0)
+        self.assertEqual(self.db.tess.nUpdCalibChange,1)
 
     @inlineCallbacks
     def test_failChangeName(self):
@@ -106,26 +130,33 @@ class RegistryNominalTestCase(unittest.TestCase):
         Fail to change the second instrument name to the first's one 
         '''
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.register(row)
         row = { 'name': 'test2', 'mac': '12:34:56:78:90:AC', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.register(row)
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AC', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x01 | 0x40)
+        yield self.db.register(row)
+        self.assertEqual(self.db.tess.nregister, 3)
+        self.assertEqual(self.db.tess.nCreation, 2)
+        self.assertEqual(self.db.tess.rejCreaDupName, 0)
+        self.assertEqual(self.db.tess.nUpdNameChange, 0)
+        self.assertEqual(self.db.tess.rejUpdDupName,  1)
+        self.assertEqual(self.db.tess.nUpdCalibChange,0)
 
     @inlineCallbacks
     def test_failRegisterNew(self):
         '''
-        Fail to register a second insrument with diffrenet MAC but same name
+        Fail to register a second instrument with different MAC but same name
         '''
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.register(row)
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AC', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x80)
+        yield self.db.register(row)
+        self.assertEqual(self.db.tess.nregister, 2)
+        self.assertEqual(self.db.tess.nCreation, 1)
+        self.assertEqual(self.db.tess.rejCreaDupName, 1)
+        self.assertEqual(self.db.tess.nUpdNameChange, 0)
+        self.assertEqual(self.db.tess.rejUpdDupName,  0)
+        self.assertEqual(self.db.tess.nUpdCalibChange,0)
 
     @inlineCallbacks
     def test_failChangeNameConstantOk(self):
@@ -134,11 +165,14 @@ class RegistryNominalTestCase(unittest.TestCase):
         but changes constant ok.
         '''
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.register(row)
         row = { 'name': 'test2', 'mac': '12:34:56:78:90:AC', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
-        row = { 'name': 'test1', 'mac': '12:34:56:78:90:AC', 'calib': 18.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x01 | 0x04 | 0x40)
+        yield self.db.register(row)
+        row = { 'name': 'test1', 'mac': '12:34:56:78:90:AC', 'calib': 17.0}
+        yield self.db.register(row)
+        self.assertEqual(self.db.tess.nregister, 3)
+        self.assertEqual(self.db.tess.nCreation, 2)
+        self.assertEqual(self.db.tess.rejCreaDupName, 0)
+        self.assertEqual(self.db.tess.nUpdNameChange, 0)
+        self.assertEqual(self.db.tess.rejUpdDupName,  1)
+        self.assertEqual(self.db.tess.nUpdCalibChange,1)

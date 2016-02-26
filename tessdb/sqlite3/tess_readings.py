@@ -119,12 +119,27 @@ class TESSReadings(Table):
         '''Resets stat counters'''
         self.nreadings = 0
         self.nrejected = 0
+        self.rejNotRegistered = 0
+        self.rejLackSunrise   = 0
+        self.rejSunrise       = 0
+        self.rejDuplicate     = 0
+        self.rejOther         = 0
 
     def logCounters(self):
         '''log stat counters'''
         log.info("Readings (Total/Accepted/Rejected) = ({total}/{accepted}/{rejected})", 
                 total=self.nreadings, accepted=self.nreadings-self.nrejected, rejected=self.nrejected)
 
+    def getCounters(self):
+        '''get stat counters'''
+        return [ 
+                self.nreadings, 
+                self.rejNotRegistered, 
+                self.rejLackSunrise, 
+                self.rejSunrise, 
+                self.rejDuplicate, 
+                self.rejOther
+                ]
 
     # ===============
     # OPERATIONAL API
@@ -165,6 +180,7 @@ class TESSReadings(Table):
         if not len(tess):
             log.warn("No tess {0} registered for this reading !".format(row['name']))
             self.nrejected += 1
+            self.rejNotRegistered += 1
             ret |= 0x01
             returnValue(ret)
         tess = tess[0]  # Keep only the first row
@@ -182,6 +198,7 @@ class TESSReadings(Table):
                 if  isDaytime(row['sunrise'], row['sunset'], now):
                     log.debug("reading rejected by being at daytime")
                     self.nrejected += 1
+                    self.rejSunrise += 1
                     ret |= 0x20
                     returnValue(ret)
             else:               # fixed instrument assigned to location
@@ -191,12 +208,14 @@ class TESSReadings(Table):
                     sunrise=sunrise[0], sunset=sunrise[1], now=now)
                 if not sunrise[0]:
                     log.debug("reading rejected by lack of sunrise/sunset data")
+                    self.rejLackSunrise += 1
                     self.nrejected += 1
                     ret |= 0x10
                     returnValue(ret)
                 if  isDaytime(sunrise[0], sunrise[1], now):
                     log.debug("reading rejected by being at daytime")
                     self.nrejected += 1
+                    self.rejSunrise += 1
                     ret |= 0x20
                     returnValue(ret)
 
@@ -214,10 +233,12 @@ class TESSReadings(Table):
         except sqlite3.IntegrityError as e:
             log.error("tess id={id} is sending readings too fast", id=tess[0])
             self.nrejected += 1
+            self.rejDuplicate += 1
             ret |= 0x40
         except Exception as e:
             log.error("exception {excp!s}", excp=e)
             self.nrejected += 1
+            self.rejOther += 1
             ret |= 0x80
         returnValue(ret)
 
