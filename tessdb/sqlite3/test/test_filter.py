@@ -144,8 +144,8 @@ class FixedInstrumentTestCase(unittest.TestCase):
     def registerInstruments(self):
         tess1 = { 'name': 'TESS-AH',  'mac': '12:34:56:78:90:AB', 'calib': 10.0}
         tess2 = { 'name': 'TESS-OAM', 'mac': '21:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(tess1)
-        res = yield self.db.register(tess2)
+        yield self.db.register(tess1)
+        yield self.db.register(tess2)
 
     @inlineCallbacks
     def insertLocations(self):
@@ -175,11 +175,15 @@ class FixedInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 13, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1)
-        self.assertEqual(res, 0x20)
+        yield self.db.update(self.row1)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2)
-        self.assertEqual(res, 0x20)
+        yield self.db.update(self.row2)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      2)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 
     @inlineCallbacks
     def test_updateAtNight(self):
@@ -189,11 +193,15 @@ class FixedInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 22, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(self.row1)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(self.row2)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      0)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 
     @inlineCallbacks
     def test_updateAtTwilight(self):
@@ -203,11 +211,15 @@ class FixedInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1)
-        self.assertEqual(res, 0x20)
+        yield self.db.update(self.row1)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(self.row2)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      1)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 
 
 
@@ -235,8 +247,8 @@ class MobileInstrumentTestCase(unittest.TestCase):
     def registerInstruments(self):
         tess1 = { 'name': 'TESS-AH',  'mac': '12:34:56:78:90:AB', 'calib': 10.0}
         tess2 = { 'name': 'TESS-OAM', 'mac': '21:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(tess1)
-        res = yield self.db.register(tess2)
+        yield self.db.register(tess1)
+        yield self.db.register(tess2)
         self.row1 = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
             'lat': 40.418561, 'long': -3.551502, 'height': 650.0}
         self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
@@ -254,11 +266,15 @@ class MobileInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 13, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1)
-        self.assertEqual(res, 0x20)
+        yield self.db.update(self.row1)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2)
-        self.assertEqual(res, 0x20)
+        yield self.db.update(self.row2)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      2)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 
     @inlineCallbacks
     def test_updateAtNight(self):
@@ -268,11 +284,15 @@ class MobileInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 22, 00, 00)
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(self.row1)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(self.row2)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      0)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 
     @inlineCallbacks
     def test_updateAtTwilight(self):
@@ -282,9 +302,13 @@ class MobileInstrumentTestCase(unittest.TestCase):
         '''
         now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
         self.row1['tstamp'] = now
-        res = yield self.db.update(self.row1)
-        self.assertEqual(res, 0x20)
+        yield self.db.update(self.row1)
         self.row2['tstamp'] = now
-        res = yield self.db.update(self.row2)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(self.row2)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      1)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 

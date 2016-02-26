@@ -68,8 +68,13 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         '''
         now = datetime.datetime.utcnow() 
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row)
-        self.assertEqual(res, 0x01)
+        yield self.db.update(row)
+        self.assertEqual(self.db.tess_readings.nreadings,       1)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,1)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      0)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 
 class UpdateRegisteredTestCase(unittest.TestCase):
 
@@ -82,9 +87,9 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         self.db = DBase("tesoro.db")
         yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        res = yield self.db.register(row)
-        self.assertEqual(res, 0x00)
-
+        yield self.db.register(row)
+       
+        
     def tearDown(self):
         self.db.pool.close()
     
@@ -96,8 +101,14 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         '''
         now = datetime.datetime.utcnow()
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(row)
+        self.assertEqual(self.db.tess_readings.nreadings,       1)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      0)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
+
       
     @inlineCallbacks
     def test_updateTooFast(self):
@@ -107,9 +118,13 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         '''
         now = datetime.datetime.utcnow()
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row)
-        self.assertEqual(res, 0x00)
+        yield self.db.update(row)
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
-        res = yield self.db.update(row)
-        self.assertEqual(res, 0x40)
+        yield self.db.update(row)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  0)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      0)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    1)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
 
