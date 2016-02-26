@@ -73,6 +73,7 @@ class DBase(object):
       Schema Generation
       Returns a Deferred
       '''
+      self.tess_readings.setOptions(location_filter, location_horizon)
       yield self.date.schema(date_fmt, year_start, year_end, replace)
       yield self.time.schema(json_dir, replace)
       yield self.tess_locations.schema(json_dir, replace)

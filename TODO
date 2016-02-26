@@ -1,10 +1,8 @@
 Todas y cada una de estas cosas en su rama git
 =============================================
 *) Actualizar doc de oepracion
-*) FICHEROS JSON
-- implementar plenamente reload a las tablas
-- recargar implica populate ahora
 *)Nuevas constraints UNIQUE NOT NULL a name y mac_address
+*) Repasar sunrise/sunset que creo que está mal el calculo del sunrise (da el ya pasado)
 *) Merge de DBase y Dbase service, ya que DBase no hace nada que nopuda hacer DBase service y me quito un nivel de indireccion
 *) UPDATE or <POLITICA> al asignar instrumentos a sitios
 *) Estadisticas bonitas en el logfile con tabulate

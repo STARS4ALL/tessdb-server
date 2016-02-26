@@ -55,8 +55,7 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         except OSError as e:
             pass
         self.db = DBase("tesoro.db")
-        self.db.tess_readings.setOptions(filter_flag=False)
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
+        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
 
     def tearDown(self):
         self.db.pool.close()
@@ -81,8 +80,7 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         except OSError as e:
             pass
         self.db = DBase("tesoro.db")
-        self.db.tess_readings.setOptions(filter_flag=False)
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
+        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
         res = yield self.db.register(row)
         self.assertEqual(res, 0x00)

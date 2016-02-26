@@ -125,8 +125,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         except OSError as e:
             pass
         self.db = DBase("fixed.db")
-        self.db.tess_readings.setOptions(filter_flag=True, horizon='-0:34')
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
+        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
         yield self.insertLocations()
         yield self.registerInstruments()
         yield self.assignLocations()
@@ -222,8 +221,7 @@ class MobileInstrumentTestCase(unittest.TestCase):
         except OSError as e:
             pass
         self.db = DBase("mobile.db")
-        self.db.tess_readings.setOptions(filter_flag=True, horizon='-0:34')
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, replace=False)
+        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
         yield self.registerInstruments()
 
     def tearDown(self):
