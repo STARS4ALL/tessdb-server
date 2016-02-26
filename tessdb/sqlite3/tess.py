@@ -121,7 +121,7 @@ def _populateIgn(transaction, rows):
 def _deployInstr(transaction, rows):
     '''Update location id of given TESS instruments'''
     transaction.executemany(
-        '''UPDATE tess_t SET location_id = (
+        '''UPDATE  tess_t SET location_id = (
             SELECT location_id FROM location_t
             WHERE  location_t.site == :site
            )

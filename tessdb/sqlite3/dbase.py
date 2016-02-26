@@ -113,6 +113,7 @@ class DBase(object):
       yield self.date.populate(json_dir, replace)
       yield self.tess_locations.populate(json_dir, replace)
       yield self.tess_units.populate(json_dir, replace)
+      yield self.tess.populate(json_dir, replace)
 
 
    # -------------

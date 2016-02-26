@@ -172,7 +172,7 @@ class InstrDeployTestCase(unittest.TestCase):
     @inlineCallbacks
     def test_assign_ok(self):
         tessdb.sqlite3.tess.DEFAULT_DEPLOYMENT = self.TEST_DEPLOYMENTS1
-        yield self.db.reload('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
+        yield self.db.reload('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
         rows = yield self.db.pool.runQuery('SELECT name,location_id FROM tess_t ORDER BY name ASC')
         self.assertEqual( rows[0][0], 'test1')
         self.assertEqual( rows[0][1], 0)
@@ -190,13 +190,13 @@ class InstrDeployTestCase(unittest.TestCase):
 
     def test_assign_wrong_loc(self):
         tessdb.sqlite3.tess.DEFAULT_DEPLOYMENT = self.TEST_DEPLOYMENTS2
-        d = self.db.reload('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
+        d = self.db.reload('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
         return self.assertFailure(d, sqlite3.IntegrityError)
 
     @inlineCallbacks
     def test_assign_wrong_instr(self):
         tessdb.sqlite3.tess.DEFAULT_DEPLOYMENT = self.TEST_DEPLOYMENTS3
-        d =  self.db.reload('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
+        d =  self.db.reload('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
         rows = yield self.db.pool.runQuery('SELECT name,location_id FROM tess_t ORDER BY name ASC')
         self.assertEqual( rows[0][0], 'test1')
         self.assertEqual( rows[0][1], 0)
