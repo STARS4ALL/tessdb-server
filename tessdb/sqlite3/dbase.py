@@ -9,6 +9,8 @@
 # -------------------
 
 
+import tabulate
+
 # ---------------
 # Twisted imports
 # ---------------
@@ -125,8 +127,13 @@ class DBase(object):
       self.tess_readings.resetCounters()
       self.tess.resetCounters()
 
+
    def logCounters(self):
       '''log stat counters'''
-      self.tess_readings.logCounters()
-      self.tess.logCounters()
-   
+      result = self.tess_readings.getCounters()
+      text = tabulate.tabulate([result], headers=['Total','Not Registered','Lack Sunrise','Daytime','Dupl','Other'], tablefmt='grid')
+      log.info("\n{table}",table=text)
+      result = self.tess.getCounters()
+      text = tabulate.tabulate([result], headers=['Total','Created','Upd Name','Upd Calib','No Upd Name','No Create Name'], tablefmt='grid')
+      log.info("\n{table}",table=text)
+

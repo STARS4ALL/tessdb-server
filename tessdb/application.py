@@ -146,5 +146,3 @@ class TESSApplication(object):
         self.mqttService.logCounters()
         self.dbaseService.logCounters()
         self.resetCounters()
-
-    

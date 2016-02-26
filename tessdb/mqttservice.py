@@ -14,6 +14,8 @@ import sys
 import datetime
 import json
 
+import tabulate
+
 # ---------------
 # Twisted imports
 # ---------------
@@ -109,17 +111,20 @@ class MQTTService(Service):
     # log stats API
     # -------------
 
-    def logCounters(self):
-        '''log stat counters'''
-        log.info("MQTT (Total/Readings/Registrations) = ({total}/{nreadings}/{nregister})", 
-                total=self.npublish, nreadings=self.nreadings, nregister=self.nregister)
-
-
     def resetCounters(self):
         '''Resets stat counters'''
         self.npublish  = 0
         self.nreadings = 0
         self.nregister = 0
+
+    def getCounters(self):
+        return [ self.npublish, self.nreadings, self.nregister ]
+
+    def logCounters(self):
+        '''log stat counters'''
+        result = self.getCounters()
+        text = tabulate.tabulate([result], headers=['Total','Readings','Register'], tablefmt='grid')
+        log.info("\n{table}",table=text)
 
     # --------------
     # Helper methods
