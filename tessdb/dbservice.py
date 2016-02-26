@@ -13,7 +13,11 @@ import errno
 import sys
 import datetime
 import json
+import math
+
 import ephem
+import tabulate
+
 # ---------------
 # Twisted imports
 # ---------------
@@ -70,6 +74,7 @@ class DBaseService(Service):
         self.options  = options
         self.paused   = False
         self.onBoot   = True
+        self.wStatList = []
         self.sunriseTask  = task.LoopingCall(self.sunrise)
         setLogLevel(namespace='dbase', levelStr=options['log_level'])
       
@@ -136,11 +141,24 @@ class DBaseService(Service):
     def resetCounters(self):
         '''Resets stat counters'''
         self.dbase.resetCounters()
+        self.wStatList = []
 
+    def getCounters(self):
+        def f(t):
+            return t[0]
+        def g(t):
+            return t[1]
+        qLen = len(self.wStatList)
+        averInput = sum(map(f, self.wStatList))/qLen
+        averT     = math.fsum(map(g, self.wStatList))/qLen
+        return [qLen, averInput, averT]
 
     def logCounters(self):
         '''log stat counters'''
         self.dbase.logCounters()
+        result = self.getCounters()
+        text = tabulate.tabulate([result], headers=['Queue Len','Aver Input','Aver T'], tablefmt='grid')
+        log.info("\n{table}",table=text)
 
     # =============
     # Twisted Tasks
@@ -156,6 +174,8 @@ class DBaseService(Service):
         Periodic task that takes rows from the queues
         and update them to database
         '''
+        t0 = datetime.datetime.utcnow()
+        l0 = len(self.parent.queue['tess_readings']) + len(self.parent.queue['tess_register'])
         if not self.paused:
             while len(self.parent.queue['tess_register']):
                 row = self.parent.queue['tess_register'].popleft()
@@ -163,6 +183,7 @@ class DBaseService(Service):
             while len(self.parent.queue['tess_readings']):
                 row = self.parent.queue['tess_readings'].popleft()
                 yield self.dbase.update(row, self.options['location_filter'])
+        self.wStatList.append( (l0, (datetime.datetime.utcnow() - t0).total_seconds(), ) )
         self.later = reactor.callLater(1,self.writter)
         
 
