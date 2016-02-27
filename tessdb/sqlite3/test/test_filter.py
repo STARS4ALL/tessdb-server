@@ -30,6 +30,7 @@ import sys
 import datetime
 import json
 
+import ephem
 # ---------------
 # Twisted imports
 # ---------------
@@ -146,7 +147,7 @@ TEST_LOCATIONS = [
 ]
 
 # UTC time
-TODAY = datetime.datetime(2016, 02, 21, 12, 00, 00)
+TODAY = ephem.Date(datetime.datetime(2016, 02, 21, 12, 00, 00))
 
 class FixedInstrumentTestCase(unittest.TestCase):
 
@@ -178,7 +179,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         yield self.db.schema()
         yield self.registerInstrument()
         yield self.db.reloadService(options)
-        yield self.db.sunrise(today=DATE)
+        yield self.db.sunrise(today=TODAY)
         self.row1 = { 'name': 'TESS-AH',  'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
         self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
 
