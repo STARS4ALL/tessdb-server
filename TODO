@@ -1,7 +1,6 @@
 
 *) Actualizar documentacion
 *) Estudiar si merece la pena poner nuevas constraints UNIQUE NOT NULL a tess_t.name y tess_t.mac_address
-*) UPDATE or <POLITICA> al asignar instrumentos a sitios	
 *) Logrotate en la Pi al mediodia
 Con muy baja prioridad si es que es interesante:
 *) Embeber servidor web de twisted.

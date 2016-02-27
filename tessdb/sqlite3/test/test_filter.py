@@ -28,6 +28,7 @@
 import os
 import sys
 import datetime
+import json
 
 # ---------------
 # Twisted imports
@@ -56,7 +57,7 @@ options = {
     'year_start' : 2015,
     'year_end' : 2026,
     'date_fmt' : '%Y/%m/%d',
-    'json_dir' : 'foo',
+    'json_dir' : '.',
     'location_filter': True,
     'location_horizon': '-0:34',
     'location_batch_size' : 10,
@@ -107,6 +108,18 @@ def _assignLocations(transaction, rows):
 
 TEST_LOCATIONS = [
     {
+        "location_id"   : -1, 
+        "contact_email" : "Unknown", 
+        "site"          : "Unknown", 
+        "longitude"     : "Unknown", 
+        "latitude"      : "Unknown", 
+        "elevation"     : "Unknown", 
+        "zipcode"       : "Unknown", 
+        "location"      : "Unknown", 
+        "province"      : "Unknown", 
+        "country"       : "Unknown"
+    }, 
+    {
         "location_id"   : 0, 
         "contact_email" : "asociacion@astrohenares.org", 
         "site"          : "Centro de Recursos Asociativos El Cerro", 
@@ -137,22 +150,38 @@ TODAY = datetime.datetime(2016, 02, 21, 12, 00, 00)
 
 class FixedInstrumentTestCase(unittest.TestCase):
 
- 
+    TEST_INSTRUMENTS = [
+        { 'name': 'TESS-AH',  'mac': '12:34:56:78:90:AB', 'calib': 10.0},
+        { 'name': 'TESS-OAM', 'mac': '21:34:56:78:90:AB', 'calib': 10.0}
+    ]
+
+    TEST_DEPLOYMENTS1 = [
+        { 'name': 'TESS-AH',  'site': 'Centro de Recursos Asociativos El Cerro'},
+        { 'name': 'TESS-OAM', 'site': 'Observatorio Astronomico de Mallorca'},
+    ]
+
+
     @inlineCallbacks
     def setUp(self):
         try:
             options['connection_string'] = 'fixed.db'
             os.remove(options['connection_string'])
+            #os.remove('tess_location.json')
+            #os.remove('locations.json')
         except OSError as e:
             pass
+        with open('locations.json','w') as f:
+            json.dump(TEST_LOCATIONS, f)
+        with open('tess_location.json','w') as f:
+            json.dump(self.TEST_DEPLOYMENTS1, f)
         self.db = DBaseService(parent=None, options=options)
         yield self.db.schema()
-        yield self.insertLocations()
-        yield self.registerInstruments()
-        yield self.assignLocations()
-        
+        yield self.registerInstrument()
+        yield self.db.reloadService(options)
+        yield self.db.sunrise()
         self.row1 = { 'name': 'TESS-AH',  'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
         self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
+
 
     def tearDown(self):
         self.db.pool.close()
@@ -161,28 +190,11 @@ class FixedInstrumentTestCase(unittest.TestCase):
     # Helper methods
     # --------------
 
+    
     @inlineCallbacks
-    def registerInstruments(self):
-        tess1 = { 'name': 'TESS-AH',  'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        tess2 = { 'name': 'TESS-OAM', 'mac': '21:34:56:78:90:AB', 'calib': 10.0}
-        yield self.db.register(tess1)
-        yield self.db.register(tess2)
-
-    @inlineCallbacks
-    def insertLocations(self):
-        '''
-        Insert several locations given by rows dctionary.
-        Updates sunrise/sunset accordingly
-        '''
-        yield self.db.pool.runInteraction( _insertLocations, TEST_LOCATIONS )
-        yield self.db.tess_locations.sunrise(batch_perc=100, batch_min_size=1, horizon='-0:34', pause=0, today=TODAY)
-
-    def assignLocations(self):
-        assign = [ 
-            {'tess': 'TESS-AH',  'site': 'Centro de Recursos Asociativos El Cerro'},
-            {'tess': 'TESS-OAM', 'site': 'Observatorio Astronomica de Mallorca'},
-        ]
-        return self.db.pool.runInteraction( _assignLocations, assign )
+    def registerInstrument(self):
+        for row in self.TEST_INSTRUMENTS:
+            yield self.db.register(row)
 
     # ----------
     # Test cases
@@ -246,6 +258,11 @@ class FixedInstrumentTestCase(unittest.TestCase):
 
 class MobileInstrumentTestCase(unittest.TestCase):
 
+    TEST_INSTRUMENTS = [
+        { 'name': 'TESS-AH',  'mac': '12:34:56:78:90:AB', 'calib': 10.0},
+        { 'name': 'TESS-OAM', 'mac': '21:34:56:78:90:AB', 'calib': 10.0}
+    ]
+
  
     @inlineCallbacks
     def setUp(self):
@@ -256,7 +273,12 @@ class MobileInstrumentTestCase(unittest.TestCase):
             pass
         self.db = DBaseService(parent=None, options=options)
         yield self.db.schema()
-        yield self.registerInstruments()
+        yield self.registerInstrument()
+
+        self.row1 = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
+            'lat': 40.418561, 'long': -3.551502, 'height': 650.0}
+        self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
+            'lat': 39.64269, 'long': 2.950533, 'height': 100.0}
 
     def tearDown(self):
         self.db.pool.close()
@@ -266,15 +288,10 @@ class MobileInstrumentTestCase(unittest.TestCase):
     # --------------
 
     @inlineCallbacks
-    def registerInstruments(self):
-        tess1 = { 'name': 'TESS-AH',  'mac': '12:34:56:78:90:AB', 'calib': 10.0}
-        tess2 = { 'name': 'TESS-OAM', 'mac': '21:34:56:78:90:AB', 'calib': 10.0}
-        yield self.db.register(tess1)
-        yield self.db.register(tess2)
-        self.row1 = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
-            'lat': 40.418561, 'long': -3.551502, 'height': 650.0}
-        self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
-            'lat': 39.64269, 'long': 2.950533, 'height': 100.0}
+    def registerInstrument(self):
+        for row in self.TEST_INSTRUMENTS:
+            yield self.db.register(row)
+
 
     # ----------
     # Test cases

@@ -129,7 +129,6 @@ def _deployInstr(transaction, rows):
         ''', rows)
 
 
-
 def _updateCalibration(cursor, row):
     '''
     Updates Instrument calibration constant keeping its history

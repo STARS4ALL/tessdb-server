@@ -72,16 +72,16 @@ options = {
 # Some Sample locations
 TEST_LOCATIONS = [
         {
-        "location_id"   : -1, 
-        "contact_email" : "Unknown", 
-        "site"          : "Unknown", 
-        "longitude"     : "Unknown", 
-        "latitude"      : "Unknown", 
-        "elevation"     : "Unknown", 
-        "zipcode"       : "Unknown", 
-        "location"      : "Unknown", 
-        "province"      : "Unknown", 
-        "country"       : "Unknown"
+            "location_id"   : -1, 
+            "contact_email" : "Unknown", 
+            "site"          : "Unknown", 
+            "longitude"     : "Unknown", 
+            "latitude"      : "Unknown", 
+            "elevation"     : "Unknown", 
+            "zipcode"       : "Unknown", 
+            "location"      : "Unknown", 
+            "province"      : "Unknown", 
+            "country"       : "Unknown"
         }, 
         {
             "location_id"   : 0, 
@@ -155,18 +155,17 @@ class InstrDeployTestCase1(unittest.TestCase):
         { 'name': 'test4', 'mac': '12:34:56:78:90:AE', 'calib': 10.0},
     ]
 
-
     TEST_DEPLOYMENTS1 = [
         { 'name': 'test1', 'site': 'Centro de Recursos Asociativos El Cerro'},
         { 'name': 'test2', 'site': 'Observatorio Astronomica de Mallorca'},
     ]
 
-
-
     @inlineCallbacks
     def setUp(self):
         try:
             os.remove(options['connection_string'])
+            os.remove('tess_location.json')
+            os.remove('locations.json')
         except OSError as e:
             pass
         with open('locations.json','w') as f:
@@ -243,6 +242,8 @@ class InstrDeployTestCase2(unittest.TestCase):
     def setUp(self):
         try:
             os.remove(options['connection_string'])
+            os.remove('tess_location.json')
+            os.remove('locations.json')
         except OSError as e:
             pass
         with open('locations.json','w') as f:
@@ -276,7 +277,6 @@ class InstrDeployTestCase2(unittest.TestCase):
 
 class InstrDeployTestCase3(unittest.TestCase):
 
-
     TEST_INSTRUMENTS = [
         { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0},
         { 'name': 'test2', 'mac': '12:34:56:78:90:AC', 'calib': 10.0},
@@ -286,7 +286,10 @@ class InstrDeployTestCase3(unittest.TestCase):
         { 'name': 'test4', 'mac': '12:34:56:78:90:AE', 'calib': 10.0},
     ]
 
-
+    TEST_DEPLOYMENTS1 = [
+        { 'name': 'test1', 'site': 'Centro de Recursos Asociativos El Cerro'},
+        { 'name': 'test2', 'site': 'Observatorio Astronomica de Mallorca'},
+    ]
 
     TEST_DEPLOYMENTS3 = [
         { 'name': 'wrong-tess1', 'site': 'Centro de Recursos Asociativos El Cerro'},
@@ -302,12 +305,12 @@ class InstrDeployTestCase3(unittest.TestCase):
         with open('locations.json','w') as f:
             json.dump(TEST_LOCATIONS, f)
         with open('tess_location.json','w') as f:
-            json.dump(self.TEST_DEPLOYMENTS3, f)
+            json.dump(self.TEST_DEPLOYMENTS1, f)
         self.db = DBaseService(parent=None, options=options)
         yield self.db.schema()
         yield self.registerInstrument()
+        yield self.db.reloadService(options)
        
-
     def tearDown(self):
         self.db.pool.close()
 
@@ -319,7 +322,8 @@ class InstrDeployTestCase3(unittest.TestCase):
 
     @inlineCallbacks
     def test_assign_wrong_instr(self):
-       
+        with open('tess_location.json','w') as f:
+            json.dump(self.TEST_DEPLOYMENTS3, f)
         d = self.db.reloadService(options)
         rows = yield self.db.pool.runQuery('SELECT name,location_id,tess_id FROM tess_t ORDER BY tess_id ASC')
         self.assertEqual( rows[0][0], 'test1')

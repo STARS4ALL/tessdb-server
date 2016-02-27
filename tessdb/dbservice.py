@@ -261,7 +261,7 @@ class DBaseService(Service):
               returnValue(None)
         self.onBoot    = False  
         batch_perc     = self.options['location_batch_size']
-        batch_min_size = self.options['location_minimun_batch_size']
+        batch_min_size = self.options['location_minimum_batch_size']
         horizon        = self.options['location_horizon']
         pause          = self.options['location_pause']
         yield self.tess_locations.sunrise(batch_perc=batch_perc, 
