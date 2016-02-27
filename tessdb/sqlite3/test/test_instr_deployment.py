@@ -45,10 +45,28 @@ from twisted.internet.task import deferLater
 # local imports
 # -------------
 
-import tessdb.sqlite3.tess   # to perform one hack
-
 from   tessdb.error import ReadingKeyError, ReadingTypeError
-from   tessdb.sqlite3 import DBase
+from   tessdb.dbservice import DBaseService
+import tessdb.sqlite3.tess   # to perform a dirty hack
+
+# --------------------------------------
+# Database Service configuration options
+#---------------------------------------
+
+options = {
+    'log_level': 'info',
+    'type': 'sqlite3',
+    'connection_string': 'tesoro.db',
+    'year_start' : 2015,
+    'year_end' : 2026,
+    'date_fmt' : '%Y/%m/%d',
+    'json_dir' : 'foo',
+    'location_filter': True,
+    'location_horizon': '-0:34',
+    'location_batch_size' : 10,
+    'location_minimum_batch_size' : 1,
+    'location_pause': 0,
+}
 
 # Some Sample locations
 TEST_LOCATIONS = [
@@ -145,11 +163,12 @@ class InstrDeployTestCase(unittest.TestCase):
     @inlineCallbacks
     def setUp(self):
         try:
-            os.remove('tesoro.db')
+            options['connection_string'] = 'fixed.db'
+            os.remove(options['connection_string'])
         except OSError as e:
             pass
-        self.db = DBase("tesoro.db")
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
+        self.db = DBaseService(parent=None, options=options)
+        yield self.db.schema()
         yield self.register()
         yield self.locations()
 
@@ -172,7 +191,7 @@ class InstrDeployTestCase(unittest.TestCase):
     @inlineCallbacks
     def test_assign_ok(self):
         tessdb.sqlite3.tess.DEFAULT_DEPLOYMENT = self.TEST_DEPLOYMENTS1
-        yield self.db.reload('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
+        yield self.db.reloadService(options)
         rows = yield self.db.pool.runQuery('SELECT name,location_id FROM tess_t ORDER BY name ASC')
         self.assertEqual( rows[0][0], 'test1')
         self.assertEqual( rows[0][1], 0)
@@ -190,13 +209,13 @@ class InstrDeployTestCase(unittest.TestCase):
 
     def test_assign_wrong_loc(self):
         tessdb.sqlite3.tess.DEFAULT_DEPLOYMENT = self.TEST_DEPLOYMENTS2
-        d = self.db.reload('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
+        d = self.db.reloadService(options)
         return self.assertFailure(d, sqlite3.IntegrityError)
 
     @inlineCallbacks
     def test_assign_wrong_instr(self):
         tessdb.sqlite3.tess.DEFAULT_DEPLOYMENT = self.TEST_DEPLOYMENTS3
-        d =  self.db.reload('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
+        d = self.db.reloadService(options)
         rows = yield self.db.pool.runQuery('SELECT name,location_id FROM tess_t ORDER BY name ASC')
         self.assertEqual( rows[0][0], 'test1')
         self.assertEqual( rows[0][1], 0)
