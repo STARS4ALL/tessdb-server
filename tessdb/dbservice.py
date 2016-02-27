@@ -265,7 +265,7 @@ class DBaseService(Service):
         horizon        = self.options['location_horizon']
         pause          = self.options['location_pause']
         yield self.tess_locations.sunrise(batch_perc=batch_perc, 
-            batch_min_size=batch_min_size, horizon=horizon, pause=pause)
+            batch_min_size=batch_min_size, horizon=horizon, pause=pause, today=utcnoon())
       
    
 
