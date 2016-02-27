@@ -141,8 +141,9 @@ class TESSApplication(object):
         self.mqttService.resetCounters()
         self.dbaseService.resetCounters()
 
+    @inlineCallbacks
     def logCounters(self):
         '''log stat counters'''
         self.mqttService.logCounters()
-        self.dbaseService.logCounters()
+        yield self.dbaseService.logCounters()
         self.resetCounters()

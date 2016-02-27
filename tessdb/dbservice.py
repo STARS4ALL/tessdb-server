@@ -26,6 +26,7 @@ from twisted.logger import Logger, LogLevel
 from twisted.internet import reactor, task
 from twisted.application.service import Service
 from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet.threads import deferToThread
 
 #--------------
 # local imports
@@ -67,6 +68,7 @@ class DBaseService(Service):
 
     # Sunrise/Sunset Task period in seconds
     T_SUNRISE = 3600
+    T_QUEUE_POLL = 1
 
     def __init__(self, parent, options, **kargs):
         Service.__init__(self)
@@ -74,7 +76,8 @@ class DBaseService(Service):
         self.options  = options
         self.paused   = False
         self.onBoot   = True
-        self.wStatList = []
+        self.timeStatList  = []
+        self.nrowsStatList = []
         self.sunriseTask  = task.LoopingCall(self.sunrise)
         setLogLevel(namespace='dbase', levelStr=options['log_level'])
         
@@ -187,18 +190,17 @@ class DBaseService(Service):
         '''Resets stat counters'''
         self.tess_readings.resetCounters()
         self.tess.resetCounters()
-        self.wStatList = []
+        self.timeStatList  = []
+        self.nrowsStatList = []
 
     def getCounters(self):
-        def f(t):
-            return t[0]
-        def g(t):
-            return t[1]
-        qLen = len(self.wStatList)
-        averInput = sum(map(f, self.wStatList))/qLen
-        averT     = math.fsum(map(g, self.wStatList))/qLen
-        return [qLen, averInput, averT]
+        N = len(self.nrowsStatList)
+        timeStats = [ "I/O Time (sec.)", min(self.timeStatList),  sum(self.timeStatList)/N,  max(self.timeStatList) ]
+        rowsStats = [ "Pend Samples", min(self.nrowsStatList), sum(self.nrowsStatList)/N, max(self.nrowsStatList) ]
+        efficiency = (100 * N * self.T_QUEUE_POLL) / float(self.parent.T_STAT)
+        return ((timeStats, rowsStats), efficiency, N)
 
+    @inlineCallbacks
     def logCounters(self):
         '''log stat counters'''
         result = self.tess_readings.getCounters()
@@ -207,8 +209,10 @@ class DBaseService(Service):
         result = self.tess.getCounters()
         text = tabulate.tabulate([result], headers=['Total','Created','Upd Name','Upd Calib','No Upd Name','No Create Name'], tablefmt='grid')
         log.info("\n{table}",table=text)
-        result = self.getCounters()
-        text = tabulate.tabulate([result], headers=['Queue Len','Aver Input','Aver T'], tablefmt='grid')
+        # I/O efficiency stats
+        result = yield deferToThread(self.getCounters)
+        log.info("EFFICIENCY = {efficiency}%",efficiency=result[1])
+        text = tabulate.tabulate(result[0], headers=['Stat. (N = {0})'.format(result[2]),'Min','Aver','Max'], tablefmt='grid')
         log.info("\n{table}",table=text)
 
 
@@ -236,8 +240,9 @@ class DBaseService(Service):
             while len(self.parent.queue['tess_readings']):
                 row = self.parent.queue['tess_readings'].popleft()
                 yield self.update(row)
-        self.wStatList.append( (l0, (datetime.datetime.utcnow() - t0).total_seconds(), ) )
-        self.later = reactor.callLater(1,self.writter)
+        self.timeStatList.append( (datetime.datetime.utcnow() - t0).total_seconds())
+        self.nrowsStatList.append(l0)
+        self.later = reactor.callLater(self.T_QUEUE_POLL,self.writter)
         
 
     # ---------------------
