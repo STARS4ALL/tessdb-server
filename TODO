@@ -5,5 +5,4 @@
 *) UPDATE or <POLITICA> al asignar instrumentos a sitios	
 *) Logrotate en la Pi al mediodia
 Con muy baja prioridad si es que es interesante:
-*) Etiquetas UNKNOWN, CURRENT, EXPIRED configurables por idoioma en una sección [locale] del fichero de configuracion
 *) Embeber servidor web de twisted.
