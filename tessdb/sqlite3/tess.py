@@ -209,7 +209,6 @@ def _createViews(cursor):
 
 class TESS(Table):
 
-    FILE      = 'tess.json'
     DEPL_FILE = 'tess_location.json'
 
     def __init__(self, pool, validate=False):
