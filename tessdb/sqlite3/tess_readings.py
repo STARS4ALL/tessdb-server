@@ -74,7 +74,7 @@ class TESSReadings(Table):
         '''Create the SQLite TESS Readings table'''
         Table.__init__(self, pool)
         self.parent = parent
-        self.setOptions(filter_flag=True)
+        self.setOptions(location_filter=True)
         self.resetCounters()
 
     def table(self):
@@ -221,12 +221,12 @@ class TESSReadings(Table):
     # Helper methods
     # ==============
 
-    def setOptions(self, filter_flag=True, horizon='-0:34'):
+    def setOptions(self, location_filter=True, location_horizon='-0:34'):
         '''
         Set option for sunrise/sunset filtering
         '''
-        self.locationFilter = filter_flag
-        self.horizon        = horizon
+        self.locationFilter = location_filter
+        self.horizon        = location_horizon
 
     def computeSunrise(self, row, now):
         '''

@@ -23,7 +23,13 @@ from twisted.logger   import LogLevel
 # -------------
 
 from ..logger import startLogging
-from .dbase import DBase
+from .dbase import getPool
+from .date          import Date
+from .time          import TimeOfDay
+from .tess_units    import TESSUnits
+from .location      import Location
+from .tess          import TESS
+from .tess_readings import TESSReadings
 
 # ----------------
 # Module constants
@@ -33,14 +39,31 @@ from .dbase import DBase
 # Module global variables
 # -----------------------
 
+# ----------------
+# Module functions
+# ----------------
 
 
 @inlineCallbacks
 def main():
-	startLogging()
-	dbase = DBase(sys.argv[1])
-	yield dbase.schema('config', '%Y/%m/%d', 2015, 2026, replace=False)
-	reactor.stop()
+    startLogging()
+    pool = getPool(sys.argv[1])
+    
+    tess           = TESS(pool)
+    tess_units     = TESSUnits(pool)
+    tess_readings  = TESSReadings(pool, parent=None)
+    tess_locations = Location(pool)
+    date           = Date(pool)
+    timeOfDay      = TimeOfDay(pool)
+
+    yield date.schema(date_fmt='%Y/%m/%d', year_start=2016, year_end=2026, replace=True)
+    yield timeOfDay.schema(json_dir='etc/tessdb/config', replace=True)
+    yield tess_locations.schema(json_dir='etc/tessdb/config', replace=True)
+    yield tess.schema(json_dir='etc/tessdb/config', replace=True)
+    yield tess_units.schema(json_dir='etc/tessdb/config', replace=True)
+    yield tess_readings.schema(json_dir='etc/tessdb/config', replace=True)
+
+    reactor.stop()
 
 main()
 reactor.run()

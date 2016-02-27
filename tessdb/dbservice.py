@@ -84,29 +84,40 @@ class DBaseService(Service):
 
     @inlineCallbacks
     def startService(self):
+        # Import appropiate DAO module
         if self.options['type'] == "sqlite3":
-            from .sqlite3 import DBase
+            from .sqlite3 import getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
         else:
             msg = "No database driver found for '{0}'".format(self.options['type'])
             raise ImportError( msg )
         log.info("starting DBase Service")
-        self.dbase    = DBase(self.options['connection_string'])
-        self.dbase.tess_readings.setOptions(filter_flag=self.options['location_filter'],horizon=self.options['location_horizon'])
-        yield self.dbase.schema(
-            json_dir=self.options['json_dir'], 
-            date_fmt=self.options['date_fmt'], 
-            year_start=self.options['year_start'], 
-            year_end=self.options['year_end'], 
-            location_filter=self.options['location_filter'],
-            location_horizon=self.options['location_horizon'],
-            replace=True)
+        
+        # Create DAO objects
+        self.pool           = getPool(self.options['connection_string'])
+        self.tess           = TESS(self.pool)
+        self.tess_units     = TESSUnits(self.pool)
+        self.tess_readings  = TESSReadings(self.pool, self)
+        self.tess_locations = Location(self.pool)
+        self.date           = Date(self.pool)
+        self.time           = TimeOfDay(self.pool)
+
+        # Create/Configure Database
+        self.tess_readings.setOptions(location_filter=self.options['location_filter'], location_horizon=self.options['location_horizon'])
+        yield self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'], replace=True)
+        yield self.time.schema(json_dir=self.options['json_dir'], replace=True)
+        yield self.tess_locations.schema(json_dir=self.options['json_dir'], replace=True)
+        yield self.tess.schema(json_dir=self.options['json_dir'], replace=True)
+        yield self.tess_units.schema(json_dir=self.options['json_dir'], replace=True)
+        yield self.tess_readings.schema(json_dir=self.options['json_dir'], replace=True)
+
+        # Remainder Service initialization
         Service.startService(self)
         log.info("Database operational.")
         self.later = reactor.callLater(2, self.writter)
         self.sunriseTask.start(self.T_SUNRISE, now=True)
 
     def stopService(self):
-        self.dbase.pool.close()
+        self.pool.close()
         Service.stopService()
         log.info("Database stopped.")
 
@@ -114,18 +125,23 @@ class DBaseService(Service):
     # Extended Service API
     # --------------------
 
+    @inlineCallbacks
     def reloadService(self, new_options):
+        '''
+        Reload configuration.
+        Returns a Deferred
+        '''
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.dbase.reload(
-            json_dir=new_options['json_dir'], 
-            date_fmt=new_options['date_fmt'], 
-            year_start=new_options['year_start'], 
-            year_end=new_options['year_end'],
-            location_filter=new_options['location_filter'],
-            location_horizon=new_options['location_horizon'],
-            replace=True)
+        
+        self.tess_readings.setOptions(location_filter=new_options['location_filter'], 
+            location_horizon=new_options['location_horizon'])
+        yield self.date.populate(json_dir=new_options['json_dir'], replace=True)
+        yield self.tess_locations.populate(json_dir=new_options['json_dir'], replace=True)
+        yield self.tess_units.populate(json_dir=new_options['json_dir'], replace=True)
+        yield self.tess.populate(json_dir=new_options['json_dir'], replace=True)
 
+        
     def pauseService(self):
         log.info('TESS database writer paused')
         self.paused = True
@@ -134,13 +150,32 @@ class DBaseService(Service):
         log.info('TESS database writer resumed')
         self.paused = False
 
+    # ---------------
+    # OPERATIONAL API
+    # ---------------
+
+    def register(self, row):
+        '''
+        Registers an instrument given its MAC address, friendly name and calibration constant.
+        Returns a Deferred
+        '''
+        return self.tess.register(row)
+
+    def update(self, row):
+        '''
+        Update readings table
+        Returns a Deferred 
+        '''
+        return self.tess_readings.update(row)
+
     # -------------
     # log stats API
     # -------------
 
     def resetCounters(self):
         '''Resets stat counters'''
-        self.dbase.resetCounters()
+        self.tess_readings.resetCounters()
+        self.tess.resetCounters()
         self.wStatList = []
 
     def getCounters(self):
@@ -155,10 +190,17 @@ class DBaseService(Service):
 
     def logCounters(self):
         '''log stat counters'''
-        self.dbase.logCounters()
+        result = self.tess_readings.getCounters()
+        text = tabulate.tabulate([result], headers=['Total','Not Registered','Lack Sunrise','Daytime','Dupl','Other'], tablefmt='grid')
+        log.info("\n{table}",table=text)
+        result = self.tess.getCounters()
+        text = tabulate.tabulate([result], headers=['Total','Created','Upd Name','Upd Calib','No Upd Name','No Create Name'], tablefmt='grid')
+        log.info("\n{table}",table=text)
         result = self.getCounters()
         text = tabulate.tabulate([result], headers=['Queue Len','Aver Input','Aver T'], tablefmt='grid')
         log.info("\n{table}",table=text)
+
+
 
     # =============
     # Twisted Tasks
@@ -179,10 +221,10 @@ class DBaseService(Service):
         if not self.paused:
             while len(self.parent.queue['tess_register']):
                 row = self.parent.queue['tess_register'].popleft()
-                yield self.dbase.register(row)
+                yield self.register(row)
             while len(self.parent.queue['tess_readings']):
                 row = self.parent.queue['tess_readings'].popleft()
-                yield self.dbase.update(row, self.options['location_filter'])
+                yield self.update(row)
         self.wStatList.append( (l0, (datetime.datetime.utcnow() - t0).total_seconds(), ) )
         self.later = reactor.callLater(1,self.writter)
         
@@ -206,7 +248,7 @@ class DBaseService(Service):
         batch_min_size = self.options['location_minimun_batch_size']
         horizon        = self.options['location_horizon']
         pause          = self.options['location_pause']
-        yield self.dbase.tess_locations.sunrise(batch_perc=batch_perc, 
+        yield self.tess_locations.sunrise(batch_perc=batch_perc, 
             batch_min_size=batch_min_size, horizon=horizon, pause=pause)
       
    

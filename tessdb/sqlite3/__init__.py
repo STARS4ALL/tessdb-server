@@ -12,12 +12,29 @@
 # Twisted imports
 # ---------------
 
+from twisted.enterprise import adbapi
+
 #--------------
 # local imports
 # -------------
 
-from .dbase       import DBase
+from .date          import Date
+from .time          import TimeOfDay
+from .tess_units    import TESSUnits
+from .location      import Location
+from .tess          import TESS
+from .tess_readings import TESSReadings
+
+# ----------------
+# Global Functions
+# ----------------
+
+def getPool(*args, **kargs):
+	'''Get connetion pool for sqlite3 driver'''
+   	kargs['check_same_thread']=False
+   	return adbapi.ConnectionPool("sqlite3", *args, **kargs)
+
 
 __all__ = [
-	DBase
+	getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
 ]
