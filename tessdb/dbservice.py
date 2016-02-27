@@ -250,7 +250,7 @@ class DBaseService(Service):
     # ---------------------
 
     @inlineCallbacks
-    def sunrise(self):
+    def sunrise(self, today=utcnoon()):
         if self.paused or not self.options['location_filter']:
             returnValue(None)
 
@@ -265,7 +265,7 @@ class DBaseService(Service):
         horizon        = self.options['location_horizon']
         pause          = self.options['location_pause']
         yield self.tess_locations.sunrise(batch_perc=batch_perc, 
-            batch_min_size=batch_min_size, horizon=horizon, pause=pause, today=utcnoon())
+            batch_min_size=batch_min_size, horizon=horizon, pause=pause, today=today)
       
    
 

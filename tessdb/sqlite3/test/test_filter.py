@@ -178,7 +178,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         yield self.db.schema()
         yield self.registerInstrument()
         yield self.db.reloadService(options)
-        yield self.db.sunrise()
+        yield self.db.sunrise(today=DATE)
         self.row1 = { 'name': 'TESS-AH',  'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
         self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
 
