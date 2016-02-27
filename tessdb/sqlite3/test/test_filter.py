@@ -121,7 +121,7 @@ TEST_LOCATIONS = [
     {
         "location_id"   : 1, 
         "contact_email" : "astroam@gmail.com", 
-        "site"          : "Observatorio Astronomica de Mallorca", 
+        "site"          : "Observatorio Astronomico de Mallorca", 
         "latitude"      : 39.64269, 
         "longitude"     : 2.950533, 
         "elevation"     : 100, 
