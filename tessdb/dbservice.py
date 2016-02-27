@@ -77,21 +77,28 @@ class DBaseService(Service):
         self.wStatList = []
         self.sunriseTask  = task.LoopingCall(self.sunrise)
         setLogLevel(namespace='dbase', levelStr=options['log_level'])
+        
       
     #------------
     # Service API
     # ------------
 
+
+    def startTasks(self):
+        '''Start periodic tasks'''
+        self.later = reactor.callLater(2, self.writter)
+        self.sunriseTask.start(self.T_SUNRISE, now=True)
+
     @inlineCallbacks
-    def startService(self):
+    def schema(self):
+        '''Create the schema and populate database'''
+
         # Import appropiate DAO module
         if self.options['type'] == "sqlite3":
             from .sqlite3 import getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
         else:
             msg = "No database driver found for '{0}'".format(self.options['type'])
             raise ImportError( msg )
-        log.info("starting DBase Service")
-        
         # Create DAO objects
         self.pool           = getPool(self.options['connection_string'])
         self.tess           = TESS(self.pool)
@@ -101,7 +108,7 @@ class DBaseService(Service):
         self.date           = Date(self.pool)
         self.time           = TimeOfDay(self.pool)
 
-        # Create/Configure Database
+        # Create and Populate Database
         self.tess_readings.setOptions(location_filter=self.options['location_filter'], location_horizon=self.options['location_horizon'])
         yield self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'], replace=True)
         yield self.time.schema(json_dir=self.options['json_dir'], replace=True)
@@ -110,11 +117,15 @@ class DBaseService(Service):
         yield self.tess_units.schema(json_dir=self.options['json_dir'], replace=True)
         yield self.tess_readings.schema(json_dir=self.options['json_dir'], replace=True)
 
+    @inlineCallbacks
+    def startService(self):
+        log.info("starting DBase Service")
+        yield self.schema()
+        self.startTasks()
         # Remainder Service initialization
         Service.startService(self)
         log.info("Database operational.")
-        self.later = reactor.callLater(2, self.writter)
-        self.sunriseTask.start(self.T_SUNRISE, now=True)
+      
 
     def stopService(self):
         self.pool.close()

@@ -42,7 +42,27 @@ from twisted.internet.defer import inlineCallbacks
 # -------------
 
 from   tessdb.error import ReadingKeyError, ReadingTypeError
-from   tessdb.sqlite3 import DBase
+from   tessdb.dbservice import DBaseService
+
+
+# --------------------------------------
+# Database Service configuration options
+#---------------------------------------
+
+options = {
+    'log_level': 'info',
+    'type': 'sqlite3',
+    'connection_string': 'tesoro.db',
+    'year_start' : 2015,
+    'year_end' : 2026,
+    'date_fmt' : '%Y/%m/%d',
+    'json_dir' : 'foo',
+    'location_filter': False,
+    'location_horizon': '-0:34',
+    'location_batch_size' : 10,
+    'location_minimum_batch_size' : 1,
+    'location_pause': 0,
+}
 
 
 class RegistryNominalTestCase(unittest.TestCase):
@@ -50,11 +70,11 @@ class RegistryNominalTestCase(unittest.TestCase):
     @inlineCallbacks
     def setUp(self):
         try:
-            os.remove('tesoro.db')
+            os.remove(options['connection_string'])
         except OSError as e:
             pass
-        self.db = DBase("tesoro.db")
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, True, '-0:34', replace=False)
+        self.db = DBaseService(parent=None, options=options)
+        yield self.db.schema()
         self.db.tess.resetCounters()
 
     def tearDown(self):

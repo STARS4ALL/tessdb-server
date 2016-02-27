@@ -43,19 +43,38 @@ from twisted.internet.defer import inlineCallbacks
 # -------------
 
 from   tessdb.error import ReadingKeyError, ReadingTypeError
-from   tessdb.sqlite3 import DBase
+from   tessdb.dbservice import DBaseService
 
+
+# --------------------------------------
+# Database Service configuration options
+#---------------------------------------
+
+options = {
+    'log_level': 'info',
+    'type': 'sqlite3',
+    'connection_string': 'tesoro.db',
+    'year_start' : 2015,
+    'year_end' : 2026,
+    'date_fmt' : '%Y/%m/%d',
+    'json_dir' : 'foo',
+    'location_filter': False,
+    'location_horizon': '-0:34',
+    'location_batch_size' : 10,
+    'location_minimum_batch_size' : 1,
+    'location_pause': 0,
+}
 
 class UpdateUnregisteredTestCase(unittest.TestCase):
 
     @inlineCallbacks
     def setUp(self):
         try:
-            os.remove('tesoro.db')
+            os.remove(options['connection_string'])
         except OSError as e:
             pass
-        self.db = DBase("tesoro.db")
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
+        self.db = DBaseService(parent=None, options=options)
+        yield self.db.schema()
 
     def tearDown(self):
         self.db.pool.close()
@@ -81,11 +100,11 @@ class UpdateRegisteredTestCase(unittest.TestCase):
     @inlineCallbacks
     def setUp(self):
         try:
-            os.remove('tesoro.db')
+            os.remove(options['connection_string'])
         except OSError as e:
             pass
-        self.db = DBase("tesoro.db")
-        yield self.db.schema('foo', '%Y/%m/%d', 2015, 2026, False, '-0:34', replace=False)
+        self.db = DBaseService(parent=None, options=options)
+        yield self.db.schema()
         row = { 'name': 'test1', 'mac': '12:34:56:78:90:AB', 'calib': 10.0}
         yield self.db.register(row)
        
