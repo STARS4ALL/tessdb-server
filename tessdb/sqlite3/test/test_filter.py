@@ -109,18 +109,6 @@ def _assignLocations(transaction, rows):
 
 TEST_LOCATIONS = [
     {
-        "location_id"   : -1, 
-        "contact_email" : "Unknown", 
-        "site"          : "Unknown", 
-        "longitude"     : "Unknown", 
-        "latitude"      : "Unknown", 
-        "elevation"     : "Unknown", 
-        "zipcode"       : "Unknown", 
-        "location"      : "Unknown", 
-        "province"      : "Unknown", 
-        "country"       : "Unknown"
-    }, 
-    {
         "location_id"   : 0, 
         "contact_email" : "asociacion@astrohenares.org", 
         "site"          : "Centro de Recursos Asociativos El Cerro", 

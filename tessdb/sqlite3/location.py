@@ -55,20 +55,19 @@ from .utils import Table, fromJSON, utcnoon
 
 # default location if no JSON file is found 
 # Longitude/latitude are used in tessdb for sunrise/sunset calculation
-DEFAULT_LOCATION = [
-    {
-        "location_id"   : -1, 
-        "contact_email" : utils.UNKNOWN, 
-        "site"          : utils.UNKNOWN, 
-        "longitude"     : utils.UNKNOWN, 
-        "latitude"      : utils.UNKNOWN, 
-        "elevation"     : utils.UNKNOWN, 
-        "zipcode"       : utils.UNKNOWN, 
-        "location"      : utils.UNKNOWN, 
-        "province"      : utils.UNKNOWN, 
-        "country"       : utils.UNKNOWN
-    }, 
-]
+DEFAULT_LOCATION = {
+    "location_id"   : -1, 
+    "contact_email" : utils.UNKNOWN, 
+    "site"          : utils.UNKNOWN, 
+    "longitude"     : utils.UNKNOWN, 
+    "latitude"      : utils.UNKNOWN, 
+    "elevation"     : utils.UNKNOWN, 
+    "zipcode"       : utils.UNKNOWN, 
+    "location"      : utils.UNKNOWN, 
+    "province"      : utils.UNKNOWN, 
+    "country"       : utils.UNKNOWN
+} 
+
 
 # -----------------------
 # Module Global Variables
@@ -211,7 +210,8 @@ class Location(Table):
     @inlineCallbacks
     def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, Location.FILE), DEFAULT_LOCATION)
+        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, Location.FILE), [DEFAULT_LOCATION])
+        read_rows.append(DEFAULT_LOCATION)
         returnValue(read_rows)
 
     # ===============

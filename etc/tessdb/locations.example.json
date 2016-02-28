@@ -26,6 +26,7 @@
 # ----------------------------
 
 # location_id = -1 is reserved for the 'Unknown' location
+# Thre is no need to include it,since the program already does it.
 
 [
     {

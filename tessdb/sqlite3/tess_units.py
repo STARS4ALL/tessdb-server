@@ -50,8 +50,7 @@ from .utils import Table, fromJSON
 # ----------------
 
 # Default Units data if no JSON file is present
-DEFAULT_UNITS = [
-     {  
+DEFAULT_UNITS = {  
     "units_id"                  : 0, 
     "frequency_units"           : "Hz",
     "magnitude_units"           : "Mv/arcsec^2",
@@ -65,8 +64,8 @@ DEFAULT_UNITS = [
     "valid_since"               : utils.START_TIME,
     "valid_until"               : utils.INFINITE_TIME,
     "valid_state"               : utils.CURRENT
-    }
-]
+}
+
 
 # -----------------------
 # Module Global Variables
@@ -213,7 +212,7 @@ class TESSUnits(Table):
     @inlineCallbacks
     def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESSUnits.FILE), DEFAULT_UNITS)
+        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESSUnits.FILE), [DEFAULT_UNITS])
         returnValue(read_rows)
 
    # ================
