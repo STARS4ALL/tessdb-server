@@ -167,7 +167,6 @@ class FixedInstrumentTestCase(unittest.TestCase):
         yield self.db.schema()
         yield self.registerInstrument()
         yield self.db.reloadService(options)
-        yield self.db.sunrise(today=TODAY)
         self.row1 = { 'name': 'TESS-AH',  'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
         self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
 
@@ -190,11 +189,29 @@ class FixedInstrumentTestCase(unittest.TestCase):
     # ----------
 
     @inlineCallbacks
+    def test_updateRejLackSunrise(self):
+        '''
+        Both rejected by lack of sunrise/sunse data in their locations
+        '''
+        now = datetime.datetime(2016, 02, 21, 13, 00, 00)
+        self.row1['tstamp'] = now
+        yield self.db.update(self.row1)
+        self.row2['tstamp'] = now
+        yield self.db.update(self.row2)
+        self.assertEqual(self.db.tess_readings.nreadings,       2)
+        self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
+        self.assertEqual(self.db.tess_readings.rejLackSunrise,  2)
+        self.assertEqual(self.db.tess_readings.rejSunrise,      0)
+        self.assertEqual(self.db.tess_readings.rejDuplicate,    0)
+        self.assertEqual(self.db.tess_readings.rejOther,        0)
+
+    @inlineCallbacks
     def test_updateAtDaytime(self):
         '''
         Both will be rejected, since the timestamp at both locations 
         is always at day, no matter the day of the year
         '''
+        yield self.db.sunrise(today=TODAY)
         now = datetime.datetime(2016, 02, 21, 13, 00, 00)
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
@@ -213,6 +230,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         Both will be accepted, since the timestamp at both locations
         is always at night, no matter the day of the year
         '''
+        yield self.db.sunrise(today=TODAY)
         now = datetime.datetime(2016, 02, 21, 22, 00, 00)
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
@@ -231,6 +249,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         OAM observatory at night -> acepted
         AH observatory at day -> rejected
         '''
+        yield self.db.sunrise(today=TODAY)
         now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
