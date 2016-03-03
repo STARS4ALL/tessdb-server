@@ -1,6 +1,47 @@
-
+Prioridad Alta
+==============
 *) Actualizar documentacion
 *) Estudiar si merece la pena poner nuevas constraints UNIQUE NOT NULL a tess_t.name y tess_t.mac_address
-*) Logrotate en la Pi al mediodia
-Con muy baja prioridad si es que es interesante:
+*) Ansible de despliegue
+ - Logrotate en la Pi al mediodia
+
+Prioridad media
+===============
+*) Ampliar la dimension tiempo con segindos
+ - de momento solo con resolucion 30 segundos => redondeo a 30 seg
+ - hacer el redondeo configurable para repoblar la BD
+*) 
+
+Prioridad baja
+=============
+*) Meter mas metadatos a los instrumentos (ver addednum)
+ - Esto implica cambios en el firmware, en el protocolo JSON/MQTT y en la BD
+ - hay que hacerlo de forma coordinada.
+ - Mantener compatibilidad con rev: 1
+ - No snowflakes en la BD, "aplanar campos" canal1, canal2, canal3, canal4 
+ - muchos de los metadatos irán en la info de mensaje de registro del TESS.
 *) Embeber servidor web de twisted.
+
+ADDENDUM
+========
+
+Formato estándar de IDA-IAU con info de la siguiente cabecera:
+
+# Device type: TESS-V1
+# Data supplier: Alejandro Sanchez de Miguel  / UCM
+# Local timezone: UTC+1
+# Time Synchronization: NTP
+# Moving / Stationary position: STATIONARY
+# Moving / Fixed look direction: FIXED
+# Number of channels: 1
+# Filters per channel: HOYA CM-500
+# Measurement direction per channel: 0., 0.
+# Field of view: 20
+
+Otro descriptor de las cabeceras que se usan actualmente es # Device type: SQM-LU
+# SQM cover offset value: -0.11
+pero en nuestro caso la calibración se realizará con la carcasa (a través de la ventana) y no es relevante.
+
+Para TESS-V1 sólo hay un canal pero habrá con suerte de varios canales (colores). Seguramente prepararemos algunos que apunten a diferentes direcciones fijas y no sólo el cénit (45 deg en dirección norte, por ejemplo). Otro asunto importante es el campo de visión FOV.
+Propongo emntonces que se tenga en cuenta añadiendo si hace falta algún campo.
+
