@@ -9,6 +9,7 @@
 # System wide imports
 # -------------------
 
+from __future__ import division
 import os
 import json
 import datetime
@@ -46,11 +47,11 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def roundDateTime(ts):
+def roundDateTime(ts, secs_resol):
    '''Round a timestamp to the nearest minute'''
-   tsround = ts + datetime.timedelta(minutes=0.5)
-   time_id = tsround.hour*100   + tsround.minute
-   date_id = tsround.year*10000 + tsround.month*100 + tsround.day
+   tsround = ts + datetime.timedelta(seconds=0.5*secs_resol)
+   time_id = tsround.hour*10000 + tsround.minute*100 + tsround.second
+   date_id = tsround.year*10000 + tsround.month *100 + tsround.day
    return date_id, time_id
 
 

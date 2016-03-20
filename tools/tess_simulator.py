@@ -64,7 +64,7 @@ class TESS(Service):
                 'seq': self.seq,
                 'name' : NAME,
                 'freq' : self.freq,
-                'mag'  :  self.mag ,
+                'mag'  : self.mag,
                 'tamb' : self.tamb,
                 'tsky' : self.tsky,
                 'rev'  : PROTOCOL_REVISION,

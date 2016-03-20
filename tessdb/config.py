@@ -116,7 +116,7 @@ def loadCfgFile(path):
     options['dbase']['year_start']        = parser.getint("dbase","year_start")
     options['dbase']['year_end']          = parser.getint("dbase","year_end")
     options['dbase']['date_fmt']          = parser.get("dbase","date_fmt")
-
+    options['dbase']['secs_resolution']   = parser.getint("dbase","secs_resolution")
 
     options['dbase']['location_filter']     = parser.getboolean("dbase","location_filter")
     options['dbase']['location_horizon']    = parser.get("dbase","location_horizon")

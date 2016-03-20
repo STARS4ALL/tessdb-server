@@ -63,12 +63,12 @@ log = Logger(namespace='dbase')
 def _populateRepl(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
-        "INSERT OR REPLACE INTO time_t VALUES(?,?,?,?,?)", rows)
+        "INSERT OR REPLACE INTO time_t VALUES(?,?,?,?,?,?)", rows)
 
 def _populateIgn(transaction, rows):
     '''Dimension initial data loading (ignore flavour)'''
     transaction.executemany(
-        "INSERT OR IGNORE INTO time_t VALUES(?,?,?,?,?)", rows)
+        "INSERT OR IGNORE INTO time_t VALUES(?,?,?,?,?,?)", rows)
 
 # ============================================================================ #
 #                               TIME OF DAY TABLE (DIMENSION)
@@ -76,15 +76,15 @@ def _populateIgn(transaction, rows):
 
 class TimeOfDay(Table):
     
-    ONE         = datetime.timedelta(minutes=1)
-    START_TIME  = datetime.datetime(year=1900,month=1,day=1,hour=0,minute=0)
-    END_TIME    = datetime.datetime(year=1900,month=1,day=1,hour=23,minute=59)
+   
+    START_TIME  = datetime.datetime(year=1900,month=1,day=1,hour=0,minute=0,second=0)
+    END_TIME    = datetime.datetime(year=1900,month=1,day=1,hour=23,minute=59,second=59)
 
-    def __init__(self, pool):
+    def __init__(self, pool, secs_resol):
         '''Create and Populate the SQlite Time of Day Table'''
         Table.__init__(self, pool)
-
-
+        self.secs_resol = secs_resol
+        self.ONE        = datetime.timedelta(seconds=secs_resol)
 
     def table(self):
         '''
@@ -100,11 +100,11 @@ class TimeOfDay(Table):
             time           TEXT,
             hour           INTEGER,
             minute         INTEGER,
+            second         INTEGER,
             day_fraction   REAL
             );
             '''
         )
-
 
 
     def populate(self, json_dir, replace):
@@ -135,19 +135,21 @@ class TimeOfDay(Table):
                 utils.UNKNOWN,
                 utils.UNKNOWN,
                 utils.UNKNOWN,
+                utils.UNKNOWN,
             )
         ]
         while time <= TimeOfDay.END_TIME:
             timeList.append(
                 (
-                    time.hour*100+time.minute, # Key
-                    time.strftime("%H:%M"),    # SQLite time string
-                    time.hour,            # hour
-                    time.minute,          # minute
-                    (time.hour*60+time.minute) / (24*60.0), # fraction of day
+                    time.hour*10000+time.minute*100+time.second, # Key
+                    time.strftime("%H:%M:%S"), # SQLite time string
+                    time.hour,                 # hour
+                    time.minute,               # minute
+                    time.second,               # second
+                    (time.hour*3600+time.minute*60+time.second) / (24*60*60.0), # fraction of day
                 )
             )
-            time = time + TimeOfDay.ONE
+            time = time + self.ONE
         return timeList
 
 

@@ -33,6 +33,7 @@ from twisted.internet.threads import deferToThread
 # -------------
 
 from .logger import setLogLevel
+from .error  import DiscreteValueError
 
 # ----------------
 # Module constants
@@ -69,6 +70,7 @@ class DBaseService(Service):
     # Sunrise/Sunset Task period in seconds
     T_SUNRISE = 3600
     T_QUEUE_POLL = 1
+    SECS_RESOLUTION = [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
 
     def __init__(self, parent, options, **kargs):
         Service.__init__(self)
@@ -80,6 +82,8 @@ class DBaseService(Service):
         self.nrowsStatList = []
         self.sunriseTask  = task.LoopingCall(self.sunrise)
         setLogLevel(namespace='dbase', levelStr=options['log_level'])
+        if self.options['secs_resolution'] not in self.SECS_RESOLUTION:
+            raise DiscreteValueError(self.options['secs_resolution'], self.SECS_RESOLUTION)
         
       
     #------------
@@ -109,7 +113,7 @@ class DBaseService(Service):
         self.tess_readings  = TESSReadings(self.pool, self)
         self.tess_locations = Location(self.pool)
         self.date           = Date(self.pool)
-        self.time           = TimeOfDay(self.pool)
+        self.time           = TimeOfDay(self.pool, self.options['secs_resolution'])
 
         # Create and Populate Database
         self.tess_readings.setOptions(location_filter=self.options['location_filter'], location_horizon=self.options['location_horizon'])

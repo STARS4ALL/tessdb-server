@@ -4,6 +4,15 @@
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
 
+class DiscreteValueError(ValueError):
+    '''Discrete Value is not in range'''
+    def __str__(self):
+        s = self.__doc__
+        if self.args:
+            s = '{0}: {1} -> {2}'.format(s, self.args[0], str(self.args[1]))
+        s = '{0}.'.format(s)
+        return s
+
 class ValidationError(ValueError):
     pass
     
