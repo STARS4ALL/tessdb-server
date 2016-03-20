@@ -9,12 +9,14 @@
 #
 # A list of location entries. 
 # Each location is a list with the following fields:
-# Longitude/latitude are used in tessdb for sunrise/sunset calculation
+# Longitude/latitude are used in tessdb for sunrise/sunset calculation.
+# There is no need to include a location_id at all in this file
+# The unique identifier is the 'site' field
 # ----------------------------
 #    [
-#           location_id             INTEGER PRIMARY KEY,
-#            contact_email           TEXT,
+#            location_id             INTEGER PRIMARY KEY,
 #            site                    TEXT,
+#            contact_email           TEXT,
 #            longitude               REAL, (in degrees)
 #            latitude                REAL, (in degrees)
 #			 elevation               REAL, (in meters)
@@ -26,7 +28,8 @@
 # ----------------------------
 
 # location_id = -1 is reserved for the 'Unknown' location
-# Thre is no need to include it,since the program already does it.
+# There is no need to include the Unknown location, 
+# since the program already does it.
 
 [
     {
