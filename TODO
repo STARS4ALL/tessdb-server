@@ -4,12 +4,6 @@ Prioridad Alta
 *) Ansible de despliegue
  - Logrotate en la Pi al mediodia
 
-Prioridad media
-===============
-*) Ampliar la dimension tiempo con segindos
- - de momento solo con resolucion 30 segundos => redondeo a 30 seg
- - hacer el redondeo configurable para repoblar la BD
-*) 
 
 Prioridad baja
 =============
