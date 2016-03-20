@@ -1,7 +1,6 @@
 Prioridad Alta
 ==============
 *) Actualizar documentacion
-*) Filtro para descartar medidas que no esten en una lista de nombres.
 *) Ansible de despliegue
  - Logrotate en la Pi al mediodia
 
