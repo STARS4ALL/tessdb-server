@@ -16,7 +16,7 @@ from tessdb.logger import startLogging, setLogLevel
 NAME = 'TESS-SIMULATOR'
 MAC = '01:23:45:67:89:AB'
 CALIB = 10.0
-TX_PERIOD = 60
+TX_PERIOD = 5
 PROTOCOL_REVISION = 1
 TOPIC_REGISTER = "STARS4ALL/register"
 TOPIC_READINGS = "STARS4ALL/01/reading"
@@ -40,7 +40,7 @@ class TESS(Service):
         log.info("connect yielded res={o!s}", o=kk)
         self.protocol.publish(topic=TOPIC_REGISTER, qos=QoS, message=json.dumps(self.register()))
         self.task = task.LoopingCall(self.publish)
-        self.task.start(TX_PERIOD)
+        self.task.start(TX_PERIOD, now=False)
 
     def publish(self):
         self.protocol.publish(topic=TOPIC_READINGS, qos=QoS, message=json.dumps(self.sample()))
