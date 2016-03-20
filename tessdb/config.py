@@ -104,6 +104,7 @@ def loadCfgFile(path):
     options['mqtt']['username']       = parser.get("mqtt","username")
     options['mqtt']['password']       = parser.get("mqtt","password")
     options['mqtt']['keepalive']      = parser.getint("mqtt","keepalive")
+    options['mqtt']['tess_filter']    = chop(parser.get("mqtt","tess_filter"),',')
     options['mqtt']['tess_topics']    = chop(parser.get("mqtt","tess_topics"),',')
     options['mqtt']['tess_topic_register'] = parser.get("mqtt","tess_topic_register")
 

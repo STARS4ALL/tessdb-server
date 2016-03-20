@@ -65,6 +65,15 @@ tess_topics = STARS4ALL/+/reading
 # Reloadable property
 validation = yes
 
+# Instrument Filter.
+# Discards instruments readings and registrations 
+# whose name do not belong to this comma separated list
+# Useful to keep your own readings database when sharing
+# MQTT topic with other TESS instruments
+# Leave blank if not used.
+# Reloadable property
+tess_filter = 
+
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = info

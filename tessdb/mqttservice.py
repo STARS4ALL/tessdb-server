@@ -116,14 +116,15 @@ class MQTTService(Service):
         self.npublish  = 0
         self.nreadings = 0
         self.nregister = 0
+        self.nfilter   = 0
 
     def getCounters(self):
-        return [ self.npublish, self.nreadings, self.nregister ]
+        return [ self.npublish, self.nreadings, self.nregister, self.nfilter ]
 
     def logCounters(self):
         '''log stat counters'''
         result = self.getCounters()
-        text = tabulate.tabulate([result], headers=['Total','Readings','Register'], tablefmt='grid')
+        text = tabulate.tabulate([result], headers=['Total','Readings','Register','Discarded'], tablefmt='grid')
         log.info("\n{table}",table=text)
 
     # --------------
@@ -248,6 +249,13 @@ class MQTTService(Service):
             log.error('{excp!r}', excp=e)
             return
         row['tstamp'] = now     # As a datetime instead of string
+
+        # Filter out unneeded data
+        if len(self.options['tess_filter']) and not row['name'] in self.options['tess_filter']:
+            log.debug('Filter is {filter!s}',filter=self.options['tess_filter'])
+            log.debug('Discarded payload from {name}', name=row['name'])
+            self.nfilter += 1
+            return
 
         # Handle incoming TESS Data
         topic_part  = topic.split('/')
