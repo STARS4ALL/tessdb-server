@@ -1,7 +1,6 @@
 # tessdb (overview)
 
-Linux service to collect measurements pubished by TESS Sky Quality Meter via MQTT.
-TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www.observatorioremoto.com/TESS.pdf)
+Linux service to collect measurements pubished by TESS Sky Quality Meter via MQTT. TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www.observatorioremoto.com/TESS.pdf)
 
 ## Description
 
@@ -14,21 +13,15 @@ that uses a [custom Twisted library implementing the MQTT protocol](https://gith
 Desktop applicatons may query the database to generate reports and graphs
 using the accumulated, historic data.
 
+The Windows version works as a Windows service, but the Linux version has further functionality like servcie reload and automatic daily logfile and rotation.
+
 These data sources are available:
 
 + individual samples (real time, 5 min. aprox between samples).
 
-The sampling period should be >= 1 min.
+Instrument should send their readings at twice the time resolution specified in the config file (in seconds).
 
 **Warning**: Time is UTC, not local time.
-
-## Operation & Maintenance
-
-See the [MAINTENANCE.md file](doc/MAINTENANCE.md)
-
-## Data Model
-
-See the [DATABASE.md file](doc/DATABASE.md)
 
 # INSTALLATION
     
@@ -56,7 +49,12 @@ or from GitHub:
 * All executables are copied to `/usr/local/bin`
 * The database is located at `/var/dbase/tess.db` by default
 * The log file is located at `/var/log/tessdb.log`
-
+* The following required PIP packages will be automatically installed:
+    - twisted,
+    - twisted-mqtt
+    - pyephem
+    - tabulate
+    
 ### Start up Verification
 
 Type `sudo tessdb -k` to start the service in foreground with console output.
@@ -66,7 +64,7 @@ Type `sudo update-rc.d tessdb defaults` to start it at boot time.
 
 ## Windows installation
 
-## Pregrequisites
+## Requirements
 
 (Tested on Windows XP SP1 & python 2.7.10)
 * Have [Python 2.7 for Windows](https://www.python.org/downloads/windows/) installed.
@@ -102,12 +100,18 @@ and type:
 * The executables (.bat files) are located in the same folder `C:\tessdb`
 * The database is located at `C:\tessdb\dbase` by default. It is strongly recommeded that you leave it there.
 * The log file is located at `C:\tessdb\log\tessdb.log`
-
+* The following required PIP packages will be automatically installed:
+    - twisted,
+    - twisted-mqtt
+    - pyephem
+    - tabulate
+    
 ### Start up and Verification
 
 In the same CMD console, type`.\tessdb.bat`to start it in forground and verify that it works.
 
 Go to the Services Utility and start the TESSDB database service.
+
 
 # CONFIGURATION
 
@@ -118,6 +122,7 @@ There is a small configuration file for this service:
 
 This file is self explanatory. 
 In special, the database file name and location is specified in this file.
+Some of the properities marked in this file are makred as *reloadable property*. This means that this value can be changed and the process reloads its new value on the fly.
 
 ## Logging
 
@@ -125,4 +130,134 @@ Log file is usually placed under `/var/log/tessdb.log` in Linux or under `C:\tes
 Default log level is `info`. It generates very litte logging at this level.
 File is rotated by logrotate **only under Linux**. 
 For Windows, it requires support from an exteral log rotator software such as [LogRotateWin](http://sourceforge.net/projects/logrotatewin/)
+
+## Server Start/Stop/Restart
+
+### Under Linux
+
+* Service status: `sudo service emadb status`
+* Start Service:  `sudo service emadb start`
+* Stop Service:   `sudo service emadb stop`
+* Restart Service: `sudo service emadb restart`. A service restart kills the process and then starts a new one
+
+### Under Windows
+
+The start/stop/pause operations can be performed with the Windows service GUI tool
+**If the config.ini file is not located in the usual locatioon, you must supply its path to the tool as extra arguments**
+
+## Server Pause
+
+The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enquued and not written to the database. This is usefull to perform delicate operations on the database without loss of data. Examples:
+
+* Compact the database using the SQLite VACUUM pragma
+* Migrating data from tables.
+* etc.
+
+### Under Linux
+
+To pause the server, type: `sudo service emadb pause` and watch the log file output wit `tail -f /var/log/emadb.log`
+
+To resume normal operation type `sudo service tessdb resume` and wautch the same log file. Service pause/resume use signals `SIGUSR1` and `SIGUSR2`.
+
+### Under Windows
+
+Server pause/resume is made through the standard service GUI tool by clicking the Pasue and Resume buttons.
+
+##  Service reload
+
+During a reload the service is not stopped and re-reads the new values form the configuration file and apply the changes. In general, all aspects not related to maintaining the current connection to the MQTT broker or changing the database schema can be reloaded. The full list is described in the section B above.
+
+* *Linux:* The `service emadb reload` will keep the MQTT connection intact. 
+* *Windows:* There is no GUI button in the service tool for a reload. You must execute an auxiliar script `C:\emadb\winreload.py` by double-clicking on it. 
+
+In both cases, watch the log file to ensure this is done.
+
+
+# DATA MODEL
+
+## Dimensional Modelling
+
+The data model follows the [dimensional modelling]
+(https://en.wikipedia.org/wiki/Dimensional_modeling) approach by Ralph Kimball. More references can also be found in [Star Schemas](https://en.wikipedia.org/wiki/Star_schema).
+
+## The data model
+
+The figure below shows the layout of **tessdb**.
+
+![TESS Database Model](doc/tessdb-full.png)
+
+### Dimension Tables
+
+* `date_t`      : preloaded from 2016 to 2026
+* `time_t`      : preloaded, with seconds resolution (configurable)
+* `tess_t`      : registered TESS instruments collecting data
+* `location_t`  : locations where instruments are deployed
+* `tess_units_t`     : an assorted collection of unit labels for reports, preloaded with current units.
+* `tess_v`      : View with TESS instrument and current location. It is recommended that reporting applications use this view, instead of the underlying `tess_t` and `location_t` tables.
+
+#### Instrument Dimension
+
+This dimension holds the current list of TESS instruments. 
+
+* The real key is an artificial key `tess_id` linked to the Fact table.
+* The `mac_address` could be the natural key if it weren't for the calibration constant history tracking.
+* The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name.
+* A TESS instrument name can be changed as long as there is no other instrument with the same name.
+* The `location_id` is a reference to the current location assigned to the instrument.
+* Location id -1 denotes the "Unknown" location.
+* The `calibration_k` holds the current value of the instrument calibration constant.
+* A history of calibration constant changes are maintained in the `tess_t` table if the instrument is ever recalibrated. 
+* Columns `calibrated_since` and `calibrated_until`hold the timestamps where the calibration constant is valid. 
+* Column `calibrated_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
+* The current calibration constant has its indicator set to `Current` and the expiration date in a far away future (Y2999).
+
+#### Unit dimension
+
+The `tess_units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects various labels denoting
+the current measurement units of samples in the fact table. 
+
+* Columns `valid_since`, `valid_until` and `valid_state` keep track of units change in a similar technique as above should the units change.
+
+### Fact Tables
+
+* `tess_readings_t` : Accumulating snapshot fact table containing measurements from several TESS instruments.
+
+TESS devices with accelerometer will send `azimuth` and `altitude` values, otherwise they are `NULL`.
+
+TESS devices with a GPS will send `longitude`, `latitude` and `height` values, otherwise they are `NULL`.
+
+# OPERATION & MAINTENANCE
+
+## TESS instruments and locations
+There is no master file concerning TESS instruments since they register themselves on power-up.
+
+There is a master file of all locations relevant to the deployment of TESS instruments: `config/locations.json`).
+
+It is not possible to assign beforehand where a given TESS instruments will be deployed. Besides, a given TESS instruments could be temporally moved from one site to another. So, to maintain the current location where a given TESS is deployed, there is another file named `config/tess_location.json` where this relationship is established.
+
+## Instrument filtering
+*For personal use only*. In order to reject readings from other TESS instruments coming to your own personal database, you can specify an instrument name (or a list of instrument names). All readings whose instrument names do no match the one defined in the configuration file will be silently discarded.
+
+## Sunrise / Sunset filtering
+It is recommended to activate the sunrise/sunset filter to reject TESS readings coming in daytime and avoid unnecessary grouth in the database.
+Each location has a latitude (degrees), longitude (degrees) and elevation (meters) which can be neglected is this filter is not used. 
+
+Activating this filter have the following conecuences:
+1. Once a day, at arount 00:00 UTC, all locations will have their sunrise and sunset time computed, according to the local horizon defined (configurable).
+2. Instruments assigned to locations found to be in daytime will have their readings rejected.
+2. ***Instruments not assigned to a known location will have their readings rejected***.
+3. Instruments assigned to Locations with `NULL` or `Unknown` longitude, latitude or elevation columns will have their readings rejected.
+
+## SQLite Database Maintenance
+***Only in Linux*** The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program 
+is first put in pause mode, do the copy and then resumes operation.
+
+
+
+
+
+
+
+
+
 
