@@ -97,9 +97,9 @@ elif os.name == "nt":
         url              = 'http://github.com/astrorafael/tessdb/',
         classifiers      = classifiers,
         packages         = ["tessdb","tessdb.sqlite3"],
-        install_requires = ['twisted >= 15.4.0','twisted-mqtt','pyephem >= 3.7.6'],
+        install_requires = ['twisted >= 15.4.0','twisted-mqtt','pyephem >= 3.7.6','tabulate'],
         data_files       = [ 
-          (r'C:\tessdb',          [r'usr\local\bin\tessdb.bat',r'usr\local\bin\tess']),
+          (r'C:\tessdb',          [r'usr\local\bin\tessdb.bat',r'usr\local\bin\tess',r'usr\local\bin\winreload.py']),
           (r'C:\tessdb\dbase',    [r'var\dbase\placeholder.txt']),
           (r'C:\tessdb\log',      [r'var\log\placeholder.txt']),
           (r'C:\tessdb\config',   [r'etc\tessdb\config.example.ini',r'etc\tessdb\tess_units.example.json', r'etc\tessdb\tess_location.example.json', r'etc\tessdb\locations.example.json']),
