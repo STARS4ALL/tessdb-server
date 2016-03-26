@@ -155,7 +155,7 @@ class DBaseService(Service):
         self.tess_readings.setOptions(location_filter=new_options['location_filter'], 
             location_horizon=new_options['location_horizon'])
         yield self.date.populate(json_dir=new_options['json_dir'], replace=True)
-        yield self.time.populate(json_dir=new_options'json_dir'], replace=True)
+        yield self.time.populate(json_dir=new_options['json_dir'], replace=True)
         yield self.tess_locations.populate(json_dir=new_options['json_dir'], replace=True)
         yield self.tess_units.populate(json_dir=new_options['json_dir'], replace=True)
         yield self.tess.populate(json_dir=new_options['json_dir'], replace=True)
