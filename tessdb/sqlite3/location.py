@@ -79,7 +79,7 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _populateRepl(transaction, rows):
+def _populate(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
         '''INSERT OR REPLACE INTO location_t (
@@ -106,33 +106,6 @@ def _populateRepl(transaction, rows):
             :country
         )''', rows)
         
-def _populateIgn(transaction, rows):
-    '''Dimension initial data loading (ignore flavour)'''
-    transaction.executemany(
-        '''INSERT OR IGNORE INTO location_t (
-            location_id,
-            contact_email,
-            site,
-            longitude,
-            latitude,
-            elevation,
-            zipcode,
-            location,
-            province,
-            country
-        ) VALUES (
-            :location_id,
-            :contact_email,
-            :site,
-            :longitude,
-            :latitude,
-            :elevation,
-            :zipcode,
-            :location,
-            :province,
-            :country
-        )''', rows)
-    
 
 def _updateSunrise(transaction, rows):
     '''Update sunrise/sunset in given rows'''
@@ -189,18 +162,15 @@ class Location(Table):
 
 
     @inlineCallbacks
-    def populate(self, json_dir, replace):
+    def populate(self, json_dir):
         '''
         Populate the SQLite Location Table
         Returns a Deferred
         '''
         read_rows = yield self.rows(json_dir)
-        if replace:
-            log.info("Replacing Units Table data")
-            yield self.pool.runInteraction( _populateRepl, read_rows )
-        else:
-            log.info("Populating Units Table if empty")
-            yield self.pool.runInteraction( _populateIgn, read_rows )
+        log.info("Populating/Replacing Units Table data")
+        yield self.pool.runInteraction( _populate, read_rows )
+      
 
 
     # --------------

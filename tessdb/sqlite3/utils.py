@@ -118,7 +118,7 @@ class Table(object):
         return succeed(None)
 
     @inlineCallbacks
-    def schema(self, json_dir, replace):
+    def schema(self, json_dir):
         '''
         Generates a table, taking an open data connection
         and a replace flag.
@@ -126,4 +126,4 @@ class Table(object):
         yield self.table()
         yield self.indices()
         yield self.views()
-        yield self.populate(json_dir, replace)
+        yield self.populate(json_dir)

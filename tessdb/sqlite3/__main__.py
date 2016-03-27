@@ -56,12 +56,12 @@ def main():
     date           = Date(pool)
     timeOfDay      = TimeOfDay(pool)
 
-    yield date.schema(date_fmt='%Y/%m/%d', year_start=2016, year_end=2026, replace=True)
-    yield timeOfDay.schema(json_dir='etc/tessdb/config', replace=True)
-    yield tess_locations.schema(json_dir='etc/tessdb/config', replace=True)
-    yield tess.schema(json_dir='etc/tessdb/config', replace=True)
-    yield tess_units.schema(json_dir='etc/tessdb/config', replace=True)
-    yield tess_readings.schema(json_dir='etc/tessdb/config', replace=True)
+    yield date.schema(date_fmt='%Y/%m/%d', year_start=2016, year_end=2026)
+    yield timeOfDay.schema(json_dir='etc/tessdb/config')
+    yield tess_locations.schema(json_dir='etc/tessdb/config')
+    yield tess.schema(json_dir='etc/tessdb/config')
+    yield tess_units.schema(json_dir='etc/tessdb/config')
+    yield tess_readings.schema(json_dir='etc/tessdb/config')
 
     reactor.stop()
 

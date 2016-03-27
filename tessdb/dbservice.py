@@ -117,12 +117,12 @@ class DBaseService(Service):
 
         # Create and Populate Database
         self.tess_readings.setOptions(location_filter=self.options['location_filter'], location_horizon=self.options['location_horizon'])
-        yield self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'], replace=True)
-        yield self.time.schema(json_dir=self.options['json_dir'], replace=True)
-        yield self.tess_locations.schema(json_dir=self.options['json_dir'], replace=True)
-        yield self.tess.schema(json_dir=self.options['json_dir'], replace=True)
-        yield self.tess_units.schema(json_dir=self.options['json_dir'], replace=True)
-        yield self.tess_readings.schema(json_dir=self.options['json_dir'], replace=True)
+        yield self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'])
+        yield self.time.schema(json_dir=self.options['json_dir'])
+        yield self.tess_locations.schema(json_dir=self.options['json_dir'])
+        yield self.tess.schema(json_dir=self.options['json_dir'])
+        yield self.tess_units.schema(json_dir=self.options['json_dir'])
+        yield self.tess_readings.schema(json_dir=self.options['json_dir'])
 
     @inlineCallbacks
     def startService(self):

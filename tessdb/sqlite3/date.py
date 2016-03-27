@@ -46,15 +46,11 @@ def julian_day(date):
     m = date.month + 12*a - 3
     return date.day + ((153*m + 2)//5) + 365*y + y//4 - y//100 + y//400 - 32045
 
-def _populateRepl(transaction, rows):
+def _populate(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
         "INSERT OR REPLACE INTO date_t VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
-        
-def _populateIgn(transaction, rows):
-    '''Dimension initial data loading (ignore flavour)'''
-    transaction.executemany(
-        "INSERT OR IGNORE INTO date_t VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
+
 
 # ============================================================================ #
 #                               DATE TABLE (DIMENSION)
@@ -69,16 +65,15 @@ class Date(Table):
         Table.__init__(self, pool)
 
     @inlineCallbacks
-    def schema(self, date_fmt, year_start, year_end, replace):
+    def schema(self, date_fmt, year_start, year_end):
         '''
         Overrides generic schema mehod with custom params.
         '''
-        self.replace = replace
         self.__fmt   = date_fmt
         self.__start = datetime.date(year_start,1,1)
         self.__end   = datetime.date(year_end,12,31)
         yield self.table()
-        yield self.populate(None, replace)
+        yield self.populate(None)
 
       
     def table(self):
@@ -109,17 +104,13 @@ class Date(Table):
         )
 
 
-    def populate(self, json_dir, replace):
+    def populate(self, json_dir):
         '''
         Populate the SQLite Date Table.
         Returns a Deferred
         '''
-        if replace:
-            log.info("Replacing Date Table data")
-            return self.pool.runInteraction( _populateRepl, self.rows() )
-        else:
-            log.info("Populating Date Table if empty")
-            return self.pool.runInteraction( _populateIgn, self.rows() )
+        log.info("Populating/Replacing Date Table data")
+        return self.pool.runInteraction( _populate, self.rows() )
 
 
     # --------------

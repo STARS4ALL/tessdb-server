@@ -77,7 +77,7 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _populateRepl(transaction, rows):
+def _populate(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
         '''INSERT OR REPLACE INTO tess_units_t (
@@ -110,41 +110,6 @@ def _populateRepl(transaction, rows):
             :valid_state
         )''', rows)
 
-        
-def _populateIgn(transaction, rows):
-    '''Dimension initial data loading (ignore flavour)'''
-    transaction.executemany(
-    '''INSERT OR IGNORE INTO tess_units_t (
-            units_id,
-            frequency_units,
-            magnitude_units,
-            ambient_temperature_units,
-            sky_temperature_units,
-            azimuth_units,
-            altitude_units,
-            longitude_units,
-            latitude_units,
-            height_units,
-            valid_since,
-            valid_until,
-            valid_state
-        ) VALUES (
-            :units_id,
-            :frequency_units,
-            :magnitude_units,
-            :ambient_temperature_units,
-            :sky_temperature_units,
-            :azimuth_units,
-            :altitude_units,
-            :longitude_units,
-            :latitude_units,
-            :height_units,
-            :valid_since,
-            :valid_until,
-            :valid_state
-        )''', rows)
-
-        
 
 
 # ============================================================================ #
@@ -190,20 +155,16 @@ class TESSUnits(Table):
 
 
     @inlineCallbacks
-    def populate(self, json_dir, replace):
+    def populate(self, json_dir):
         '''
         Populate the SQLite Units Table.
         Returns a Deferred
         '''
         
         read_rows = yield self.rows(json_dir)
-        if replace:
-            log.info("Replacing Units Table data")
-            yield self.pool.runInteraction( _populateRepl,read_rows )
-        else:
-            log.info("Populating Units Table if empty")
-            yield self.pool.runInteraction( _populateIgn, read_rows )
-
+        log.info("Populating/Replacing Units Table data")
+        yield self.pool.runInteraction( _populate, read_rows )
+      
     
     # --------------
     # Helper methods

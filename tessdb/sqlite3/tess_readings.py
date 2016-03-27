@@ -108,7 +108,7 @@ class TESSReadings(Table):
             '''
         )
 
-    def populate(self, json_dir, replace):
+    def populate(self, json_dir):
         return succeed(None)
 
     # -------------

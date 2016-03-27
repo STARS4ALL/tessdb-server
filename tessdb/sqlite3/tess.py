@@ -68,35 +68,12 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _populateRepl(transaction, rows):
+# This function is no needed because of the auto-registering process
+# Anyway, we keep it for reference or future use.
+def _populate(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
         '''INSERT OR REPLACE INTO tess_t (
-            tess_id,
-            name,
-            mac_address,
-            calibration_k,
-            calibrated_since,
-            calibrated_until,
-            calibrated_state,
-            location_id
-        ) VALUES (
-            :tess_id,
-            :name,
-            :mac_address,
-            :calibration_k,
-            :calibrated_since,
-            :calibrated_until,
-            :calibrated_state,
-            :location_id
-        )
-        ''', rows)
-
-        
-def _populateIgn(transaction, rows):
-    '''Dimension initial data loading (ignore flavour)'''
-    transaction.executemany(
-        '''INSERT OR IGNORE INTO tess_t (
             tess_id,
             name,
             mac_address,
@@ -254,7 +231,7 @@ class TESS(Table):
 
 
     @inlineCallbacks
-    def populate(self, json_dir, replace):
+    def populate(self, json_dir):
         '''
         Populate the SQLite Instruments Table.
         Returns a Deferred

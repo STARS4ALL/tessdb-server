@@ -60,15 +60,10 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _populateRepl(transaction, rows):
+def _populate(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
     transaction.executemany(
         "INSERT OR REPLACE INTO time_t VALUES(?,?,?,?,?,?)", rows)
-
-def _populateIgn(transaction, rows):
-    '''Dimension initial data loading (ignore flavour)'''
-    transaction.executemany(
-        "INSERT OR IGNORE INTO time_t VALUES(?,?,?,?,?,?)", rows)
 
 # ============================================================================ #
 #                               TIME OF DAY TABLE (DIMENSION)
@@ -107,17 +102,13 @@ class TimeOfDay(Table):
         )
 
 
-    def populate(self, json_dir, replace):
+    def populate(self, json_dir):
         '''
         Populate the SQLite Time Table.
         Returns a Deferred.
         '''
-        if replace:
-            log.info("Replacing Time Table data")
-            return self.pool.runInteraction( _populateRepl, self.rows() )
-        else:
-            log.info("Populating Time Table if empty")
-            return self.pool.runInteraction( _populateIgn, self.rows() )
+        log.info("Populating/Replacing Time Table data")
+        return self.pool.runInteraction( _populate, self.rows() )
 
     # --------------
     # Helper methods
