@@ -128,16 +128,7 @@ class TimeOfDay(Table):
         '''Generate a list of rows to inject into the table'''
         time = TimeOfDay.START_TIME
         # Starts with the Unknown value
-        timeList = [
-            (
-                -1,
-                utils.UNKNOWN,
-                utils.UNKNOWN,
-                utils.UNKNOWN,
-                utils.UNKNOWN,
-                utils.UNKNOWN,
-            )
-        ]
+        timeList = []
         while time <= TimeOfDay.END_TIME:
             timeList.append(
                 (

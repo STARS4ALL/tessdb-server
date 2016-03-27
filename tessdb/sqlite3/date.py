@@ -129,23 +129,7 @@ class Date(Table):
     def rows(self):
         '''Generate a list of rows to inject into the table'''
         date = self.__start
-        dateList = [
-            (
-                -1,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN, 
-                UNKNOWN,
-                UNKNOWN,
-                UNKNOWN,
-            )
-        ]
+        dateList = []
         while date <= self.__end:
             dateList.append(
                 (
