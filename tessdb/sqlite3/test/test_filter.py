@@ -64,6 +64,7 @@ options = {
     'location_batch_size' : 10,
     'location_minimum_batch_size' : 1,
     'location_pause': 0,
+    'secs_resolution': 5
 }
 
 #-----------------------------------------------
