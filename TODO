@@ -1,5 +1,7 @@
 Prioridad Alta
 ==============
+*) Renombra la columnas frequency y magnitude a frequency1 y magnitude1 en previsiónde una posible
+evolución hacia un TESS multicanal. (frequency2,magnitude2, frequency3,magnitude3, etc.)
 
 Prioridad baja
 =============
