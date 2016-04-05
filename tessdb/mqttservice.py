@@ -186,7 +186,7 @@ class MQTTService(Service):
         # Test mandatory keys
         incoming  = set(row.keys())
         if not self.MANDATORY_READ <= incoming:
-            raise ReadingKeyError(self.MANDATORY - incoming)
+            raise ReadingKeyError(self.MANDATORY_READ - incoming)
         # Mandatory field values
         if not( type(row['name']) == str or type(row['name']) == unicode):
             raise ReadingTypeError('name', str, type(row['name']))
@@ -219,7 +219,7 @@ class MQTTService(Service):
         # Test mandatory keys
         incoming  = set(row.keys())
         if not self.MANDATORY_REGR <= incoming:
-            raise ReadingKeyError(self.MANDATORY - incoming)
+            raise ReadingKeyError(self.MANDATORY_REGR - incoming)
         # Mandatory field values
         if type(row['rev']) != int:
             raise ReadingTypeError('rev', int, type(row['rev']))
