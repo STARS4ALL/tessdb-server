@@ -55,10 +55,10 @@ class MQTTService(Service):
     QoS = 2
     
     # Mandatory keys in each register
-    MANDATORY_REGR = set(['name','mac','calib'])
+    MANDATORY_REGR = set(['name','mac','calib','rev'])
     
     # Mandatory keys in each reading
-    MANDATORY_READ = set(['seq','name','freq','mag','tamb','tsky'])
+    MANDATORY_READ = set(['seq','name','freq','mag','tamb','tsky','rev'])
 
     def __init__(self, parent, options, **kargs):
         Service.__init__(self)
@@ -221,6 +221,8 @@ class MQTTService(Service):
         if not self.MANDATORY_REGR <= incoming:
             raise ReadingKeyError(self.MANDATORY - incoming)
         # Mandatory field values
+        if type(row['rev']) != int:
+            raise ReadingTypeError('rev', int, type(row['rev']))
         if not( type(row['name']) == str or type(row['name']) == unicode):
             raise ReadingTypeError('name', str, type(row['name']))
         if not( type(row['mac']) == str or type(row['mac']) == unicode):
@@ -228,8 +230,8 @@ class MQTTService(Service):
         if type(row['calib']) != float:
             raise ReadingTypeError('calib', float, type(row['calib']))
         # optionals field values in Payload V1 format
-        if 'channel' in row and type(row['channel']) != float:
-            raise ReadingTypeError('channel', float, type(row['channel']))
+        if 'chan' in row and type(row['chan']) != float:
+            raise ReadingTypeError('chan', float, type(row['chan']))
 
 
 
