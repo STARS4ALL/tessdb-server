@@ -230,8 +230,8 @@ class MQTTService(Service):
         if type(row['calib']) != float:
             raise ReadingTypeError('calib', float, type(row['calib']))
         # optionals field values in Payload V1 format
-        if 'chan' in row and type(row['chan']) != float:
-            raise ReadingTypeError('chan', float, type(row['chan']))
+        if 'chan' in row and not (type(row['chan']) == str or type(row['chan']) == unicode):
+            raise ReadingTypeError('chan', str, type(row['chan']))
 
 
 
