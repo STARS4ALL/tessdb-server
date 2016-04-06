@@ -58,6 +58,7 @@ or from GitHub:
 ### Start up Verification
 
 Type `sudo tessdb -k` to start the service in foreground with console output.
+Verify that it starts without errors or exceptions.
 
 Type `sudo service tessdb start` to start it as a backgroud service.
 Type `sudo update-rc.d tessdb defaults` to start it at boot time.
@@ -108,7 +109,7 @@ and type:
     
 ### Start up and Verification
 
-In the same CMD console, type`.\tessdb.bat`to start it in forground and verify that it works.
+In the same CMD console, type`.\tessdb.bat`to start it in forground and verify that it starts without errors or exceptions.
 
 Go to the Services Utility and start the TESSDB database service.
 
@@ -252,11 +253,101 @@ Activating this filter have the following conecuences:
 ***Only in Linux*** The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program 
 is first put in pause mode, do the copy and then resumes operation.
 
+## The `tess` utility
+
+`tess` is a command line utility to perform some actions on the database without having to write SQL statements.
+
+It has several subcommands. You can find the all by typing `tess --help`
+```
+pi@rb-tess:~ $ tess --help
+usage: /usr/local/bin/tess [-h] {instrument,location,readings} ...
+
+positional arguments:
+  {instrument,location,readings}
+    instrument          instrument commands
+    location            location commands
+    readings            readings commands
+
+optional arguments:
+  -h, --help            show this help message and exit
+```
+
+Each subcommand has its own help that you may display by issuing `tess <subcommand> --help`
+
+Example:
+```
+pi@rb-tess:~ $ tess location list --help
+usage: /usr/local/bin/tess location list [-h] [-p PAGE_SIZE] [-d DBASE]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PAGE_SIZE, --page-size PAGE_SIZE
+                        list page size
+  -d DBASE, --dbase DBASE
+                        SQLite database full file path
+```
 
 
 
+### Listing locations
+`tess location list`
+```
++-----------------------------------------+-------------+------------+-------------+
+| Name                                    |   Longitude |   Latitude |   Elevation |
++=========================================+=============+============+=============+
+| Laboratorio de Cristobal                |    -nn.nnnn |    nn.nnnn |         nnn |
++-----------------------------------------+-------------+------------+-------------+
+| Centro de Recursos Asociativos El Cerro |    -3.5515  |    40.4186 |         650 |
++-----------------------------------------+-------------+------------+-------------+
+```
+
+### Listing TESS instruments
+`tess instrument list`
+
+```
++---------+---------+-------------+------------+-------------+
+| TESS    | Site    | Longitude   | Latitude   | Elevation   |
++=========+=========+=============+============+=============+
+| pruebas | Unknown | Unknown     | Unknown    | Unknown     |
++---------+---------+-------------+------------+-------------+
+| stars1  | Unknown | Unknown     | Unknown    | Unknown     |
++---------+---------+-------------+------------+-------------+
+```
 
 
+### Assign a location to an instrument
+The most important use of the tess utility is to assign an existing location to an instrument, since brand new registered instruments are assigned to a default *Unknown* location. This must be issued with `sudo`, since it requires a DB write.
+
+`sudo tess assign pruebas "Laboratorio de Cristobal"`
+
+```
++---------+--------------------------+-------------+------------+-------------+
+| TESS    | Site                     |   Longitude |   Latitude |   Elevation |
++=========+==========================+=============+============+=============+
+| pruebas | Laboratorio de Cristobal |    -n.nnnnn |    nn.nnnn |         nnn |
++---------+--------------------------+-------------+------------+-------------+
+```
+
+`tess instrument list`
+
+```
++---------+--------------------------+-------------+------------+-------------+
+| TESS    | Site                     | Longitude   | Latitude   | Elevation   |
++=========+==========================+=============+============+=============+
+| pruebas | Laboratorio de Cristobal | -nn.nnnnnnn | nn.nnnnnnn | nnn.n       |
++---------+--------------------------+-------------+------------+-------------+
+| stars1  | Unknown                  | Unknown     | Unknown    | Unknown     |
++---------+--------------------------+-------------+------------+-------------+
+```
+
+### Listing TESS readings
+`test readings list`
+```
++--------------+--------+------------+-------------+-------------+
+| Timestammp   | TESS   | Location   | Frequency   | Magnitude   |
++==============+========+============+=============+=============+
++--------------+--------+------------+-------------+-------------+
+```
 
 
 
