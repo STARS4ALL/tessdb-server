@@ -198,7 +198,7 @@ def readings_list(connection, options):
         SELECT r.timestamp, i.name, l.site, r.frequency, r.magnitude
         FROM tess_readings_t as r 
         JOIN location_t as l USING (location_id)
-        NATURAL JOIN tess_t as i
+        JOIN tess_t as i     USING (tess_id)
         ORDER BY r.timestamp DESC
         LIMIT 100
         ''')
