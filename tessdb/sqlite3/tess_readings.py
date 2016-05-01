@@ -163,9 +163,9 @@ class TESSReadings(Table):
         self.nreadings += 1
         ret = 0
         tess = yield self.parent.tess.findName(row)
-        log.debug("{tess!s}", tess=tess)
+        log.debug("TessReadings.update(): Found tess => {tess!s}", tess=tess)
         if not len(tess):
-            log.warn("No tess {0} registered for this reading !".format(row['name']))
+            log.warn("TESSReadings.update(): No tess {0} registered for this reading !".format(row['name']))
             self.rejNotRegistered += 1
             returnValue(None)
 
@@ -182,7 +182,7 @@ class TESSReadings(Table):
             if  'lat' in row:   # mobile instrument
                 self.computeSunrise(row, now)
                 if  isDaytime(row['sunrise'], row['sunset'], now):
-                    log.debug("reading rejected by being at daytime")
+                    log.debug("TESSReadings.update(): reading rejected by being at daytime")
                     self.rejSunrise += 1
                     returnValue(None)
             else:               # fixed instrument assigned to location
@@ -191,11 +191,11 @@ class TESSReadings(Table):
                 log.debug("Testing sunrise({sunrise!s}) <  now({now!s}) < sunset({sunset!s})", 
                     sunrise=sunrise[0], sunset=sunrise[1], now=now)
                 if not sunrise[0]:
-                    log.debug("reading rejected by lack of sunrise/sunset data")
+                    log.debug("TESSReadings.update(): reading rejected by lack of sunrise/sunset data")
                     self.rejLackSunrise += 1
                     returnValue(None)
                 if  isDaytime(sunrise[0], sunrise[1], now):
-                    log.debug("reading rejected by being at daytime")
+                    log.debug("TESSReadings.update(): reading rejected by being at daytime")
                     self.rejSunrise += 1
                     returnValue(None)
 
@@ -204,17 +204,17 @@ class TESSReadings(Table):
         row['instr_id'] = tess[0]
         row['loc_id']   = tess[3]
         row['units_id'] = yield self.parent.tess_units.latest()
-        log.debug("{row!s}", row=row)
+        log.debug("TESSReadings.update(): About to write {row!s}", row=row)
         n = self.which(row)
         # Get the appropriate decoder function
         myupdater = getattr(self, "update{0}".format(n), None)
         try:
             yield myupdater(row)
         except sqlite3.IntegrityError as e:
-            log.error("tess id={id} is sending readings too fast", id=tess[0])
+            log.error("TESSReadings.update(): tess id={id} is sending readings too fast", id=tess[0])
             self.rejDuplicate += 1
         except Exception as e:
-            log.error("exception {excp!s}", excp=e)
+            log.error("TESSReadings.update(): exception {excp!s}", excp=e)
             self.rejOther += 1
 
     # ==============

@@ -259,7 +259,7 @@ class DBaseService(Service):
         if self.paused or not self.options['location_filter']:
             returnValue(None)
 
-        log.info("ON BOOT = {onboot}", onboot=self.onBoot)
+        log.info("Sunrise Task: ON BOOT = {onboot} today = {today!s}", onboot=self.onBoot, today=today)
         # Only compute Sunrise/Sunset once a day around midnight
         # with sampling resolution given by T_SUNRISE
         if  not self.onBoot and utcnow() - utcmidnight() > self.T_SUNRISE * ephem.second:
