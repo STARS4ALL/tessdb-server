@@ -98,9 +98,14 @@ def createParser():
     ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    xp = subparser.add_parser('export', help='export instruments')
-    xp.add_argument('-f', '--file', type=str, default="instruments.json", help='export instrument to JSON file')
+    xp = subparser.add_parser('export', help='export instruments to JSON')
     xp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    xp.add_argument('-f', '--file', type=str, default="instruments.json", help='exported JSON file')
+
+    imp = subparser.add_parser('import', help='import instruments from JSON')
+    imp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    imp.add_argument('-f', '--file', type=str, default="instruments.json", help='source JSON file')
+
 
     return parser
 
@@ -117,6 +122,8 @@ def main():
             instrument_assign(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'export':
             instrument_export(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'import':
+            instrument_import(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
@@ -208,6 +215,33 @@ def instrument_export(connection, options):
     result = cursor.fetchall()
     with open(options.file, 'w') as outfile:
         json.dump(map(instrument_map, result), outfile, indent=4, sort_keys=True)
+
+def instrument_import(connection, options):
+    cursor = connection.cursor()
+    with open(options.file, 'r') as outfile:
+        rows = json.load(outfile)
+    cursor.executemany(
+        '''INSERT OR REPLACE INTO tess_t (
+            tess_id,
+            name,
+            mac_address,
+            calibration_k,
+            calibrated_since,
+            calibrated_until,
+            calibrated_state,
+            location_id
+        ) VALUES (
+            :tess_id,
+            :name,
+            :mac_address,
+            :calibration_k,
+            :calibrated_since,
+            :calibrated_until,
+            :calibrated_state,
+            :location_id
+        )
+        ''', rows)
+    connection.commit()
 
 
 def location_list(connection, options):
