@@ -17,6 +17,7 @@ import argparse
 import sqlite3
 import os
 import os.path
+import json
 
 #--------------
 # other imports
@@ -97,6 +98,10 @@ def createParser():
     ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    xp = subparser.add_parser('export', help='export instruments')
+    xp.add_argument('-f', '--file', type=str, default="instruments.json", help='export instrument to JSON file')
+    xp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     return parser
 
 def main():
@@ -110,6 +115,8 @@ def main():
             instrument_list(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'assign':
             instrument_assign(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'export':
+            instrument_export(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
@@ -171,12 +178,36 @@ def instrument_list(connection, options):
     row = {'state': CURRENT}
     cursor.execute(
             '''
-            SELECT name,site,longitude,latitude,elevation 
+            SELECT name,mac_address,calibration_k,site,longitude,latitude,elevation 
             FROM tess_v
             WHERE calibrated_state == :state
             ORDER BY name ASC;
             ''', row)
-    paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
+    paging(cursor,["TESS","MAC Addr.","Calibration","Site","Longitude","Latitude","Elevation"])
+
+def instrument_map(item):
+    return {
+        'tess_id':          item[0], 
+        'name':             item[1], 
+        'mac_address':      item[2], 
+        'calibration_k':    item[3], 
+        'calibrated_since': item[4], 
+        'calibrated_until': item[5], 
+        'calibrated_state': item[6], 
+        'location_id':      item[7],
+        }
+
+def instrument_export(connection, options):
+    cursor = connection.cursor()
+    cursor.execute(
+            '''
+            SELECT tess_id,name,mac_address,calibration_k,calibrated_since,calibrated_until,calibrated_state,location_id 
+            FROM tess_t
+            ORDER BY tess_id ASC;
+            ''')
+    result = cursor.fetchall()
+    with open(options.file, 'w') as outfile:
+        json.dump(map(instrument_map, result), outfile, indent=4, sort_keys=True)
 
 
 def location_list(connection, options):
@@ -197,12 +228,12 @@ def readings_list(connection, options):
         '''
         SELECT r.timestamp, i.name, l.site, r.frequency, r.magnitude
         FROM tess_readings_t as r 
-        JOIN location_t as l USING (location_id)
-        JOIN tess_t as i     USING (tess_id)
-        ORDER BY r.timestamp DESC
+        NATURAL JOIN location_t as l
+        NATURAL JOIN tess_t as i
+        ORDER BY r.timestamp ASC
         LIMIT 100
         ''')
-    paging(cursor,["Timestamp","TESS","Location","Frequency","Magnitude"])
+    paging(cursor,["Timestammp","TESS","Location","Frequency","Magnitude"])
    
 
 
