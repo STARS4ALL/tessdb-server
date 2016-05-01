@@ -163,7 +163,7 @@ class TESSReadings(Table):
         self.nreadings += 1
         ret = 0
         tess = yield self.parent.tess.findName(row)
-        log.debug("{tess!s}", tess=tess)
+        log.debug("TessReading.update(). Found tess => {tess!s}", tess=tess)
         if not len(tess):
             log.warn("No tess {0} registered for this reading !".format(row['name']))
             self.rejNotRegistered += 1
