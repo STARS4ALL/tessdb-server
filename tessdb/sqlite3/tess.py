@@ -185,7 +185,8 @@ def _createViews(cursor):
 
 class TESS(Table):
 
-    DEPL_FILE = 'tess_location.json'
+    DEPL_FILE        = 'tess_location.json'
+    INSTRUMENTS_FILE = 'tess.json'
 
     def __init__(self, pool, validate=False):
         Table.__init__(self, pool)
@@ -236,6 +237,11 @@ class TESS(Table):
         Populate the SQLite Instruments Table.
         Returns a Deferred
         '''
+        if os.path.exists(os.path.join(json_dir, TESS.INSTRUMENTS_FILE)):
+            log.info("Loading instruments file")
+            read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESS.INSTRUMENTS_FILE), DEFAULT_INSTRUMENT)
+            yield self.pool.runInteraction( _populate, read_rows )
+
         log.info("Assigning locations to instruments")
         read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
         yield self.pool.runInteraction( _deployInstr, read_rows )

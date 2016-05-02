@@ -100,11 +100,11 @@ def createParser():
 
     xp = subparser.add_parser('export', help='export instruments to JSON')
     xp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    xp.add_argument('-f', '--file', type=str, default="instruments.json", help='exported JSON file')
+    xp.add_argument('-f', '--file', type=str, default="tess.json", help='exported JSON file')
 
     imp = subparser.add_parser('import', help='import instruments from JSON')
     imp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    imp.add_argument('-f', '--file', type=str, default="instruments.json", help='source JSON file')
+    imp.add_argument('-f', '--file', type=str, default="tess.json", help='source JSON file')
 
 
     return parser
