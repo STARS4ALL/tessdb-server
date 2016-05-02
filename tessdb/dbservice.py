@@ -49,6 +49,11 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
+
+def utcstart():
+    '''Returns the ephem Date object at the beginning of our valid time'''
+    return ephem.Date("0001/1/1 00:00:00")
+
 def utcnoon():
     '''Returns the ephem Date object at today's noon'''
     return ephem.Date(datetime.datetime.utcnow().replace(hour=12, minute=0, second=0,microsecond=0))
@@ -255,9 +260,14 @@ class DBaseService(Service):
     # ---------------------
 
     @inlineCallbacks
-    def sunrise(self, today=utcnoon()):
+    def sunrise(self, today=utcstart()):
         if self.paused or not self.options['location_filter']:
             returnValue(None)
+
+        # Unitary testing passes an specific value of 'today'
+        # Normal operation leaves this to a default value 'utcstart()'
+        if today == utcstart():
+            today = utcnoon()
 
         log.info("Sunrise Task: ON BOOT = {onboot} today = {today!s}", onboot=self.onBoot, today=today)
         # Only compute Sunrise/Sunset once a day around midnight
