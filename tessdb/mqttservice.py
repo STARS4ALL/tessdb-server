@@ -123,8 +123,9 @@ class MQTTService(Service):
 
     def logCounters(self):
         '''log stat counters'''
+        log.info("MQTT Statistics during the last hour")
         result = self.getCounters()
-        text = tabulate.tabulate([result], headers=['Total','Readings','Register','Discarded'], tablefmt='grid')
+        text = tabulate.tabulate([result], headers=['MQTT Total','Readings','Registration','Discarded'], tablefmt='grid')
         log.info("\n{table}",table=text)
 
     # --------------
