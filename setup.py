@@ -1,4 +1,6 @@
 import os
+import os.path
+
 from setuptools import setup, Extension
 import versioneer
 
@@ -54,6 +56,12 @@ if os.name == "posix":
   
   import shlex
 
+  # Some fixes before setup
+  if not os.path.exists("/etc/logrotate_astro.d"):
+    print("creating directory /etc/logrotate_astro.d")
+    args = shlex.split( "mkdir /etc/logrotate_astro.d")
+    subprocess.call(args)
+
   setup(name             = 'tessdb',
         version          = versioneer.get_version(),
         cmdclass         = versioneer.get_cmdclass(),
@@ -68,16 +76,16 @@ if os.name == "posix":
         packages         = ["tessdb","tessdb.sqlite3"],
         install_requires = ['twisted >= 15.4.0','twisted-mqtt','pyephem >= 3.7.6','tabulate'],
         data_files       = [ 
-          ('/etc/init.d' ,     ['etc/init.d/tessdb']),
-          ('/etc/default',     ['etc/default/tessdb']),
-          ('/etc/tessdb',      ['etc/tessdb/config.example', 'etc/tessdb/tess_units.example.json', 'etc/tessdb/tess_location.example.json', 'etc/tessdb/locations.example.json']),
-          ('/usr/local/bin',   ['usr/local/bin/tessdb','usr/local/bin/tess']),
-          ('/etc/logrotate.d', ['etc/logrotate.d/tessdb']),
-          ('/var/dbase',       ['var/dbase/placeholder.txt']),
+          ('/etc/init.d' ,           ['etc/init.d/tessdb']),
+          ('/etc/default',           ['etc/default/tessdb']),
+          ('/etc/tessdb',            ['etc/tessdb/config.example', 'etc/tessdb/tess_units.example.json', 'etc/tessdb/tess_location.example.json', 'etc/tessdb/locations.example.json']),
+          ('/usr/local/bin',         ['usr/local/bin/tessdb','usr/local/bin/tess']),
+          ('/etc/logrotate_astro.d', ['etc/logrotate.d/tessdb']),
+          ('/var/dbase',             ['var/dbase/placeholder.txt']),
           ]
         )
   # Some fixes after setup
-  args = shlex.split( "chmod 644 /etc/logrotate.d/tessdb")
+  args = shlex.split( "chmod 644 /etc/logrotate_astro.d/tessdb")
   subprocess.call(args)
 
 elif os.name == "nt":
