@@ -114,6 +114,7 @@ class TESSApplication(object):
         '''
         Reload application parameters
         '''
+        log.warn("{tessdb} config being reloaded", tessdb=VERSION_STRING")
         try:
             config_opts  = yield deferToThread(loadCfgFile, self.cfgFilePath)
         except Exception as e:
