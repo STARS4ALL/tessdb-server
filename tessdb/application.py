@@ -125,6 +125,10 @@ class TESSApplication(object):
             level = config_opts['tessdb']['log_level']
             setLogLevel(namespace='tessdb', levelStr=level)
             log.info("new log level is {lvl}", lvl=level)
+            # It is very convenient to recompute all sunrise/sunset data after a reload
+            # After having assigned an instrument to a location
+            # Otherwise, I have to restart tssdb and loose some samples
+            yield self.dbaseService.sunrise() # This is asynchronous !
     
     @inlineCallbacks
     def start(self):
