@@ -18,10 +18,10 @@
 	su root root
 	daily
 	dateext
-	rotate 7
+	rotate 30
 	missingok
 	notifempty
-	compress
-	delaycompress
+#	compress
+#	delaycompress
 	copytruncate
 }
