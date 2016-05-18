@@ -253,9 +253,16 @@ class MQTTService(Service):
             return
         row['tstamp'] = now     # As a datetime instead of string
 
-        # Filter out unneeded data
-        if len(self.options['tess_filter']) and not row['name'] in self.options['tess_filter']:
-            log.debug('Filter is {filter!s}',filter=self.options['tess_filter'])
+        # Apply White List filter
+        if len(self.options['tess_whitelist']) and not row['name'] in self.options['tess_whitelist']:
+            log.debug('Whitelist filter is {filter!s}',filter=self.options['tess_whitelist'])
+            log.debug('Discarded payload from {name}', name=row['name'])
+            self.nfilter += 1
+            return
+
+        # Apply Black List filter
+        if len(self.options['tess_blacklist']) and row['name'] in self.options['tess_blacklist']:
+            log.debug('Blacklist filter is {filter!s}',filter=self.options['tess_blacklist'])
             log.debug('Discarded payload from {name}', name=row['name'])
             self.nfilter += 1
             return
