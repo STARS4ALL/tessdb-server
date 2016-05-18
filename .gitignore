@@ -11,4 +11,5 @@ tessdb/*~
 *.txt
 my*
 *.db
+sftp-config.json
 
