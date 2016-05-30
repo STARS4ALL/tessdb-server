@@ -242,8 +242,7 @@ class MQTTService(Service):
         '''
         now = datetime.datetime.utcnow()
         self.npublish += 1
-        log.debug("topic={topic}, payload={payload} qos={qos}, dup={dup} retain={retain}, msgId={id}", 
-            topic=topic, payload=payload, qos=qos, dup=dup, retain=retain, id=msgId)
+        log.debug("payload={payload}", payload=payload)
         try:
             payload = str(payload)  # from bytearray to string
             row = json.loads(payload)
