@@ -23,6 +23,7 @@ import tabulate
 from twisted.logger import Logger, LogLevel
 from twisted.internet import reactor, task
 from twisted.application.service import Service
+from twisted.application.internet import ClientService, backoffPolicy
 from twisted.internet.endpoints import TCP4ClientEndpoint
 from twisted.internet.defer import inlineCallbacks
 
@@ -42,13 +43,19 @@ from .utils  import chop
 # Module constants
 # ----------------
 
+# Reconencting Service. Default backoff policy parameters
+
+INITIAL_DELAY = 1   # seconds
+FACTOR        = 2
+MAX_DELAY     = 300 # seconds
+
 # -----------------------
 # Module global variables
 # -----------------------
 
 log = Logger(namespace='mqtt')
 
-class MQTTService(Service):
+class MQTTService(ClientService):
 
     # Default subscription QoS
     
@@ -61,7 +68,6 @@ class MQTTService(Service):
     MANDATORY_READ = set(['seq','name','freq','mag','tamb','tsky','rev'])
 
     def __init__(self, parent, options, **kargs):
-        Service.__init__(self)
         self.parent     = parent
         self.options    = options
         self.topics     = []
@@ -70,22 +76,30 @@ class MQTTService(Service):
         setLogLevel(namespace='mqtt', levelStr=options['log_level'])
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
+        self.factory  = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
+        self.endpoint = TCP4ClientEndpoint(reactor, self.options['broker'], self.options['port'])
         if self.options['username'] == "":
             self.options['username'] = None
             self.options['password'] = None
         self.resetCounters()
-
+        ClientService.__init__(self, self.endpoint, self.factory, 
+            retryPolicy=backoffPolicy(initialDelay=INITIAL_DELAY, factor=FACTOR, maxDelay=MAX_DELAY))
 
     
     def startService(self):
         log.info("starting MQTT Client Service")
-        self.factory  = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
-        self.endpoint = TCP4ClientEndpoint(reactor, self.options['broker'], self.options['port'])
-        self.endpoint.connect(self.factory).addCallback(self.connectToBroker)
-        Service.startService(self)
+        # invoke whenConnected() inherited method
+        self.whenConnected().addCallback(self.connectToBroker)
+        ClientService.startService(self)
 
+
+    @inlineCallbacks
     def stopService(self):
-        Service.stopService()
+        try:
+            yield ClientService.stopService(self)
+        except Exception as e:
+            log.error("Exception {excp!s}", excp=e)
+            reactor.stop()
 
     #---------------------
     # Extended Service API
