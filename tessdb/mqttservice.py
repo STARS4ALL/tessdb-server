@@ -242,8 +242,7 @@ class MQTTService(Service):
         '''
         now = datetime.datetime.utcnow()
         self.npublish += 1
-        log.debug("topic={topic}, payload={payload} qos={qos}, dup={dup} retain={retain}, msgId={id}", 
-            topic=topic, payload=payload, qos=qos, dup=dup, retain=retain, id=msgId)
+        log.debug("payload={payload}", payload=payload)
         try:
             payload = str(payload)  # from bytearray to string
             row = json.loads(payload)
@@ -253,17 +252,21 @@ class MQTTService(Service):
             return
         row['tstamp'] = now     # As a datetime instead of string
 
+        # Discard retained messages to avoid duplicates in the database
+        if retain:
+            log.debug('Discarded payload from {name} by retained flag', name=row['name'])
+            self.nfilter += 1
+            return
+
         # Apply White List filter
         if len(self.options['tess_whitelist']) and not row['name'] in self.options['tess_whitelist']:
-            log.debug('Whitelist filter is {filter!s}',filter=self.options['tess_whitelist'])
-            log.debug('Discarded payload from {name}', name=row['name'])
+            log.debug('Discarded payload from {name} by whitelist', name=row['name'])
             self.nfilter += 1
             return
 
         # Apply Black List filter
         if len(self.options['tess_blacklist']) and row['name'] in self.options['tess_blacklist']:
-            log.debug('Blacklist filter is {filter!s}',filter=self.options['tess_blacklist'])
-            log.debug('Discarded payload from {name}', name=row['name'])
+            log.debug('Discarded payload from {name} by blacklist', name=row['name'])
             self.nfilter += 1
             return
 
