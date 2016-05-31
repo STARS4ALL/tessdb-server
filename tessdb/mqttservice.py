@@ -24,7 +24,7 @@ from twisted.logger import Logger, LogLevel
 from twisted.internet import reactor, task
 from twisted.application.service import Service
 from twisted.application.internet import ClientService, backoffPolicy
-from twisted.internet.endpoints import TCP4ClientEndpoint
+from twisted.internet.endpoints import clientFromString
 from twisted.internet.defer import inlineCallbacks
 
 from mqtt import v311
@@ -77,7 +77,7 @@ class MQTTService(ClientService):
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
         self.factory  = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
-        self.endpoint = TCP4ClientEndpoint(reactor, self.options['broker'], self.options['port'])
+        self.endpoint = clientFromString(reactor, self.options['broker'])
         if self.options['username'] == "":
             self.options['username'] = None
             self.options['password'] = None
@@ -159,10 +159,10 @@ class MQTTService(ClientService):
                 keepalive=self.options['keepalive'])
             yield self.subscribe(self.options)
         except Exception as e:
-            log.error("Connecting to {broker} on port {port} raised {excp!s}", 
-               broker=self.options['broker'], port=self.options['port'], excp=e)
+            log.error("Connecting to {broker} raised {excp!s}", 
+               broker=self.options['broker'], excp=e)
         else:
-            log.info("Connected and subscribed to {broker} on port {port}", broker=self.options['broker'], port=self.options['port'])
+            log.info("Connected and subscribed to {broker}", broker=self.options['broker'])
        
 
     @inlineCallbacks

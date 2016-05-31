@@ -34,13 +34,9 @@ log_level = info
 
 # MQTT Client config
 
-# Broker to connect
+# Broker to connect. Twisted-style endpoint
 # Not reloadable property
-broker = test.mosquitto.org
-
-# Connection port (unauthenticated)
-# Not reloadable property
-port = 1883
+broker = tcp:test.mosquitto.org:1883
 
 # Username/password credentials
 # leave blank if not needed
