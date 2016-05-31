@@ -261,14 +261,13 @@ def readings_list(connection, options):
     cursor.execute(
         '''
         SELECT r.timestamp, i.name, l.site, r.frequency, r.magnitude
-        FROM tess_readings_t as r 
-        NATURAL JOIN location_t as l
-        NATURAL JOIN tess_t as i
-        ORDER BY r.timestamp ASC
+        FROM tess_readings_t as r
+        JOIN location_t as l USING (location_id)
+        JOIN tess_t     as i USING (tess_id)
+        ORDER BY r.timestamp DESC
         LIMIT 100
         ''')
-    paging(cursor,["Timestammp","TESS","Location","Frequency","Magnitude"])
+    paging(cursor,["Timestamp (UTC)","TESS","Location","Frequency","Magnitude"])
    
-
-
+ 
 main()
