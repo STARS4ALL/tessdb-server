@@ -148,14 +148,16 @@ def paging(cursor, headers, size=10):
     Pages query output and displays in tabular format
     '''
     ONE_PAGE = 10
-    while size > 0:
+    while True:
         result = cursor.fetchmany(ONE_PAGE)
         print tabulate.tabulate(result, headers=headers, tablefmt='grid')
         if len(result) < ONE_PAGE:
             break
         size -= ONE_PAGE
-        raw_input("Press Enter to continue [Ctrl-C to abort] ...")
-   
+        if size > 0:
+            raw_input("Press Enter to continue [Ctrl-C to abort] ...")
+        else:
+            break
 
 def instrument_assign(connection, options):
     cursor = connection.cursor()
