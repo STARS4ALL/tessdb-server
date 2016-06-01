@@ -1,0 +1,47 @@
+# ----------------------------------------------------------------------
+# Copyright (c) 2014 Rafael Gonzalez.
+#
+# See the LICENSE file for details
+# ----------------------------------------------------------------------
+
+
+# LOCATIONS FILE FORMAT
+#
+# A list of location entries. 
+# Each location is a list with the following fields:
+# Longitude/latitude are used in tessdb for sunrise/sunset calculation.
+# There is no need to include a location_id at all in this file
+# The unique identifier is the 'site' field
+# ----------------------------
+#    [
+#            location_id             INTEGER PRIMARY KEY,
+#            site                    TEXT,
+#            contact_email           TEXT,
+#            longitude               REAL, (in degrees)
+#            latitude                REAL, (in degrees)
+#			 elevation               REAL, (in meters)
+#            ziopcode                TEXT,
+#            location                TEXT,
+#            province                TEXT,
+#            country                 TEXT
+#    ], 
+# ----------------------------
+
+# location_id = -1 is reserved for the 'Unknown' location
+# There is no need to include the Unknown location, 
+# since the program already does it.
+
+[
+    {
+        "location_id"   : -1, 
+        "contact_email" : "Unknown", 
+        "site"          : "Unknown",
+        "longitude"     : "Unknown",
+        "latitude"      : "Unknown",
+        "elevation"     : "Unknown",
+        "zipcode"       : "Unknown", 
+        "location"      : "Unknown", 
+        "province"      : "Unknown", 
+        "country"       : "Unknown"
+    }
+]

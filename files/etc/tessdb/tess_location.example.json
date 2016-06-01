@@ -1,0 +1,21 @@
+# ----------------------------------------------------------------------
+# Copyright (c) 2014 Rafael Gonzalez.
+#
+# See the LICENSE file for details
+# ----------------------------------------------------------------------
+
+
+# DEPLOYMENT OF INSTRUMENTS INTO LOCATIONS FILE FORMAT
+#
+# A list of instrument entries. 
+# Each instrument is a list with the following fields:
+# ----------------------------
+#    [
+#            name                    TEXT,
+#            site             		 TEXT
+#    ], 
+# ----------------------------
+
+[
+	{ "name": "TESS-01", "site": "Centro Civico el Cerro" }
+]

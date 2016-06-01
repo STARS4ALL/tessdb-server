@@ -1,0 +1,27 @@
+/var/dbase/tess.db {
+	copy
+	daily
+	dateext
+	rotate 1
+	missingok
+	notifempty
+	prerotate
+		/usr/sbin/service tessdb pause > /dev/null 2>/dev/null || true
+		sleep 2
+	endscript
+	postrotate
+		/usr/sbin/service tessdb resume > /dev/null 2>/dev/null || true
+	endscript
+}
+
+/var/log/tessdb.log {
+	su root root
+	daily
+	dateext
+	rotate 30
+	missingok
+	notifempty
+#	compress
+#	delaycompress
+	copytruncate
+}
