@@ -1,6 +1,6 @@
 include versioneer.py
 include tessdb/_version.py
 include README.md
-recursive-include etc *
-recursive-include var *
-recursive-include usr *
+recursive-include files/etc *
+recursive-include files/var *
+recursive-include files/usr *

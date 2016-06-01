@@ -76,12 +76,12 @@ if os.name == "posix":
         packages         = ["tessdb","tessdb.sqlite3"],
         install_requires = ['twisted >= 16.2.0','twisted-mqtt','pyephem >= 3.7.6','tabulate'],
         data_files       = [ 
-          ('/etc/init.d' ,           ['packaging/etc/init.d/tessdb']),
-          ('/etc/default',           ['packaging/etc/default/tessdb']),
-          ('/etc/tessdb',            ['packaging/etc/tessdb/config.example', 'packaging/etc/tessdb/tess_units.example.json', 'packaging/etc/tessdb/tess_location.example.json', 'packaging/etc/tessdb/locations.example.json']),
-          ('/usr/local/bin',         ['packaging/usr/local/bin/tessdb','packaging/usr/local/bin/tess']),
-          ('/etc/logrotate_astro.d', ['packaging/etc/logrotate.d/tessdb']),
-          ('/var/dbase',             ['packaging/var/dbase/placeholder.txt']),
+          ('/etc/init.d' ,           ['files/etc/init.d/tessdb']),
+          ('/etc/default',           ['files/etc/default/tessdb']),
+          ('/etc/tessdb',            ['files/etc/tessdb/config.example', 'files/etc/tessdb/tess_units.example.json', 'files/etc/tessdb/tess_location.example.json', 'files/etc/tessdb/locations.example.json']),
+          ('/usr/local/bin',         ['files/usr/local/bin/tessdb','files/usr/local/bin/tess']),
+          ('/etc/logrotate_astro.d', ['files/etc/logrotate.d/tessdb']),
+          ('/var/dbase',             ['files/var/dbase/placeholder.txt']),
           ]
         )
   # Some fixes after setup
@@ -107,10 +107,10 @@ elif os.name == "nt":
         packages         = ["tessdb","tessdb.sqlite3"],
         install_requires = ['twisted >= 16.2.0','twisted-mqtt','pyephem >= 3.7.6','tabulate'],
         data_files       = [ 
-          (r'C:\tessdb',          [r'packaging\usr\local\bin\tessdb.bat',r'packaging\usr\local\bin\tess',r'packaging\usr\local\bin\winreload.py']),
-          (r'C:\tessdb\dbase',    [r'packaging\var\dbase\placeholder.txt']),
-          (r'C:\tessdb\log',      [r'packaging\var\log\placeholder.txt']),
-          (r'C:\tessdb\config',   [r'packaging/etc\tessdb\config.example.ini',r'packaging\etc\tessdb\tess_units.example.json', r'packaging\etc\tessdb\tess_location.example.json', r'packaging\etc\tessdb\locations.example.json']),
+          (r'C:\tessdb',          [r'files\usr\local\bin\tessdb.bat',r'files\usr\local\bin\tess',r'files\usr\local\bin\winreload.py']),
+          (r'C:\tessdb\dbase',    [r'files\var\dbase\placeholder.txt']),
+          (r'C:\tessdb\log',      [r'files\var\log\placeholder.txt']),
+          (r'C:\tessdb\config',   [r'files/etc\tessdb\config.example.ini',r'files\etc\tessdb\tess_units.example.json', r'files\etc\tessdb\tess_location.example.json', r'files\etc\tessdb\locations.example.json']),
           ]
         )
 
