@@ -78,7 +78,7 @@ def createParser():
     #
     subparser = parser_readings.add_subparsers()
     rp = subparser.add_parser('list', help='list readings')
-    rp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    rp.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
     rp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     # --------------------------------------------
@@ -143,14 +143,14 @@ def open_database(options):
     return sqlite3.connect(options.dbase)
  
 
-def paging(cursor, headers):
+def paging(cursor, headers, size=10):
     '''
     Pages query output and displays in tabular format
     '''
     while True:
-        result = cursor.fetchmany(size=10)
+        result = cursor.fetchmany(size)
         print tabulate.tabulate(result, headers=headers, tablefmt='grid')
-        if len(result) < 10:
+        if len(result) <= 10:
             break
         raw_input("Press Enter to continue [Ctrl-C to abort] ...")
    
@@ -265,9 +265,9 @@ def readings_list(connection, options):
         JOIN location_t as l USING (location_id)
         JOIN tess_t     as i USING (tess_id)
         ORDER BY r.timestamp DESC
-        LIMIT 100
-        ''')
-    paging(cursor,["Timestamp (UTC)","TESS","Location","Frequency","Magnitude"])
+        LIMIT %s
+        ''' % options.count)
+    paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude"], size=options.count)
    
  
 main()
