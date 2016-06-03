@@ -146,7 +146,7 @@ class MQTTService(ClientService):
             text = tabulate.tabulate([result], headers=['MQTT Total','Readings','Registration','Discarded'], tablefmt='grid')
             log.info("\n{table}",table=text)
         elif self.options['stats'] == "condensed":
-            log.info("MQTT Stats [Tota/Reads/Regs/Disc] = {counters!s}", counters=result)
+            log.info("MQTT Stats [Total, Reads, Register, Discard] = {counters!s}", counters=result)
         else:
             pass
 

@@ -253,7 +253,7 @@ class DBaseService(Service):
             text = tabulate.tabulate([ok_stats_reg], headers=['DB Registration Total OK','Created','Upd Name','Upd Calib'], tablefmt='grid')
             log.info("\n{table}",table=text)
 
-            text = tabulate.tabulate([nok_stats], headers=['DB Registration NOK','No Upd Name','No Create Name'], tablefmt='grid')
+            text = tabulate.tabulate([nok_stats_reg], headers=['DB Registration NOK','No Upd Name','No Create Name'], tablefmt='grid')
             log.info("\n{table}",table=text)
            
             # I/O efficiency stats
@@ -263,10 +263,10 @@ class DBaseService(Service):
 
         elif self.options['stats'] == "condensed":
 
-            log.info("DB Readings [Total/OK/NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
-            log.info("DB Registr. [Total/OK/NOK] = {global_stats_reg!s}", global_stats_reg=global_stats_reg)
-            log.info("DB I/O Effic. [N/%/Tmin/Taver/Tmax/Naver] = [{N}/{eff}%/{Tmin}/{Taver}/{Tmax}/{Naver}]",
-                N=resultEff[2], 
+            log.info("DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
+            log.info("DB Stats Register [Total, OK, NOK] = {global_stats_reg!s}", global_stats_reg=global_stats_reg)
+            log.info("DB Stats I/O Effic. [Nsec, %, Tmin, Taver, Tmax, Naver] = [{Nsec}, {eff:0.2g}%, {Tmin:0.2g}, {Taver:0.2g}, {Tmax:0.2g}, {Naver:0.2g}]",
+                Nsec=resultEff[2], 
                 eff=resultEff[1], 
                 Tmin=resultEff[0][0][1], 
                 Taver=resultEff[0][0][2],
