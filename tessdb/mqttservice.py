@@ -45,9 +45,9 @@ from .utils  import chop
 
 # Reconencting Service. Default backoff policy parameters
 
-INITIAL_DELAY = 1   # seconds
+INITIAL_DELAY = 4   # seconds
 FACTOR        = 2
-MAX_DELAY     = 300 # seconds
+MAX_DELAY     = 600 # seconds
 
 # -----------------------
 # Module global variables
