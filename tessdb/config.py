@@ -106,6 +106,7 @@ def loadCfgFile(path):
     options['mqtt']['tess_whitelist'] = chop(parser.get("mqtt","tess_whitelist"),',')
     options['mqtt']['tess_blacklist'] = chop(parser.get("mqtt","tess_blacklist"),',')
     options['mqtt']['tess_topics']    = chop(parser.get("mqtt","tess_topics"),',')
+    options['mqtt']['stats']          = parser.get("mqtt","stats")
     options['mqtt']['tess_topic_register'] = parser.get("mqtt","tess_topic_register")
 
     options['dbase'] = {}
@@ -116,6 +117,7 @@ def loadCfgFile(path):
     options['dbase']['year_start']        = parser.getint("dbase","year_start")
     options['dbase']['year_end']          = parser.getint("dbase","year_end")
     options['dbase']['date_fmt']          = parser.get("dbase","date_fmt")
+    options['dbase']['stats']             = parser.get("dbase","stats")
     options['dbase']['secs_resolution']   = parser.getint("dbase","secs_resolution")
 
     options['dbase']['location_filter']     = parser.getboolean("dbase","location_filter")

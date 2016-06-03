@@ -79,6 +79,10 @@ tess_whitelist =
 # Reloadable property
 tess_blacklist = 
 
+# MQTT Stats reporting. Either 'condensed' or 'detailed'
+# Leave blank if not needed.
+stats = condensed
+
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = info
@@ -145,6 +149,10 @@ location_minimum_batch_size = 100
 # set of locations (i.e. 10000)
 # Reloadable property
 location_pause = 10
+
+# DBase Stats reporting. Either 'condensed' or 'detailed'
+# Leave blank if not needed.
+stats = condensed
 
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property

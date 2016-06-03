@@ -7,6 +7,7 @@
 #--------------------
 # System wide imports
 # -------------------
+from __future__ import division
 
 import os
 import errno
@@ -213,47 +214,67 @@ class DBaseService(Service):
     @inlineCallbacks
     def logCounters(self):
         '''log stat counters'''
-        # Readings statistics
-        log.info("DB Readings Statistics during the last hour")
-        result = self.tess_readings.getCounters()
-
-        global_nok = result[1:]
-        global_nok_sum = sum(result[1:])
-        global_ok_sum  = result[0] - global_nok_sum
-        global_stats   = (result[0], global_ok_sum, global_nok_sum)
-        text = tabulate.tabulate([global_stats], headers=['DB Readings Total','OK','NOK'], tablefmt='grid')
-        log.info("\n{table}",table=text)   
+        if self.options['stats'] == "":
+            return
         
-        global_stats   = (global_nok_sum, result[1], result[2], result[3], result[4], result[5])
-        text = tabulate.tabulate([global_stats], headers=['DB Readings Total NOK','Not Registered','Lack Sunrise','Daytime','Dupl','Other'], tablefmt='grid')
-        log.info("\n{table}",table=text)
-       
-        # Registration statistics
-        log.info("DB Registrations Statistics during the last hour")
-        result = self.tess.getCounters()
-        global_ok_sum = sum(result[1:4])
-        global_nok_sum = sum(result[4:])
-        global_stats   = (result[0], global_ok_sum, global_nok_sum)
-        text = tabulate.tabulate([global_stats], headers=['DB Registration Total','OK','NOK'], tablefmt='grid')
-        log.info("\n{table}",table=text)
+        # get readings stats
+        resultRds = self.tess_readings.getCounters()
+        global_nok = resultRds[1:]
+        global_nok_sum = sum(resultRds[1:])
+        global_ok_sum  = resultRds[0] - global_nok_sum
+        global_stats   = (resultRds[0], global_ok_sum, global_nok_sum)
+        global_stats_nok  = (global_nok_sum, resultRds[1], resultRds[2], resultRds[3], resultRds[4], resultRds[5])
+        
+        # get registration stats
+        resultReg = self.tess.getCounters()
+        global_ok_sum_reg  = sum(resultReg[1:4])
+        global_nok_sum_reg = sum(resultReg[4:])
+        global_stats_reg   = (resultReg[0], global_ok_sum_reg, global_nok_sum_reg)
+        ok_stats_reg       = (global_ok_sum_reg, resultReg[1], resultReg[2], resultReg[3])
+        nok_stats_reg      = (global_nok_sum_reg, resultReg[4], resultReg[5])
 
-        ok_stats = (global_ok_sum, result[1], result[2], result[3])
-        text = tabulate.tabulate([ok_stats], headers=['DB Registration Total OK','Created','Upd Name','Upd Calib'], tablefmt='grid')
-        log.info("\n{table}",table=text)
+        # Efficiency stats
+        resultEff = yield deferToThread(self.getCounters)
 
-        nok_stats = (global_nok_sum, result[4], result[5])
-        text = tabulate.tabulate([nok_stats], headers=['DB Registration NOK','No Upd Name','No Create Name'], tablefmt='grid')
-        log.info("\n{table}",table=text)
+        # Readings statistics
+        if self.options['stats'] == "detailed":
+            log.info("DB Readings Statistics during the last hour")
+            text = tabulate.tabulate([global_stats], headers=['DB Readings Total','OK','NOK'], tablefmt='grid')
+            log.info("\n{table}",table=text)   
+            
+            text = tabulate.tabulate([global_stats_nok], headers=['DB Readings Total NOK','Not Registered','Lack Sunrise','Daytime','Dupl','Other'], tablefmt='grid')
+            log.info("\n{table}",table=text)
+           
+            # Registration statistics
+            log.info("DB Registrations Statistics during the last hour")
+            text = tabulate.tabulate([global_stats_reg], headers=['DB Registration Total','OK','NOK'], tablefmt='grid')
+            log.info("\n{table}",table=text)
 
-        # This was the original
-        #text = tabulate.tabulate([result], headers=['Total','Created','Upd Name','Upd Calib','No Upd Name','No Create Name'], tablefmt='grid')
-        #log.info("\n{table}",table=text)
-       
-        # I/O efficiency stats
-        result = yield deferToThread(self.getCounters)
-        log.info("DB I/O EFFICIENCY = {efficiency}%",efficiency=result[1])
-        text = tabulate.tabulate(result[0], headers=['Stat. (N = {0})'.format(result[2]),'Min','Aver','Max'], tablefmt='grid')
-        log.info("\n{table}",table=text)
+            text = tabulate.tabulate([ok_stats_reg], headers=['DB Registration Total OK','Created','Upd Name','Upd Calib'], tablefmt='grid')
+            log.info("\n{table}",table=text)
+
+            text = tabulate.tabulate([nok_stats], headers=['DB Registration NOK','No Upd Name','No Create Name'], tablefmt='grid')
+            log.info("\n{table}",table=text)
+           
+            # I/O efficiency stats
+            log.info("DB I/O EFFICIENCY = {efficiency}%",efficiency=resultEff[1])
+            text = tabulate.tabulate(resultEff[0], headers=['Stat. (N = {0})'.format(resultEff[2]),'Min','Aver','Max'], tablefmt='grid')
+            log.info("\n{table}",table=text)
+
+        elif self.options['stats'] == "condensed":
+
+            log.info("DB Readings [Total/OK/NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
+            log.info("DB Registr. [Total/OK/NOK] = {global_stats_reg!s}", global_stats_reg=global_stats_reg)
+            log.info("DB I/O Effic. [N/%/Tmin/Taver/Tmax/Naver] = [{N}/{eff}%/{Tmin}/{Taver}/{Tmax}/{Naver}]",
+                N=resultEff[2], 
+                eff=resultEff[1], 
+                Tmin=resultEff[0][0][1], 
+                Taver=resultEff[0][0][2],
+                Tmax=resultEff[0][0][3],
+                Naver=resultEff[0][1][2]
+            )
+        else:
+            pass
 
 
 

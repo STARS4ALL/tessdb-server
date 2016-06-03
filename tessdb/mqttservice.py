@@ -137,10 +137,18 @@ class MQTTService(ClientService):
 
     def logCounters(self):
         '''log stat counters'''
-        log.info("MQTT Statistics during the last hour")
+        if self.options['stats'] == "":
+            return
+        # get stats
         result = self.getCounters()
-        text = tabulate.tabulate([result], headers=['MQTT Total','Readings','Registration','Discarded'], tablefmt='grid')
-        log.info("\n{table}",table=text)
+        if self.options['stats'] == "detailed":
+            log.info("MQTT Statistics during the last hour")
+            text = tabulate.tabulate([result], headers=['MQTT Total','Readings','Registration','Discarded'], tablefmt='grid')
+            log.info("\n{table}",table=text)
+        elif self.options['stats'] == "condensed":
+            log.info("MQTT Stats [Tota/Reads/Regs/Disc] = {counters!s}", counters=result)
+        else:
+            pass
 
     # --------------
     # Helper methods
