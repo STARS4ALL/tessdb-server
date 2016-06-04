@@ -24,7 +24,8 @@
 #            height_units              REAL,
 #            valid_since               TEXT,
 #            valid_until               TEXT,
-#            valid_state               TEXT
+#            valid_state               TEXT,
+#            timestamp_source          TEXT
 #    ], 
 # ---------------------------------------------------------------------------
 # Current version of units
@@ -42,6 +43,7 @@
     "height_units"              : "m",
     "valid_since"               : "2016-01-01 00:00:00",
     "valid_until"               : "2999-12-31 23:59:59",
-    "valid_state"               : "Current"
+    "valid_state"               : "Current",
+    "timestamp_source"          : "Subscriber"
     }
 ]

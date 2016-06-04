@@ -203,7 +203,7 @@ class TESSReadings(Table):
         row['tstamp']   = now.strftime(utils.TSTAMP_FORMAT)
         row['instr_id'] = tess[0]
         row['loc_id']   = tess[3]
-        row['units_id'] = yield self.parent.tess_units.latest()
+        row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
         log.debug("TESSReadings.update(): About to write {row!s}", row=row)
         n = self.which(row)
         # Get the appropriate decoder function

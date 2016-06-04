@@ -272,7 +272,13 @@ class MQTTService(ClientService):
             log.error('Invalid JSON in payload={payload}', payload=payload)
             log.error('{excp!r}', excp=e)
             return
-        row['tstamp'] = now     # As a datetime instead of string
+
+        # Find out existing timestamp. If not, timestamp it
+        if 'tstamp' in row:
+            row['tstamp_src'] = "Publisher"
+        else:
+            row['tstamp_src'] = "Subscriber"
+            row['tstamp'] = now     # As a datetime instead of string
 
         # Discard retained messages to avoid duplicates in the database
         if retain:

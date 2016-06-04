@@ -63,7 +63,8 @@ DEFAULT_UNITS = {
     "height_units"              : "m",
     "valid_since"               : utils.START_TIME,
     "valid_until"               : utils.INFINITE_TIME,
-    "valid_state"               : utils.CURRENT
+    "valid_state"               : utils.CURRENT,
+    "timestamp_source"          : "Subscriber"
 }
 
 
@@ -93,7 +94,8 @@ def _populate(transaction, rows):
             height_units,
             valid_since,
             valid_until,
-            valid_state
+            valid_state,
+            timestamp_source
         ) VALUES (
             :units_id,
             :frequency_units,
@@ -107,7 +109,8 @@ def _populate(transaction, rows):
             :height_units,
             :valid_since,
             :valid_until,
-            :valid_state
+            :valid_state,
+            :timestamp_source
         )''', rows)
 
 
@@ -123,7 +126,10 @@ class TESSUnits(Table):
     def __init__(self, pool):
         '''Create and populate the SQLite Units Table'''
         Table.__init__(self, pool)
-        self.id = None
+        # Cached row ids
+        self._id = {}
+        self._id['Publisher']  = None
+        self._id['Subscriber'] = None
 
 
     def table(self):
@@ -148,7 +154,8 @@ class TESSUnits(Table):
             height_units              REAL,
             valid_since               TEXT,
             valid_until               TEXT,
-            valid_state               TEXT
+            valid_state               TEXT,
+            timestamp_source          TEXT
             );
             '''
         )
@@ -182,17 +189,19 @@ class TESSUnits(Table):
 
 
     @inlineCallbacks
-    def latest(self):
+    def latest(self, timestamp_source="Subscriber"):
 
-        def queryLatest(dbpool):
-            row = {'valid_state': utils.CURRENT }
+        def queryLatest(dbpool, timestamp_source):
+            row = {'valid_state': utils.CURRENT, 'timestamp_source': timestamp_source }
             return dbpool.runQuery(
             '''
-            SELECT units_id FROM tess_units_t WHERE valid_state == :valid_state
+            SELECT units_id FROM tess_units_t 
+            WHERE valid_state == :valid_state 
+            AND timestamp_source == :timestamp_source
             ''', row)
 
-        if self.id is None:
-            row = yield queryLatest(self.pool)
-            self.id = row[0][0]
-        returnValue(self.id)
+        if self._id[timestamp_source] is None:
+            row = yield queryLatest(self.pool, timestamp_source)
+            self._id[timestamp_source] = row[0][0]
+        returnValue(self._id[timestamp_source])
    
