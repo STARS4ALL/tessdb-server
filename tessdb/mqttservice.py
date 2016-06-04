@@ -49,6 +49,8 @@ INITIAL_DELAY = 4   # seconds
 FACTOR        = 2
 MAX_DELAY     = 600 # seconds
 
+TSTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 # -----------------------
 # Module global variables
 # -----------------------
@@ -276,6 +278,8 @@ class MQTTService(ClientService):
         # Find out existing timestamp. If not, timestamp it
         if 'tstamp' in row:
             row['tstamp_src'] = "Publisher"
+            # - Esto va a dar guerra si la marca viene de un GPS, ya veras ...
+            row['tstamp']   = datetime.datetime.strptime(row['tstamp'], TSTAMP_FORMAT)
         else:
             row['tstamp_src'] = "Subscriber"
             row['tstamp'] = now     # As a datetime instead of string
