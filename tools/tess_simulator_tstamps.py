@@ -22,7 +22,7 @@ PROTOCOL_REVISION = 1
 TOPIC_REGISTER = "STARS4ALL/register"
 TOPIC_READINGS = "STARS4ALL/01/reading"
 QoS = 0
-TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
+TSTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 class TESS(Service):
 
@@ -63,6 +63,7 @@ class TESS(Service):
         self.tamb = round(self.tamb + random.uniform(-2,2), 1)
         self.tsky = self.tamb - 30
         self.tstamp = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+        #self.tstamp = (datetime.datetime.utcnow() + datetime.timedelta(minutes=1)).strftime(TSTAMP_FORMAT)
         return {  
                 'seq': self.seq,
                 'name' : NAME,
