@@ -53,6 +53,9 @@ MAX_DELAY     = 600 # seconds
 # Sequence of possible timestamp formats comming from the Publishers
 TSTAMP_FORMAT = [ "%Y-%m-%d %H:%M:%S",]
 
+# Max Timestamp Ouf-Of-Sync difference, in seconds
+MAX_TSTAMP_OOS = 60
+
 # -----------------------
 # Module global variables
 # -----------------------
@@ -301,7 +304,7 @@ class MQTTService(ClientService):
             else:
                 break
         delta = math.fabs((now - row['tstamp']).total_seconds())
-        if delta > 5:
+        if delta > MAX_TSTAMP_OOS:
             log.warn("Publisher timestamp out of sync with Subscriber by {delta} seconds", delta=delta)
 
 
@@ -360,7 +363,6 @@ class MQTTService(ClientService):
 
         # Handle incoming TESS Data
         topic_part  = topic.split('/')
-
         
         if self.regAllowed and topic == self.options["tess_topic_register"]:
             self.handleRegistration(row)
