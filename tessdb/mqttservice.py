@@ -35,7 +35,7 @@ from mqtt.client.factory import MQTTFactory
 # local imports
 # -------------
 
-from .error import ValidationError, ReadingKeyError, ReadingTypeError
+from .error import ValidationError, ReadingKeyError, ReadingTypeError, IncorrectTimestampError
 from .logger import setLogLevel
 from .utils  import chop
 
@@ -49,7 +49,8 @@ INITIAL_DELAY = 4   # seconds
 FACTOR        = 2
 MAX_DELAY     = 600 # seconds
 
-TSTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
+# Sequence of possible timestamp formats comming from the Publishers
+TSTAMP_FORMAT = [ "%Y-%m-%d %H:%M:%S",]
 
 # -----------------------
 # Module global variables
@@ -259,6 +260,66 @@ class MQTTService(ClientService):
             raise ReadingTypeError('chan', str, type(row['chan']))
 
 
+    def handleRegistration(self, row):
+        '''
+        Handle registration data coming from onPublish()
+        '''
+        self.nregister += 1
+        if self.validate:
+            try:
+                    self.validateRegister(row)
+            except ValidationError as e:
+                log.error('Validation error in registration payload={payload!s}', payload=row)
+                log.error('{excp!r}', excp=e)
+            else:
+                self.parent.queue['tess_register'].append(row)
+
+
+    def handleTimestamps(self, row, now):
+        '''
+        Handle Source timestamp conversions and issues
+        '''
+        # If not source timestamp then timestamp it and we are done
+        if not 'tstamp' in row:
+            row['tstamp_src'] = "Subscriber"
+            row['tstamp']     = now     # As a datetime instead of string
+            return
+
+        row['tstamp_src'] = "Publisher"
+        # - This is gonna be awfull with different GPS timestamps ...
+        i = 0
+        while True:
+            try:
+                row['tstamp']   = datetime.datetime.strptime(row['tstamp'], TSTAMP_FORMAT[i])
+            except ValueError as e:
+                i += 1
+                log.debug("Trying next timestamp format ...")
+                continue
+            except IndexError as e:
+                raise IncorrectTimestampError(row['tstamp'])
+            else:
+                break
+
+
+    def handleReadings(self, row, now):
+        '''
+        Handle actual reqadings data coming from onPublish()
+        '''
+        self.nreadings += 1
+        if self.validate:
+            try:
+                self.validateReadings(row)
+                self.handleTimestamps(row, now)
+            except ValidationError as e:
+                log.error('Validation error in readings payload={payload!s}', payload=row)
+            except IncorrectTimestampError as e:
+                log.error("Source timestamp unknown format {tstamp}", tstamp=row['tstamp'])
+            except Exception as e:
+                log.error('{excp!r}', excp=e)
+            else:
+                self.parent.queue['tess_readings'].append(row)
+
+
 
     def onPublish(self, topic, payload, qos, dup, retain, msgId):
         '''
@@ -274,15 +335,6 @@ class MQTTService(ClientService):
             log.error('Invalid JSON in payload={payload}', payload=payload)
             log.error('{excp!r}', excp=e)
             return
-
-        # Find out existing timestamp. If not, timestamp it
-        if 'tstamp' in row:
-            row['tstamp_src'] = "Publisher"
-            # - Esto va a dar guerra si la marca viene de un GPS, ya veras ...
-            row['tstamp']   = datetime.datetime.strptime(row['tstamp'], TSTAMP_FORMAT)
-        else:
-            row['tstamp_src'] = "Subscriber"
-            row['tstamp'] = now     # As a datetime instead of string
 
         # Discard retained messages to avoid duplicates in the database
         if retain:
@@ -305,27 +357,10 @@ class MQTTService(ClientService):
         # Handle incoming TESS Data
         topic_part  = topic.split('/')
 
-        # Registration
+        
         if self.regAllowed and topic == self.options["tess_topic_register"]:
-            self.nregister += 1
-            if self.validate:
-                try:
-                    self.validateRegister(row)
-                except ValidationError as e:
-                    log.error('Validation error in registration payload={payload!s}', payload=row)
-                    log.error('{excp!r}', excp=e)
-                    return
-            self.parent.queue['tess_register'].append(row)
-        # Data
+            self.handleRegistration(row)
         elif topic_part[0] in self.tess_heads and topic_part[-1] in self.tess_tails:
-            self.nreadings += 1
-            if self.validate:
-                try:
-                    self.validateReadings(row)
-                except ValidationError as e:
-                    log.error('Validation error in readings payload={payload!s}', payload=row)
-                    log.error('{excp!r}', excp=e)
-                    return
-            self.parent.queue['tess_readings'].append(row)
+            self.handleReadings(row, now)
         else:
             log.warn("message received on unexpected topic {topic}", topic=topic)

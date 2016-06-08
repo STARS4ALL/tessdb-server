@@ -15,6 +15,9 @@ class DiscreteValueError(ValueError):
 
 class ValidationError(ValueError):
     pass
+
+class IncorrectTimestampError(ValueError):
+    pass
     
 class ReadingKeyError(ValidationError):
     '''Missing mandatory keys in reading'''
