@@ -299,6 +299,9 @@ class MQTTService(ClientService):
                 raise IncorrectTimestampError(row['tstamp'])
             else:
                 break
+        delta = math.fabs((now - row['tstamp']).total_seconds())
+        if delta > 5:
+            log.warn("Publisher timestamp out of sync with Subscriber by {delta} seconds", delta=delta)
 
 
     def handleReadings(self, row, now):
