@@ -1,5 +1,9 @@
 Prioridad Alta
 ==============
+*) Formato fecha ISO
+  - nueva release del pip
+  - scripst de migracion de lo que hay ya
+*) Actuaizar formato de payload en el README.md y con tablas
 *) Capturar excepcion para morir y ser levantado con monit
 
 
