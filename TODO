@@ -1,5 +1,9 @@
 Prioridad Alta
 ==============
+*) Migracion fuera tmestamp
+ - Editar el dibujo del esquema de BD, y e README-md si hace falta
+ - drop table old_tess_readings_t;
+
 *) Formato fecha ISO
   - nueva release del pip
   - scripst de migracion de lo que hay ya

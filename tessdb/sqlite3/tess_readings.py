@@ -199,7 +199,6 @@ class TESSReadings(Table):
                     returnValue(None)
 
         row['date_id'], row['time_id'] = roundDateTime(now, self.parent.time.secs_resol)
-        row['tstamp']   = now.strftime(utils.TSTAMP_FORMAT)
         row['instr_id'] = tess[0]
         row['loc_id']   = tess[3]
         row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
