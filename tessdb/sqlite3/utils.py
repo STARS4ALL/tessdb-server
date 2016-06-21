@@ -48,7 +48,7 @@ log = Logger(namespace='dbase')
 # ------------------------
 
 def roundDateTime(ts, secs_resol):
-   '''Round a timestamp to the nearest minute'''
+    '''Round a timestamp to the nearest minute'''
     if secs_resol > 1:
         tsround = ts + datetime.timedelta(seconds=0.5*secs_resol)
     else:
