@@ -229,23 +229,35 @@ TESS devices with a GPS will send `longitude`, `latitude` and `height` values, o
 
 # MQTT PAYLOAD INFORMATION
 
-## Published on  topic 'STARS4ALL/<channel>/reading'
+Payloads are transmitted in JSON format, with the format described below.
+
+## Published on  topic 'STARS4ALL/{channel}/reading'
 
 | Field name |  Type  | Units | Optional | Description                       |
-|:----------:|:------:|:-----:|:--------:|----------------------------------:|
+|:----------:|:------:|:-----:|:--------:|:----------------------------------|
 | seq        | int    |   -   | mand  | Sequence number. If possible use 32 bits. The sequence number will start in 1 at each device reboot. |
 | name       | string |   -   | mand  | Instrument friendly name. Should be unique as it identifies the device. |
 | freq       | float  | Hz    | mand  | Raw reading as a frequency with 3 decimal digits precision (millihertz) NNNNN.NNN |
 | mag        | float  | mag/arcsec^2 | mandat. | Visual magnitude (formulae?) corresponding to the raw reading). Transmitted up to two decimal places NN.NN |
 | tamb       | float   | ºC    | mandat. | Ambient Temperature. Transmitted up to one decimal place. |
 | tsky       | float   | ºC    | mandat.  | Sky Temperature. Transmitted up to one decimal place. |
-| az         | int     | deg | opt | photometer optical axis Azimuth sent only on instruments with accelerometer. |
-| alt | int | degrees | opt | photometer optical axis Altitude (angle): sent only on instruments with accelerometer. |
+| az         | int     | deg | opt | Photometer optical axis Azimuth sent only on instruments with accelerometer. |
+| alt | int | degrees | opt | Photometer optical axis Altitude (angle): sent only on instruments with accelerometer. |
 | lat | float | deg | opt | Instrument latitude. Only sent by instruments with GPS integration.
 | long | float | deg | opt | Instrument longitude. Only sent by instruments with GPS integration. |
 | height | float | meters | opt | Instrument height above the sea level. Only sent by instruments with GPS integration. |
 | rev | int | - | mand | Payload data format revision number. Current version is 1. |
-| tstamp | string | UTC | opt | Optional timestamp,“YYYY-MM-DDTHH:MM:SS” format. Must be UTC. |
+| tstamp | string | UTC | opt | Timestamp,“YYYY-MM-DDTHH:MM:SS” format. Must be UTC. |
+
+## Published on  topic 'STARS4ALL/register'
+
+| Field name |  Type  | Units | Optional | Description                       |
+|:----------:|:------:|:-----:|:--------:|:----------------------------------|
+| name  | string | - | mand | Instrument friendly name. Should be unique as it identifies the device. |
+| mac   | string | - | mand. | Device MAC address, format “xx:yy:zz:rr:ss:tt” |
+| calib | float  | mag/arcsec^2 | mand | Per-device calibrated Instrumental constant. Transmitted as NN.NN floating point. |
+| rev   | int    | - | mand | Payload data format revision number. Current version is 1. |
+| chan  | string | - | opt | Channel where this instrument will publish its readings. |
 
 # OPERATION & MAINTENANCE
 
