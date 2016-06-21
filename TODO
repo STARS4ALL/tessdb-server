@@ -1,7 +1,6 @@
 Prioridad Alta
 ==============
 
-*) Actuaizar formato de payload en el README.md y con tablas
 *) Capturar excepcion para morir y ser levantado con monit
 
 
