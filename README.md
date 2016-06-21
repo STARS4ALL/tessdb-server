@@ -344,7 +344,7 @@ The most important use of the tess utility is to assign an existing location to 
 `test readings list`
 ```
 +--------------+--------+------------+-------------+-------------+
-| Timestammp   | TESS   | Location   | Frequency   | Magnitude   |
+| Timestamp    | TESS   | Location   | Frequency   | Magnitude   |
 +==============+========+============+=============+=============+
 +--------------+--------+------------+-------------+-------------+
 ```

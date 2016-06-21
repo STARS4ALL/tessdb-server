@@ -264,11 +264,13 @@ def readings_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT r.timestamp, i.name, l.site, r.frequency, r.magnitude
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude
         FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
         JOIN location_t as l USING (location_id)
         JOIN tess_t     as i USING (tess_id)
-        ORDER BY r.timestamp DESC
+        ORDER BY r.date_id DESC, r.time_id DESC
         LIMIT %s
         ''' % options.count)
     paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude"], size=options.count)
