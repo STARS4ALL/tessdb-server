@@ -51,7 +51,7 @@ FACTOR        = 2
 MAX_DELAY     = 600 # seconds
 
 # Sequence of possible timestamp formats comming from the Publishers
-TSTAMP_FORMAT = [ "%Y-%m-%d %H:%M:%S",]
+TSTAMP_FORMAT = [ "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S",]
 
 # Max Timestamp Ouf-Of-Sync difference, in seconds
 MAX_TSTAMP_OOS = 60

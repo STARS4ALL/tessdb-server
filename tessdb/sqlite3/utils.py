@@ -31,11 +31,11 @@ from twisted.logger   import Logger
 # ----------------
 
 UNKNOWN       = 'Unknown'
-START_TIME    = "2016-01-01 00:00:00"
-INFINITE_TIME = "2999-12-31 23:59:59"
+START_TIME    = "2016-01-01T00:00:00"
+INFINITE_TIME = "2999-12-31T23:59:59"
 EXPIRED       = "Expired"
 CURRENT       = "Current"
-TSTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"
+TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 # -----------------------
 # Module Global Variables
