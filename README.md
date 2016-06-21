@@ -242,7 +242,7 @@ Payloads are transmitted in JSON format, with the format described below.
 | tamb       | float   | ºC    | mandat. | Ambient Temperature. Transmitted up to one decimal place. |
 | tsky       | float   | ºC    | mandat.  | Sky Temperature. Transmitted up to one decimal place. |
 | az         | int     | deg | opt | Photometer optical axis Azimuth sent only on instruments with accelerometer. |
-| alt | int | degrees | opt | Photometer optical axis Altitude (angle): sent only on instruments with accelerometer. |
+| alt | int | deg | opt | Photometer optical axis Altitude (angle): sent only on instruments with accelerometer. |
 | lat | float | deg | opt | Instrument latitude. Only sent by instruments with GPS integration.
 | long | float | deg | opt | Instrument longitude. Only sent by instruments with GPS integration. |
 | height | float | meters | opt | Instrument height above the sea level. Only sent by instruments with GPS integration. |
