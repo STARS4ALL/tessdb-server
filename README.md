@@ -381,6 +381,40 @@ The most important use of the tess utility is to assign an existing location to 
 +--------------+--------+------------+-------------+-------------+
 ```
 
+# Sample SQL Queries
 
+1. Get a daily report of readings per instrument:
+
+```sh
+#!/bin/bash
+sqlite3 /var/dbase/tess.db <<EOF
+.mode column
+.headers on
+SELECT d.sql_date, i.name, count(*) AS readings
+FROM tess_readings_t AS r
+JOIN tess_t AS i USING (tess_id)
+JOIN date_t AS d USING (date_id)
+GROUP BY r.date_id, r.tess_id
+ORDER BY d.sql_date DESC;
+EOF
+```
+
+2. Extract al readings for a given instrument:
+
+```sh
+#!/bin/bash
+instrument_name=$1
+sqlite3 -csv -header /var/dbase/tess.db <<EOF
+SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time) AS timestamp, r.sequence_number, l.site, i.name, r.frequency, r.magnitude, i.calibration_k, r.sky_temperature, r.ambient_temperature
+FROM tess_readings_t AS r
+JOIN tess_t          AS i USING (tess_id)
+JOIN location_t      AS l USING (location_id)
+JOIN date_t          AS d USING (date_id)
+JOIN time_t          AS t USING (time_id)
+WHERE i.name = "${instrument_name}"
+ORDER BY r.date_id ASC, r.time_id ASC;
+EOF
+
+```
 
 

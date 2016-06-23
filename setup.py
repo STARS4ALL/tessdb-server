@@ -79,7 +79,7 @@ if os.name == "posix":
           ('/etc/init.d' ,           ['files/etc/init.d/tessdb']),
           ('/etc/default',           ['files/etc/default/tessdb']),
           ('/etc/tessdb',            ['files/etc/tessdb/config.example', 'files/etc/tessdb/tess_units.example.json', 'files/etc/tessdb/tess_location.example.json', 'files/etc/tessdb/locations.example.json']),
-          ('/usr/local/bin',         ['files/usr/local/bin/tessdb','files/usr/local/bin/tess']),
+          ('/usr/local/bin',         ['files/usr/local/bin/tessdb','files/usr/local/bin/tess', 'files/usr/local/bin/tess_bulk_dump_by_instrument.sh', 'files/usr/local/bin/tess_daily_summary.sh', 'files/usr/local/bin/tess_sunrise_sunset.sh']),
           ('/etc/logrotate_astro.d', ['files/etc/logrotate.d/tessdb']),
           ('/var/dbase',             ['files/var/dbase/placeholder.txt']),
           ]
