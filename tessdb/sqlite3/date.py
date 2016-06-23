@@ -5,6 +5,8 @@
 #
 # ----------------------------------------------------------------------
 
+from __future__ import division
+
 #--------------------
 # System wide imports
 # -------------------
@@ -40,11 +42,11 @@ log = Logger(namespace='dbase')
 # ------------------------
 
 def julian_day(date):
-    '''Returns the Julian day number of a date at noon.'''
+    '''Returns the Julian day number of a date at 0h UTC.'''
     a = (14 - date.month)//12
     y = date.year + 4800 - a
     m = date.month + 12*a - 3
-    return date.day + ((153*m + 2)//5) + 365*y + y//4 - y//100 + y//400 - 32045
+    return (date.day + ((153*m + 2)//5) + 365*y + y//4 - y//100 + y//400 - 32045) - 0.5
 
 def _populate(transaction, rows):
     '''Dimension initial data loading (replace flavour)'''
@@ -129,7 +131,7 @@ class Date(Table):
                     date.strftime(self.__fmt),  # date string
                     date.day,             # day of month
                     date.strftime("%j"),  # day of year
-                    julian_day(date)+0.5,     # At midnight (+ or - ?????)
+                    julian_day(date),     # At midnight
                     date.strftime("%A"),      # weekday name
                     date.strftime("%a"),      # abbreviated weekday name
                     int(date.strftime("%w")), # weekday number (0=Sunday)
