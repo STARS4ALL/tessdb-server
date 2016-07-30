@@ -88,6 +88,7 @@ class DBaseService(Service):
         self.nrowsStatList = []
         self.sunriseTask  = task.LoopingCall(self.sunrise)
         setLogLevel(namespace='dbase', levelStr=options['log_level'])
+        setLogLevel(namespace='register', levelStr=options['register_log_level'])
         if self.options['secs_resolution'] not in self.SECS_RESOLUTION:
             raise DiscreteValueError(self.options['secs_resolution'], self.SECS_RESOLUTION)
         
@@ -156,6 +157,7 @@ class DBaseService(Service):
         Returns a Deferred
         '''
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
+        setLogLevel(namespace='register', levelStr=options['register_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
         
         self.tess_readings.setOptions(location_filter=new_options['location_filter'], 

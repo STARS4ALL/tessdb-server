@@ -163,6 +163,10 @@ location_pause = 10
 # Reloadable property
 stats = condensed
 
-# namespace log level (debug, info, warn, error, critical)
+# general namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = info
+
+# specific registration log level (debug, info, warn, error, critical)
+# Reloadable property
+register_log_level = info

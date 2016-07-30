@@ -61,7 +61,8 @@ DEFAULT_DEPLOYMENT = []
 # Module Global Variables
 # -----------------------
 
-log = Logger(namespace='dbase')
+log  = Logger(namespace='dbase')
+log2 = Logger(namespace='registry')
 
 
 # ------------------------
@@ -286,7 +287,7 @@ class TESS(Table):
         Registers an instrument given its MAC address, friendly name and calibration constant
         Returns a Deferred.
         '''
-
+        log2.debug("New registration request for {row}", row=row)
         self.nregister += 1
         instrument = yield self.findMAC(row)
         # if  instrument with that MAC already exists, may be update it ...
@@ -299,22 +300,23 @@ class TESS(Table):
                 if not len(instrument2):
                     self.nUpdNameChange += 1
                     yield self.updateName(row)
-                    log.info("Changed instrument name to {name}", name=row['name'])
+                    log2.info("Changed instrument name to {name}", name=row['name'])
                 else:
                     self.rejUpdDupName += 1
+                    log2.info("Rejected: existing instrument name {name} modification due to other instrument using the same name",name=row['name'])
 
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
                 yield self.updateCalibration(row)
                 self.nUpdCalibChange += 1
-                log.info("Changed instrument calibration data to {calib}", calib=row['calib'])
+                log2.info("Changed instrument calibration data to {calib}", calib=row['calib'])
         else:
             # Find other posible existing instruments with the same name
-            # We require the names to be unique as wellocation_t.
+            # We require the names to be unique.
             # If that condition is met, we add a new instrument
             instrument = yield self.findName(row) 
             if len(instrument):
-                log.info("Another instrument already registered with the same name: {name}", name=row['name']) 
+                log2.info("Registration rejected: another instrument already registered with the same name: {name}", name=row['name']) 
                 self.rejCreaDupName += 1
             else:
                 yield self.addNew(row)
