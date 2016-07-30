@@ -116,10 +116,13 @@ def createParser():
     icr = subparser.add_parser('create', help='create instrument')
     icr.add_argument('name',  type=str, help='friendly name')
     icr.add_argument('mac',   type=str, help='MAC address')
-    icr.add_argument('calib', type=float, help='Calibration cnstant')
-   
+    icr.add_argument('calib', type=float, help='Calibration Constant')
     icr.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    ire = subparser.add_parser('rename', help='rename instrument')
+    ire.add_argument('oldname',  type=str, help='old friendly name')
+    ire.add_argument('newname',   type=str, help='new friendly name')
+    ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
 
     return parser
@@ -141,6 +144,8 @@ def main():
             instrument_import(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'create':
             instrument_create(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'rename':
+            instrument_rename(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
@@ -321,6 +326,25 @@ def instrument_create(connection, options):
         )
         ''',  row)
     connection.commit()
+    print("Operation complete.")
+
+
+def instrument_rename(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['newname']  = options.newname
+    row['oldname']  = options.oldname
+    cursor.execute("SELECT mac_address FROM tess_t WHERE name == :oldname", row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot rename. Existing instrument with old name %s does not exist." % (options.oldname,) )
+    cursor.execute("SELECT mac_address FROM tess_t WHERE name == :newname", row)
+    result = cursor.fetchone()
+    if result:
+        raise IndexError("Cannot rename. Existing instrument MAC %s owns this name." % (result[0],) ) 
+    cursor.execute("UPDATE tess_t SET name = :newname WHERE name == :oldname", row)
+    connection.commit()
+    print("Operation complete.")
 
 
 # --------------------
