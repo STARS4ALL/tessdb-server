@@ -120,9 +120,14 @@ def createParser():
     icr.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ire = subparser.add_parser('rename', help='rename instrument')
-    ire.add_argument('oldname',  type=str, help='old friendly name')
-    ire.add_argument('newname',   type=str, help='new friendly name')
+    ire.add_argument('old_name',  type=str, help='old friendly name')
+    ire.add_argument('new_name',   type=str, help='new friendly name')
     ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    iup = subparser.add_parser('update', help='update instrument calibration constant')
+    iup.add_argument('name',   type=str, help='instrument friendly name')
+    iup.add_argument('new_value',  type=float, help='new calib constant')
+    iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
 
     return parser
@@ -146,6 +151,8 @@ def main():
             instrument_create(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'rename':
             instrument_rename(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'update':
+            instrument_update(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
@@ -329,20 +336,73 @@ def instrument_create(connection, options):
     print("Operation complete.")
 
 
+
 def instrument_rename(connection, options):
     cursor = connection.cursor()
     row = {}
-    row['newname']  = options.newname
-    row['oldname']  = options.oldname
+    row['newname']  = options.new_name
+    row['oldname']  = options.old_name
     cursor.execute("SELECT mac_address FROM tess_t WHERE name == :oldname", row)
     result = cursor.fetchone()
     if not result:
-        raise IndexError("Cannot rename. Existing instrument with old name %s does not exist." % (options.oldname,) )
+        raise IndexError("Cannot rename. Existing instrument with old name %s does not exist." % (options.old_name,) )
     cursor.execute("SELECT mac_address FROM tess_t WHERE name == :newname", row)
     result = cursor.fetchone()
     if result:
         raise IndexError("Cannot rename. Existing instrument MAC %s owns this name." % (result[0],) ) 
     cursor.execute("UPDATE tess_t SET name = :newname WHERE name == :oldname", row)
+    connection.commit()
+    print("Operation complete.")
+
+
+
+def instrument_update(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['name']       = options.name
+    row['calib_flag'] = CURRENT
+    cursor.execute(
+        '''
+        SELECT name, mac_address, location_id 
+        FROM tess_t 
+        WHERE name == :name
+        AND calibrated_state == :calib_flag 
+        ''', row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot rename. Existing instrument with name %s does not exist." % (options.name,) )
+    row['mac']           = result[1]
+    row['location']      = result[2]
+    row['calib']         = options.new_value
+    row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+    row['exp_date']      = INFINITE_TIME
+    row['calib_expired'] = EXPIRED
+    
+    cursor.execute(
+        '''
+        UPDATE tess_t SET calibrated_until = :eff_date, calibrated_state = :calib_expired
+        WHERE mac_address == :mac AND calibrated_state == :calib_flag
+        ''', row)
+    cursor.execute(
+        '''
+        INSERT INTO tess_t (
+            name,
+            mac_address, 
+            calibration_k,
+            calibrated_since,
+            calibrated_until,
+            calibrated_state,
+            location_id
+        ) VALUES (
+            :name,
+            :mac,
+            :calib,
+            :eff_date,
+            :exp_date,
+            :calib_flag,
+            :location
+        )
+        ''',  row)
     connection.commit()
     print("Operation complete.")
 
