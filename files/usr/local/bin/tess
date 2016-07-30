@@ -18,6 +18,7 @@ import sqlite3
 import os
 import os.path
 import json
+import datetime
 
 #--------------
 # other imports
@@ -35,6 +36,12 @@ if os.name == "nt":
     DEFAULT_DBASE = r"C:\tesdb\dbase\tess.db"
 else:
     DEFAULT_DBASE = "/var/dbase/tess.db"
+
+
+INFINITE_TIME = "2999-12-31T23:59:59"
+EXPIRED       = "Expired"
+CURRENT       = "Current"
+TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
 # -----------------------
 # Module global variables
@@ -106,6 +113,14 @@ def createParser():
     imp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     imp.add_argument('-f', '--file', type=str, default="tess.json", help='source JSON file')
 
+    icr = subparser.add_parser('create', help='create instrument')
+    icr.add_argument('name',  type=str, help='friendly name')
+    icr.add_argument('mac',   type=str, help='MAC address')
+    icr.add_argument('calib', type=float, help='Calibration cnstant')
+   
+    icr.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+
 
     return parser
 
@@ -124,6 +139,8 @@ def main():
             instrument_export(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'import':
             instrument_import(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'create':
+            instrument_create(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
@@ -158,6 +175,10 @@ def paging(cursor, headers, size=10):
             raw_input("Press Enter to continue [Ctrl-C to abort] ...")
         else:
             break
+
+# ----------------------
+# INSTRUMENT SUBCOMMANDS
+# ----------------------
 
 def instrument_assign(connection, options):
     cursor = connection.cursor()
@@ -247,6 +268,64 @@ def instrument_import(connection, options):
         ''', rows)
     connection.commit()
 
+
+def instrument_create(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['name']       = options.name
+    row['mac']        = options.mac
+    row['calib']      = options.calib
+    row['calib_flag'] = CURRENT
+    row['eff_date']   = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+    row['exp_date']   = INFINITE_TIME
+    
+    # Find existing MAC and abort if so
+    cursor.execute(
+        '''
+        SELECT name, mac_address, calibration_k 
+        FROM tess_t 
+        WHERE mac_address == :mac
+        AND calibrated_state == :calib_flag
+        ''', row)
+    result = cursor.fetchone()
+    if result:
+        raise IndexError("Already existing MAC %s" % (row['mac'],) )
+    # Find existing name and abort if so
+    cursor.execute(
+        '''
+        SELECT tess_id, mac_address, calibration_k, location_id 
+        FROM tess_t 
+        WHERE name == :name
+        AND calibrated_state == :calib_flag 
+        ''', row)
+    result = cursor.fetchone()
+    if result:
+        raise IndexError("Other instrument already using friendly name %s" (row['name'],) )
+    # Write into database
+    cursor.execute(
+        '''
+        INSERT INTO tess_t (
+            name,
+            mac_address, 
+            calibration_k,
+            calibrated_since,
+            calibrated_until,
+            calibrated_state
+        ) VALUES (
+            :name,
+            :mac,
+            :calib,
+            :eff_date,
+            :exp_date,
+            :calib_flag
+        )
+        ''',  row)
+    connection.commit()
+
+
+# --------------------
+# LOCATION SUBCOMMANDS
+# --------------------
 
 def location_list(connection, options):
     cursor = connection.cursor()
