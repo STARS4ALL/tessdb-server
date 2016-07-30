@@ -131,14 +131,16 @@ def _updateCalibration(cursor, row):
             calibration_k,
             calibrated_since,
             calibrated_until,
-            calibrated_state
+            calibrated_state,
+            location_id
         ) VALUES (
             :name,
             :mac,
             :calib,
             :eff_date,
             :exp_date,
-            :calib_flag
+            :calib_flag,
+            :location
         )
         ''',  row)
 
@@ -307,6 +309,7 @@ class TESS(Table):
 
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
+                row['location'] = instrument[3] # carries over the location id
                 yield self.updateCalibration(row)
                 self.nUpdCalibChange += 1
                 log2.info("Changed instrument calibration data to {calib}", calib=row['calib'])
@@ -334,7 +337,7 @@ class TESS(Table):
         row['calib_flag'] = utils.CURRENT
         return self.pool.runQuery(
             '''
-            SELECT name, mac_address, calibration_k 
+            SELECT name, mac_address, calibration_k, location_id 
             FROM tess_t 
             WHERE mac_address == :mac
             AND calibrated_state == :calib_flag
