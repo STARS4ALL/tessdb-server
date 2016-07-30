@@ -1,11 +1,19 @@
 Prioridad Alta
 ==============
 
-*) Capturar excepcion para morir y ser levantado con monit
+*) Mergear rama fix/registry a develop
+*) Hacer una nueva release de tessdb
+*) Estudiar los log a ver por que nose ha registrado STARS7
+*) Estudiar porque se muere de repente el cliente MQTT 
+
 
 
 Prioridad baja
 =============
+*) Refactorizar tessdb de acuerdo a a nueva arqitectura de servicios
+ - Servicoo maestro y 2 subservicios (mqttservice y dbservice)
+ - El servicio padre tiene las colas de mensajes entre ellos
+
 *) Renombra la columnas frequency y magnitude a frequency1 y magnitude1 en previsiónde una posible
 evolución hacia un TESS multicanal. (frequency2,magnitude2, frequency3,magnitude3, etc.)
 *) Meter mas metadatos a los instrumentos (ver addednum)

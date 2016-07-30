@@ -157,7 +157,7 @@ class DBaseService(Service):
         Returns a Deferred
         '''
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
-        setLogLevel(namespace='register', levelStr=options['register_log_level'])
+        setLogLevel(namespace='register', levelStr=new_options['register_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
         
         self.tess_readings.setOptions(location_filter=new_options['location_filter'], 
