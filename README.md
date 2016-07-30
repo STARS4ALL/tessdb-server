@@ -372,6 +372,43 @@ The most important use of the tess utility is to assign an existing location to 
 +---------+--------------------------+-------------+------------+-------------+
 ```
 
+### Create a brand new TESS instrument
+If automatic registration fails, this command allows manual creation of a TESS instrument in the database
+
+`tess instrument create {name} {mac} {calibration constant}`
+
+### Renaming a TESS instrument
+If for some reason, an instrument needs to change the friendly user name, this command allows you to do so.
+`tess instrument rename {old name} {new name}`
+
++---------+-------------------+---------------+----------+-------------+------------+-------------+
+| TESS    | MAC Addr.         |   Calibration | Site     |   Longitude |   Latitude |   Elevation |
++=========+===================+===============+==========+=============+============+=============+
+| pruebas | 18:FE:34:9C:AD:ED |          1.61 | Pamplona |    n.nnnnn |    nn.nnnn |         nnn |
++---------+-------------------+---------------+----------+-------------+------------+-------------+
+
+
+
+### Updating the calibration constant
+If, for some reason, we need to change the instrument calibration constant, this command allows you to do so.
+`tess instrument update {name} {new calibration constant}`
+
+```
++---------+---------------+---------+---------------------+---------------------+----------+
+| TESS    |   Calibration | State   | Since               | Until               | Site     |
++=========+===============+=========+=====================+=====================+==========+
+| pruebas |          1.65 | Expired | 2016-04-06T14:35:52 | 2016-05-07T16:36:22 | Pamplona |
++---------+---------------+---------+---------------------+---------------------+----------+
+| pruebas |          1.6  | Expired | 2016-05-07T16:36:22 | 2016-07-30T14:29:25 | Pamplona |
++---------+---------------+---------+---------------------+---------------------+----------+
+| pruebas |          1.69 | Expired | 2016-07-30T14:29:25 | 2016-07-30T14:39:01 | Pamplona |
++---------+---------------+---------+---------------------+---------------------+----------+
+| pruebas |          1.63 | Expired | 2016-07-30T14:39:01 | 2016-07-30T16:05:31 | Pamplona |
++---------+---------------+---------+---------------------+---------------------+----------+
+| pruebas |          1.61 | Current | 2016-07-30T16:05:31 | 2999-12-31T23:59:59 | Pamplona |
++---------+---------------+---------+---------------------+---------------------+----------+
+```
+
 ### Listing TESS readings
 `test readings list`
 ```
@@ -380,6 +417,8 @@ The most important use of the tess utility is to assign an existing location to 
 +==============+========+============+=============+=============+
 +--------------+--------+------------+-------------+-------------+
 ```
+
+
 
 # Sample SQL Queries
 
@@ -399,7 +438,7 @@ ORDER BY d.sql_date DESC;
 EOF
 ```
 
-2. Extract al readings for a given instrument:
+2. Extract all readings for a given instrument:
 
 ```sh
 #!/bin/bash

@@ -333,7 +333,15 @@ def instrument_create(connection, options):
         )
         ''',  row)
     connection.commit()
-    print("Operation complete.")
+    # Now display it
+    cursor.execute(
+        '''
+        SELECT name,mac_address,calibration_k,site,longitude,latitude,elevation 
+        FROM   tess_v
+        WHERE  name == :name
+        WHERE  calibrated_state == :calib_flag
+        ''', row)
+    paging(cursor,["TESS","MAC Addr.","Calibration","Site","Longitude","Latitude","Elevation"])
 
 
 
@@ -352,7 +360,16 @@ def instrument_rename(connection, options):
         raise IndexError("Cannot rename. Existing instrument MAC %s owns this name." % (result[0],) ) 
     cursor.execute("UPDATE tess_t SET name = :newname WHERE name == :oldname", row)
     connection.commit()
-    print("Operation complete.")
+    # Now display it
+    row['calib_flag'] = CURRENT
+    cursor.execute(
+        '''
+        SELECT name,mac_address,calibration_k,site,longitude,latitude,elevation 
+        FROM   tess_v
+        WHERE  name == :newname
+        AND    calibrated_state == :calib_flag
+        ''', row)
+    paging(cursor,["TESS","MAC Addr.","Calibration","Site","Longitude","Latitude","Elevation"])
 
 
 
@@ -405,6 +422,13 @@ def instrument_update(connection, options):
         ''',  row)
     connection.commit()
     print("Operation complete.")
+    cursor.execute(
+        '''
+        SELECT name, calibration_k, calibrated_state, calibrated_since, calibrated_until, site
+        FROM   tess_v
+        WHERE  name == :name
+        ''', row)
+    paging(cursor,["TESS","Calibration","State","Since","Until", "Site"])
 
 
 # --------------------
