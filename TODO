@@ -1,8 +1,14 @@
 Prioridad Alta
 ==============
 
-*) Mergear rama fix/registry a develop
-*) Hacer una nueva release de tessdb
+*) Absolute import y division
+*) Refactor
+  - nuevo folder service
+  - nuevo fichero tessdb.py que es el servicio padre
+  - pruebas de regresion antes , durante y despues
+  - nuevos entry point para windos y linux
+  - tocar el setup.py
+  - tocar el fichero de config
 *) Estudiar los log a ver por que nose ha registrado STARS7
 *) Estudiar porque se muere de repente el cliente MQTT 
 

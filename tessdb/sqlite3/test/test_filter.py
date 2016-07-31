@@ -53,6 +53,7 @@ from   tessdb.dbservice import DBaseService
 
 options = {
     'log_level': 'info',
+    'register_log_level': 'info',
     'type': 'sqlite3',
     'connection_string': 'tesoro.db',
     'year_start' : 2015,
@@ -168,8 +169,8 @@ class FixedInstrumentTestCase(unittest.TestCase):
         yield self.db.schema()
         yield self.registerInstrument()
         yield self.db.reloadService(options)
-        self.row1 = { 'name': 'TESS-AH',  'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
-        self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, }
+        self.row1 = { 'name': 'TESS-AH',  'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp_src': 'Subscriber'}
+        self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp_src': 'Subscriber'}
 
 
     def tearDown(self):
@@ -285,9 +286,9 @@ class MobileInstrumentTestCase(unittest.TestCase):
         yield self.registerInstrument()
 
         self.row1 = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
-            'lat': 40.418561, 'long': -3.551502, 'height': 650.0}
+            'lat': 40.418561, 'long': -3.551502, 'height': 650.0, 'tstamp_src': 'Subscriber'}
         self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
-            'lat': 39.64269, 'long': 2.950533, 'height': 100.0}
+            'lat': 39.64269, 'long': 2.950533, 'height': 100.0, 'tstamp_src': 'Subscriber'}
 
     def tearDown(self):
         self.db.pool.close()
