@@ -56,6 +56,7 @@ import tessdb.sqlite3.tess   # to perform a dirty hack
 
 options = {
     'log_level': 'info',
+    'register_log_level': 'info',
     'type': 'sqlite3',
     'connection_string': 'assign.db',
     'year_start' : 2015,

@@ -51,6 +51,7 @@ from   tessdb.dbservice import DBaseService
 
 options = {
     'log_level': 'info',
+    'register_log_level': 'info',
     'type': 'sqlite3',
     'connection_string': 'tesoro.db',
     'year_start' : 2015,

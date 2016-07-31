@@ -52,6 +52,7 @@ from   tessdb.dbservice import DBaseService
 
 options = {
     'log_level': 'info',
+    'register_log_level': 'info',
     'type': 'sqlite3',
     'connection_string': 'tesoro.db',
     'year_start' : 2015,
@@ -87,7 +88,7 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         It should not be inserted
         '''
         now = datetime.datetime.utcnow() 
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}
         yield self.db.update(row)
         self.assertEqual(self.db.tess_readings.nreadings,       1)
         self.assertEqual(self.db.tess_readings.rejNotRegistered,1)
@@ -120,7 +121,7 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         It should be inserted
         '''
         now = datetime.datetime.utcnow()
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}
         yield self.db.update(row)
         self.assertEqual(self.db.tess_readings.nreadings,       1)
         self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
@@ -137,9 +138,9 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         The first one should be inserted, the second one not.
         '''
         now = datetime.datetime.utcnow()
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}
         yield self.db.update(row)
-        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now}
+        row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}
         yield self.db.update(row)
         self.assertEqual(self.db.tess_readings.nreadings,       2)
         self.assertEqual(self.db.tess_readings.rejNotRegistered,0)
