@@ -8,6 +8,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 # ---------------
 # Twisted imports
 # ---------------
@@ -18,12 +20,12 @@ from twisted.enterprise import adbapi
 # local imports
 # -------------
 
-from .date          import Date
-from .time          import TimeOfDay
-from .tess_units    import TESSUnits
-from .location      import Location
-from .tess          import TESS
-from .tess_readings import TESSReadings
+from tessdb.sqlite3.date          import Date
+from tessdb.sqlite3.time          import TimeOfDay
+from tessdb.sqlite3.tess_units    import TESSUnits
+from tessdb.sqlite3.location      import Location
+from tessdb.sqlite3.tess          import TESS
+from tessdb.sqlite3.tess_readings import TESSReadings
 
 # ----------------
 # Global Functions
@@ -36,5 +38,11 @@ def getPool(*args, **kargs):
 
 
 __all__ = [
-	getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
+	"getPool", 
+	"Date", 
+	"TimeOfDay", 
+	"TESSUnits", 
+	"Location", 
+	"TESS", 
+	"TESSReadings"
 ]

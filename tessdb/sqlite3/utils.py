@@ -9,7 +9,8 @@
 # System wide imports
 # -------------------
 
-from __future__ import division
+from __future__ import division, absolute_import
+
 import os
 import json
 import datetime

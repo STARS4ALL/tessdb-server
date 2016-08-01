@@ -4,26 +4,16 @@
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
 
-[log]
-
-# File where log is stored, if any
-# Leave blank if no logfile is desired
-# Not reloadable property
-path = /var/log/tessdb.log
-
-# log file rotation policy, either 'time' or 'size'
-# Not reloadable property
-policy = time
-
-# File Max size in bytes when rotating by size
-# Not reloadable property
-max_size = 1000000
-
 #------------------------------------------------------------------------#
 
 [tessdb]
 
 # Global section
+
+# File where log is stored, if any
+# Leave blank if no logfile is desired
+# Not reloadable property
+log_file = /var/log/tessdb.log
 
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property

@@ -8,6 +8,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import os
 import errno
 import sys
@@ -36,9 +38,9 @@ from mqtt.client.factory import MQTTFactory
 # local imports
 # -------------
 
-from .error import ValidationError, ReadingKeyError, ReadingTypeError, IncorrectTimestampError
-from .logger import setLogLevel
-from .utils  import chop
+from tessdb.error import ValidationError, ReadingKeyError, ReadingTypeError, IncorrectTimestampError
+from tessdb.logger import setLogLevel
+from tessdb.utils  import chop
 
 # ----------------
 # Module constants
@@ -64,6 +66,8 @@ log = Logger(namespace='mqtt')
 
 class MQTTService(ClientService):
 
+    NAME = 'MQTTService'
+
     # Default subscription QoS
     
     QoS = 2
@@ -74,8 +78,7 @@ class MQTTService(ClientService):
     # Mandatory keys in each reading
     MANDATORY_READ = set(['seq','name','freq','mag','tamb','tsky','rev'])
 
-    def __init__(self, parent, options, **kargs):
-        self.parent     = parent
+    def __init__(self, options, **kargs):
         self.options    = options
         self.topics     = []
         self.regAllowed = False
@@ -83,15 +86,18 @@ class MQTTService(ClientService):
         setLogLevel(namespace='mqtt', levelStr=options['log_level'])
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
-        self.factory  = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
-        self.endpoint = clientFromString(reactor, self.options['broker'])
+        self.factory     = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
+        self.endpoint    = clientFromString(reactor, self.options['broker'])
         if self.options['username'] == "":
             self.options['username'] = None
             self.options['password'] = None
         self.resetCounters()
         ClientService.__init__(self, self.endpoint, self.factory, 
             retryPolicy=backoffPolicy(initialDelay=INITIAL_DELAY, factor=FACTOR, maxDelay=MAX_DELAY))
-
+    
+    # -----------
+    # Service API
+    # -----------
     
     def startService(self):
         log.info("starting MQTT Client Service")
@@ -108,9 +114,6 @@ class MQTTService(ClientService):
             log.error("Exception {excp!s}", excp=e)
             reactor.stop()
 
-    #---------------------
-    # Extended Service API
-    # --------------------
 
     @inlineCallbacks
     def reloadService(self, new_options):
@@ -121,12 +124,6 @@ class MQTTService(ClientService):
         self.options = new_options
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
-
-    def pauseService(self):
-        pass
-
-    def resumeService(self):
-        pass
 
     # -------------
     # log stats API
@@ -243,6 +240,7 @@ class MQTTService(ClientService):
             raise ReadingTypeError('lat', float, type(row['lat']))
         if 'height' in row and type(row['height']) != float:
             raise ReadingTypeError('height', float, type(row['height']))
+
 
     def validateRegister(self, row):
         '''validate the registration fields'''

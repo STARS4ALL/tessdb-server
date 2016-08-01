@@ -8,147 +8,59 @@
 # System wide imports
 # -------------------
 
-import sys
-from collections import deque
+from __future__ import division, absolute_import
 
 # ---------------
 # Twisted imports
 # ---------------
 
-from twisted.logger   import Logger, LogLevel
-from twisted.internet import task
-from twisted.internet.defer  import inlineCallbacks, returnValue
-from twisted.internet.threads import deferToThread
+from twisted.internet import task, reactor
+
 #--------------
 # local imports
 # -------------
 
-from .config import VERSION_STRING, loadCfgFile
-from .mqttservice import MQTTService
-from .dbservice   import DBaseService
-from .logger import setLogLevel
-
-# ----------------
-# Module constants
-# ----------------
-
-# -----------------------
-# Module global variables
-# -----------------------
-
-log = Logger(namespace='tessdb')
+from tessdb.service.reloadable import Service, MultiService, Application
+from tessdb.logger             import sysLogInfo,  startLogging
+from tessdb.config             import VERSION_STRING, cmdline, loadCfgFile
+from tessdb.tessdb             import TESSDBService
+from tessdb.dbservice          import DBaseService
+from tessdb.mqttservice        import MQTTService   
 
 
+# Read the command line arguments and config file options
+cmdline_opts = cmdline()
+config_file = cmdline_opts.config
+if config_file:
+   options  = loadCfgFile(config_file)
+else:
+   options = None
 
-class TESSApplication(object):
+# Start the logging subsystem
+log_file = options['tessdb']['log_file']
+startLogging(console=cmdline_opts.console, filepath=log_file)
 
-    # Pointer to self
-    instance = None
+# ------------------------------------------------
+# Assemble application from its service components
+# ------------------------------------------------
 
-    # Signal handler polling period
-    T = 1
+application = Application("TESSDB")
 
-    # Periodic task in seconds
-    TLOG = 60
+tessdbService  = TESSDBService(options['tessdb'], config_file)
+tessdbService.setName(TESSDBService.NAME)
+tessdbService.setServiceParent(application)
 
-    # Stats period task in seconds
-    T_STAT = 3600
+dbaseService = DBaseService(options['dbase'])
+dbaseService.setName(DBaseService.NAME)
+dbaseService.setServiceParent(tessdbService)
 
-    def __init__(self, cfgFilePath, config_opts):
-        
-        TESSApplication.instance = self
-        self.cfgFilePath = cfgFilePath
-        self.queue  = { 'tess_register':  deque() , 'tess_readings':   deque() }
-        self.sigreload  = False
-        self.sigpause   = False
-        self.sigresume  = False
-        self.reloadTask   = task.LoopingCall(self.sighandler)
-        self.reportTask   = task.LoopingCall(self.reporter)
-        self.statsTask    = task.LoopingCall(self.logCounters)
-        self.mqttService  = MQTTService(self, config_opts['mqtt'])
-        self.dbaseService = DBaseService(self, config_opts['dbase'])
-        setLogLevel(namespace='tessdb', levelStr=config_opts['tessdb']['log_level'])
-        self.reloadTask.start(self.T, now=False) # call every T seconds
+mqttService = MQTTService(options['mqtt'])
+mqttService.setName(MQTTService.NAME)
+mqttService.setServiceParent(tessdbService)
 
-    def reporter(self):
-        '''
-        Periodic task to log queue size
-        '''
-        log.info("Readings queue size is {size}", size=len(self.queue['tess_readings']))
+# --------------------------------------------------------
+# Store direct links to subservices in our manager service
+# --------------------------------------------------------
 
 
-    def sighandler(self):
-        '''
-        Periodic task to check for signal events
-        '''
-        if self.sigreload:
-            self.sigreload = False
-            self.reload()
-        if self.sigpause:
-            self.sigpause = False
-            self.pause()
-        if self.sigresume:
-            self.sigresume = False
-            self.resume()
-
-
-    def pause(self):
-        '''
-        Pause application
-        '''
-        self.dbaseService.pauseService()
-        if not self.reportTask.running:
-            self.reportTask.start(self.TLOG, now=True) # call every T seconds
-
-
-    def resume(self):
-        '''
-        Resume application
-        '''
-        self.dbaseService.resumeService()
-        if self.reportTask.running:
-            self.reportTask.stop()
-
-    @inlineCallbacks
-    def reload(self):
-        '''
-        Reload application parameters
-        '''
-        log.warn("{tessdb} config being reloaded", tessdb=VERSION_STRING)
-        try:
-            config_opts  = yield deferToThread(loadCfgFile, self.cfgFilePath)
-        except Exception as e:
-            log.error("Error trying to reload: {excp!s}", excp=e)
-        else:
-            self.mqttService.reloadService(config_opts['mqtt'])
-            self.dbaseService.reloadService(config_opts['dbase'])
-            level = config_opts['tessdb']['log_level']
-            setLogLevel(namespace='tessdb', levelStr=level)
-            log.info("new log level is {lvl}", lvl=level)
-            # It is very convenient to recompute all sunrise/sunset data after a reload
-            # After having assigned an instrument to a location
-            # Otherwise, I have to restart tssdb and loose some samples
-            yield self.dbaseService.sunrise() # This is asynchronous !
-    
-    @inlineCallbacks
-    def start(self):
-        log.info('starting {tessdb}', tessdb=VERSION_STRING)
-        yield self.dbaseService.startService()    # This is asynchronous !
-        self.mqttService.startService()
-        self.statsTask.start(self.T_STAT, now=False) # call every T seconds
-    
-    # -------------
-    # log stats API
-    # -------------
-
-    def resetCounters(self):
-        '''Resets stat counters'''
-        self.mqttService.resetCounters()
-        self.dbaseService.resetCounters()
-
-    @inlineCallbacks
-    def logCounters(self):
-        '''log stat counters'''
-        self.mqttService.logCounters()
-        yield self.dbaseService.logCounters()
-        self.resetCounters()
+__all__ = [ "application" ]

@@ -27,6 +27,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import datetime
 
 
@@ -41,9 +43,7 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-# -- beware of absolute_import in Python 3 when doing import utils
-import utils
-from .utils import Table
+from tessdb.sqlite3.utils import Table
 
 # ----------------
 # Module Constants

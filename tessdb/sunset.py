@@ -8,6 +8,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import ephem
 import datetime
 import math

@@ -4,25 +4,25 @@
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
 
-
 #--------------------
 # System wide imports
 # -------------------
 
 from __future__ import division, absolute_import
 
-import os
-import sys
-
 # ---------------
 # Twisted imports
 # ---------------
+
+from twisted.internet import reactor
+from twisted.application.service import IService
 
 #--------------
 # local imports
 # -------------
 
-from .config import cmdline
+from tessdb  import __version__
+from tessdb.application import application
 
 # ----------------
 # Module constants
@@ -32,16 +32,13 @@ from .config import cmdline
 # Module global variables
 # -----------------------
 
-options = cmdline()
 
+# ------------------------
+# Module Utility Functions
+# ------------------------
 
-if os.name == "nt":
-	if not options.interactive:
-		import tessdb.main_winserv
-	else:
-		import tessdb.main_win
-elif os.name == "posix":
-	import tessdb.main_posix
-else:
-	print("ERROR: unsupported OS")
-	sys.exit(1)
+print("Starting {0} {1} Windows program".format(IService(application).name, __version__ ))
+IService(application).startService()
+reactor.run()
+print("{0} {1} Windows program stopped".format( IService(application).name, __version__ ))
+

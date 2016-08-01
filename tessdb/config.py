@@ -21,7 +21,7 @@ import ConfigParser
 # Twisted imports
 # ---------------
 
-from twisted.logger import LogLevel
+from .logger import LogLevel
 
 #--------------
 # local imports
@@ -131,4 +131,8 @@ def loadCfgFile(path):
     return options
 
 
-__all__ = [VERSION_STRING, loadCfgFile, cmdline]
+__all__ = [
+    "VERSION_STRING", 
+    "loadCfgFile", 
+    "cmdline",
+]

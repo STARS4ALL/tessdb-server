@@ -11,18 +11,20 @@
 
 from __future__ import division, absolute_import
 
-import os
-import sys
-
 # ---------------
 # Twisted imports
 # ---------------
+
+from twisted.internet import reactor
+from twisted.application.service import IService
 
 #--------------
 # local imports
 # -------------
 
-from .config import cmdline
+from tessdb  import __version__
+from tessdb.application import application
+from tessdb.logger      import sysLogInfo
 
 # ----------------
 # Module constants
@@ -32,16 +34,12 @@ from .config import cmdline
 # Module global variables
 # -----------------------
 
-options = cmdline()
 
+# ------------------------
+# Module Utility Functions
+# ------------------------
 
-if os.name == "nt":
-	if not options.interactive:
-		import tessdb.main_winserv
-	else:
-		import tessdb.main_win
-elif os.name == "posix":
-	import tessdb.main_posix
-else:
-	print("ERROR: unsupported OS")
-	sys.exit(1)
+sysLogInfo("Starting {0} {1} Linux service".format(IService(application).name, __version__ ))
+IService(application).startService()
+reactor.run()
+sysLogInfo("{0} {1} Linux service stopped".format(IService(application).name, __version__ ))

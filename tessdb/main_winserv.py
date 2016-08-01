@@ -8,6 +8,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import os
 import sys
 import argparse
@@ -36,11 +38,11 @@ from twisted.logger import Logger, LogLevel
 # local imports
 # -------------
 
-from .logger import sysLogInfo, startLogging
+from tessdb  import __version__
 
-from .  import __version__
-from .config import VERSION_STRING, CONFIG_FILE, cmdline, loadCfgFile
-from .application import TESSApplication
+from tessdb.logger               import sysLogInfo
+from tessdb.application          import application
+from tessdb.service.reloadable   import TopLevelService
 
 # ----------------
 # Module constants
@@ -58,24 +60,6 @@ SERVICE_CONTROL_RELOAD = 128
 # Module Utility Functions
 # ------------------------
 
-def sigreload():
-   '''
-   Signal handler emulator SIGHUP)
-   '''
-   TESSApplication.instance.sigreload = True
-
-def sigpause():
-   '''
-   Signal handler emulator (SIGUSR1)
-   '''
-   TESSApplication.instance.sigpause = True
-
-def sigresume():
-   '''
-   Signal handler emulator (SIGUSR2)
-   '''
-   TESSApplication.instance.sigresume = True
-
 
 # ----------
 # Main Class
@@ -86,35 +70,37 @@ class TESSWindowsService(win32serviceutil.ServiceFramework):
 	Windows service for the TESS database.
 	"""
 	_svc_name_         = "tessdb"
-	_svc_display_name_ = "TESS database {0}".format( __version__)
-	_svc_description_  = "An MQTT Client for TESS that stores data into a SQLite database"
+	_svc_display_name_ = "{0} Windows service {1}".format( IService(application).name , __version__)
+	_svc_description_  = "TESS database service"
 
 
 	def __init__(self, args):
 		win32serviceutil.ServiceFramework.__init__(self, args)
-		self.config_opts  = loadCfgFile(CONFIG_FILE)
 		
 
 	def SvcStop(self):
 		'''Service Stop entry point'''
 		self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
 		reactor.callFromThread(reactor.stop)
-		sysLogInfo("Stopping  tessdb {0} Windows service".format( __version__ ))
+		sysLogInfo("Stopping {0} {1} Windows service".format( IService(application).name, __version__ ))
 
+	# -----------------------------------------------------------------
+	#  SvcPause() &  SvcContinue() only applicable to pausable services
+	# -----------------------------------------------------------------
 
 	def SvcPause(self):
 		'''Service Pause entry point'''
 		self.ReportServiceStatus(win32service.SERVICE_PAUSE_PENDING)
-		reactor.callFromThread(sigpause)
-		sysLogInfo("Pausing tessdb {0} Windows service".format( __version__ ))
+		reactor.callFromThread(TopLevelService.sigpause)
+		sysLogInfo("Pausing {0} {1} Windows service".format( IService(application).name, __version__ ))
 		self.ReportServiceStatus(win32service.SERVICE_PAUSED)
 		
 
 	def SvcContinue(self):
 		'''Service Continue entry point'''
 		self.ReportServiceStatus(win32service.SERVICE_CONTINUE_PENDING)
-		reactor.callFromThread(sigresume)
-		sysLogInfo("Resuming tessdb {0} Windows service".format( __version__ ))
+		reactor.callFromThread(TopLevelService.sigresume)
+		sysLogInfo("Resuming {0} {1} Windows service".format( IService(application).name, __version__ ))
 		self.ReportServiceStatus(win32service.SERVICE_RUNNING)
 		
 
@@ -127,20 +113,17 @@ class TESSWindowsService(win32serviceutil.ServiceFramework):
 
 
 	def SvcDoReload(self):
-		sysLogInfo("Reloading tessdb {0} Windows service".format( __version__ ))
-		reactor.callFromThread(sigreload)
+		sysLogInfo("Reloading {0} {1} Windows service".format( IService(application).name, __version__ ))
+		reactor.callFromThread(TopLevelService.sigreload)
 
 
 	def SvcDoRun(self):
 		'''Service Run entry point'''
 		# initialize your services here
-		sysLogInfo("Starting {0}".format(VERSION_STRING))
-		log_file=self.config_opts['log']['path']
-		startLogging(console=False, filepath=log_file)
-		application = TESSApplication(CONFIG_FILE, self.config_opts)
-		application.start()
+		sysLogInfo("Starting {0} {1}".format(IService(application).name, __version__))
+		IService(application).startService()
 		reactor.run(installSignalHandlers=0)
-		sysLogInfo("tessdb Windows service stopped {0}".format( __version__ ))
+		sysLogInfo("{0} {1} Windows service stopped".format( IService(application).name, __version__ ))
 
      
 def ctrlHandler(ctrlType):

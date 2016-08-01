@@ -7,7 +7,8 @@
 #--------------------
 # System wide imports
 # -------------------
-from __future__ import division
+
+from __future__ import division, absolute_import
 
 import os
 import errno
@@ -24,7 +25,7 @@ import tabulate
 # ---------------
 
 from twisted.logger import Logger, LogLevel
-from twisted.internet import reactor, task
+from twisted.internet import reactor, task, defer
 from twisted.application.service import Service
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
@@ -33,8 +34,8 @@ from twisted.internet.threads import deferToThread
 # local imports
 # -------------
 
-from .logger import setLogLevel
-from .error  import DiscreteValueError
+from tessdb.logger import setLogLevel
+from tessdb.error  import DiscreteValueError
 
 # ----------------
 # Module constants
@@ -78,9 +79,8 @@ class DBaseService(Service):
     T_QUEUE_POLL = 1
     SECS_RESOLUTION = [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
 
-    def __init__(self, parent, options, **kargs):
+    def __init__(self, options, **kargs):
         Service.__init__(self)
-        self.parent   = parent
         self.options  = options
         self.paused   = False
         self.onBoot   = True
@@ -140,11 +140,11 @@ class DBaseService(Service):
         Service.startService(self)
         log.info("Database operational.")
       
-
     def stopService(self):
         self.pool.close()
-        Service.stopService()
+        d = Service.stopService()
         log.info("Database stopped.")
+        return d
 
     #---------------------
     # Extended Service API
@@ -172,10 +172,12 @@ class DBaseService(Service):
     def pauseService(self):
         log.info('TESS database writer paused')
         self.paused = True
+        return defer.succeed(None)
 
     def resumeService(self):
         log.info('TESS database writer resumed')
         self.paused = False
+        return defer.succeed(None)
 
     # ---------------
     # OPERATIONAL API

@@ -27,6 +27,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import os
 
 # ---------------
@@ -41,9 +43,8 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-# -- beware of absolute_import in Python 3 when doing import utils
-import utils
-from .utils import Table, fromJSON
+
+from tessdb.sqlite3.utils import Table, fromJSON, START_TIME, INFINITE_TIME, CURRENT
 
 # ----------------
 # Module Constants
@@ -61,9 +62,9 @@ DEFAULT_UNITS = {
     "longitude_units"           : "degrees",
     "latitude_units"            : "degrees",
     "height_units"              : "m",
-    "valid_since"               : utils.START_TIME,
-    "valid_until"               : utils.INFINITE_TIME,
-    "valid_state"               : utils.CURRENT,
+    "valid_since"               : START_TIME,
+    "valid_until"               : INFINITE_TIME,
+    "valid_state"               : CURRENT,
     "timestamp_source"          : "Subscriber"
 }
 
@@ -192,7 +193,7 @@ class TESSUnits(Table):
     def latest(self, timestamp_source="Subscriber"):
 
         def queryLatest(dbpool, timestamp_source):
-            row = {'valid_state': utils.CURRENT, 'timestamp_source': timestamp_source }
+            row = {'valid_state': CURRENT, 'timestamp_source': timestamp_source }
             return dbpool.runQuery(
             '''
             SELECT units_id FROM tess_units_t 

@@ -27,6 +27,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import os
 import datetime
 
@@ -312,7 +314,7 @@ class TESS(Table):
                 row['location'] = instrument[3] # carries over the location id
                 yield self.updateCalibration(row)
                 self.nUpdCalibChange += 1
-                log2.info("Changed instrument calibration data to {calib}", calib=row['calib'])
+                log2.info("{name} Changed instrument calibration data to {calib}", name=row['name'], calib=row['calib'])
         else:
             # Find other posible existing instruments with the same name
             # We require the names to be unique.

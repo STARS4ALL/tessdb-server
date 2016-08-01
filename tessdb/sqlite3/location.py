@@ -27,6 +27,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import os
 import math
 import ephem
@@ -45,9 +47,7 @@ from twisted.internet.task import deferLater
 # local imports
 # -------------
 
-# -- beware of absolute_import in Python 3 when doing import utils
-import utils
-from .utils import Table, fromJSON, utcnoon
+from   tessdb.sqlite3.utils import Table, fromJSON, utcnoon, UNKNOWN
 
 # ----------------
 # Module Constants
@@ -57,15 +57,15 @@ from .utils import Table, fromJSON, utcnoon
 # Longitude/latitude are used in tessdb for sunrise/sunset calculation
 DEFAULT_LOCATION = {
     "location_id"   : -1, 
-    "contact_email" : utils.UNKNOWN, 
-    "site"          : utils.UNKNOWN, 
-    "longitude"     : utils.UNKNOWN, 
-    "latitude"      : utils.UNKNOWN, 
-    "elevation"     : utils.UNKNOWN, 
-    "zipcode"       : utils.UNKNOWN, 
-    "location"      : utils.UNKNOWN, 
-    "province"      : utils.UNKNOWN, 
-    "country"       : utils.UNKNOWN
+    "contact_email" : UNKNOWN, 
+    "site"          : UNKNOWN, 
+    "longitude"     : UNKNOWN, 
+    "latitude"      : UNKNOWN, 
+    "elevation"     : UNKNOWN, 
+    "zipcode"       : UNKNOWN, 
+    "location"      : UNKNOWN, 
+    "province"      : UNKNOWN, 
+    "country"       : UNKNOWN
 } 
 
 
@@ -233,7 +233,7 @@ class Location(Table):
         '''
         Test for valid longitude,latitude elevation in result set.
         '''
-        return location[1] and location[1] != utils.UNKNOWN and  location[2] and location[2] != utils.UNKNOWN and location[3] and location[2] != utils.UNKNOWN
+        return location[1] and location[1] != UNKNOWN and  location[2] and location[2] != UNKNOWN and location[3] and location[2] != UNKNOWN
     
 
     def computeSunrise(self, locations, sun, noon, horizon):

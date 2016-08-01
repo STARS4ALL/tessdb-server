@@ -5,7 +5,7 @@
 #
 # ----------------------------------------------------------------------
 
-from __future__ import division
+from __future__ import division, absolute_import
 
 #--------------------
 # System wide imports
@@ -24,7 +24,7 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-from .utils import Table,  UNKNOWN
+from tessdb.sqlite3.utils import Table,  UNKNOWN
 
 # ----------------
 # Module Constants

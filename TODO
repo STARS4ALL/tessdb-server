@@ -1,14 +1,13 @@
 Prioridad Alta
 ==============
 
-*) Absolute import y division
 *) Refactor
-  - nuevo folder service
-  - nuevo fichero tessdb.py que es el servicio padre
-  - pruebas de regresion antes , durante y despues
-  - nuevos entry point para windos y linux
-  - tocar el setup.py
-  - tocar el fichero de config
+   tocar el fichero de config:
+   - plantilla de Ansible, 
+   - ejemplo x2(win,lin) 
+   - host crater para pruebas
+   - host astrix
+   hacer pruebas locales en crater vs mosquitto
 *) Estudiar los log a ver por que nose ha registrado STARS7
 *) Estudiar porque se muere de repente el cliente MQTT 
 

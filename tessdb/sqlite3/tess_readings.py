@@ -27,6 +27,8 @@
 # System wide imports
 # -------------------
 
+from __future__ import division, absolute_import
+
 import datetime
 import sqlite3
 import math
@@ -43,10 +45,10 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-# -- beware of absolute_import in Python 3 when doing import utils
-import utils
-from .utils import Table, roundDateTime, isDaytime
-from ..error import ReadingKeyError, ReadingTypeError
+
+from tessdb.sqlite3.utils import Table, roundDateTime, isDaytime
+from tessdb.error import ReadingKeyError, ReadingTypeError
+
 # ----------------
 # Module Constants
 # ----------------
