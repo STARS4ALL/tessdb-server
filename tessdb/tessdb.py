@@ -54,10 +54,11 @@ class TESSDBService(MultiService):
     T_STAT = 3600
 
     def __init__(self, config_opts, cfgFilePath):
+        MultiService.__init__(self)
         self.cfgFilePath = cfgFilePath
         self.queue  = { 'tess_register':  deque() , 'tess_readings':   deque() }
         self.statsTask    = task.LoopingCall(self.logCounters)
-        setLogLevel(namespace='tessdb', levelStr=config_opts['tessdb']['log_level'])
+        setLogLevel(namespace='tessdb', levelStr=config_opts['log_level'])
 
     # -----------
     # Service API

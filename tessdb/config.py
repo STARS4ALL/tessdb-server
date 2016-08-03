@@ -89,12 +89,8 @@ def loadCfgFile(path):
     parser.read(path)
 
     options['tessdb'] = {}
+    options['tessdb']['log_file']   = parser.get("tessdb","log_file")
     options['tessdb']['log_level']  = parser.get("tessdb","log_level")
-
-    options['log'] = {}
-    options['log']['path']     = parser.get("log","path")
-    options['log']['policy']   = parser.get("log","policy")
-    options['log']['max_size'] = parser.getint("log","max_size")
 
     options['mqtt'] = {}
     options['mqtt']['log_level']      = parser.get("mqtt","log_level")

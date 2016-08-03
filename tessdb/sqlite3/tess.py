@@ -44,10 +44,8 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-# -- beware of absolute_import in Python 3 when doing import utils
-import utils
-from .utils import Table, fromJSON
-from ..error import ReadingKeyError, ReadingTypeError
+from tessdb.sqlite3.utils import Table, fromJSON, TSTAMP_FORMAT, INFINITE_TIME, EXPIRED, CURRENT
+from tessdb.error import ReadingKeyError, ReadingTypeError
 
 # ----------------
 # Module Constants
@@ -115,10 +113,10 @@ def _updateCalibration(cursor, row):
     row is a dictionary with at least the following keys: 'name', 'mac', 'calib'
     Returns a Deferred.
     '''
-    row['eff_date']      = datetime.datetime.utcnow().strftime(utils.TSTAMP_FORMAT)
-    row['exp_date']      = utils.INFINITE_TIME
-    row['calib_expired'] = utils.EXPIRED
-    row['calib_flag']    = utils.CURRENT
+    row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+    row['exp_date']      = INFINITE_TIME
+    row['calib_expired'] = EXPIRED
+    row['calib_flag']    = CURRENT
 
     cursor.execute(
         '''

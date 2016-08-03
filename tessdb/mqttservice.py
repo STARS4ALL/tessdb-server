@@ -25,7 +25,6 @@ import tabulate
 
 from twisted.logger import Logger, LogLevel
 from twisted.internet import reactor, task
-from twisted.application.service import Service
 from twisted.application.internet import ClientService, backoffPolicy
 from twisted.internet.endpoints import clientFromString
 from twisted.internet.defer import inlineCallbacks
@@ -37,6 +36,7 @@ from mqtt.client.factory import MQTTFactory
 #--------------
 # local imports
 # -------------
+from tessdb.service.relopausable import Service
 
 from tessdb.error import ValidationError, ReadingKeyError, ReadingTypeError, IncorrectTimestampError
 from tessdb.logger import setLogLevel

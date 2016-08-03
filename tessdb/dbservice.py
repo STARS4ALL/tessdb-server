@@ -26,7 +26,6 @@ import tabulate
 
 from twisted.logger import Logger, LogLevel
 from twisted.internet import reactor, task, defer
-from twisted.application.service import Service
 from twisted.internet.defer import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
 
@@ -34,6 +33,7 @@ from twisted.internet.threads import deferToThread
 # local imports
 # -------------
 
+from tessdb.service.relopausable import Service
 from tessdb.logger import setLogLevel
 from tessdb.error  import DiscreteValueError
 
@@ -73,6 +73,9 @@ def utcnow():
 # --------------
 
 class DBaseService(Service):
+
+    # Service name
+    NAME = 'DBaseService'
 
     # Sunrise/Sunset Task period in seconds
     T_SUNRISE = 3600
