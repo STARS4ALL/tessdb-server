@@ -89,7 +89,7 @@ class TESSDBService(MultiService):
 
 
     @inlineCallbacks
-    def reloadService(self):
+    def reloadService(self, options):
         '''
         Reload service parameters
         '''
