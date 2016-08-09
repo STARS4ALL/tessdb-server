@@ -20,12 +20,12 @@ from twisted.internet import task, reactor
 # local imports
 # -------------
 
-from tessdb.service.reloadable import Service, MultiService, Application
-from tessdb.logger             import sysLogInfo,  startLogging
-from tessdb.config             import VERSION_STRING, cmdline, loadCfgFile
-from tessdb.tessdb             import TESSDBService
-from tessdb.dbservice          import DBaseService
-from tessdb.mqttservice        import MQTTService   
+from tessdb.service.relopausable import Service, MultiService, Application
+from tessdb.logger               import sysLogInfo,  startLogging
+from tessdb.config               import VERSION_STRING, cmdline, loadCfgFile
+from tessdb.tessdb               import TESSDBService
+from tessdb.dbservice            import DBaseService
+from tessdb.mqttservice          import MQTTService   
 
 
 # Read the command line arguments and config file options
