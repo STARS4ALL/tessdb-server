@@ -42,7 +42,7 @@ from tessdb  import __version__
 
 from tessdb.logger               import sysLogInfo
 from tessdb.application          import application
-from tessdb.service.reloadable   import TopLevelService
+from tessdb.service.relopausable import TopLevelService
 
 # ----------------
 # Module constants
