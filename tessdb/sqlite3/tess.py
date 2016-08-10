@@ -334,7 +334,7 @@ class TESS(Table):
         row is a dictionary with at least the following keys: 'mac'
         Returns a Deferred.
         '''
-        row['calib_flag'] = utils.CURRENT
+        row['calib_flag'] = CURRENT
         return self.pool.runQuery(
             '''
             SELECT name, mac_address, calibration_k, location_id 
@@ -350,7 +350,7 @@ class TESS(Table):
         row is a dictionary with at least the following keys: 'name'
         Returns a Deferred.
         '''
-        row['calib_flag'] = utils.CURRENT
+        row['calib_flag'] = CURRENT
         return self.pool.runQuery(
             '''
             SELECT tess_id, mac_address, calibration_k, location_id 
@@ -367,9 +367,9 @@ class TESS(Table):
         row is a dictionary with the following keys: 'name', 'mac', 'calib'
         Returns a Deferred.
         '''
-        row['eff_date']   = datetime.datetime.utcnow().strftime(utils.TSTAMP_FORMAT)
-        row['exp_date']   = utils.INFINITE_TIME
-        row['calib_flag'] = utils.CURRENT
+        row['eff_date']   = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+        row['exp_date']   = INFINITE_TIME
+        row['calib_flag'] = CURRENT
         return self.pool.runOperation( 
             '''
             INSERT INTO tess_t (
