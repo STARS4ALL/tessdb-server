@@ -227,7 +227,7 @@ def instrument_list(connection, options):
             WHERE calibrated_state == :state
             ORDER BY name ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Calibration","Site","Longitude","Latitude","Elevation"])
+    paging(cursor,["TESS","MAC Addr.","Calibration","Site","Longitude","Latitude","Elevation"], size=100)
 
 def instrument_map(item):
     return {
@@ -444,7 +444,7 @@ def location_list(connection, options):
         WHERE location_id > -1 
         ORDER BY location_id ASC
         ''')
-    paging(cursor,["Name","Longitude","Latitude","Elevation"])
+    paging(cursor,["Name","Longitude","Latitude","Elevation"], size=100)
    
 
 def readings_list(connection, options):
