@@ -127,6 +127,7 @@ def createParser():
     iup = subparser.add_parser('update', help='update instrument calibration constant')
     iup.add_argument('name',   type=str, help='instrument friendly name')
     iup.add_argument('new_value',  type=float, help='new calib constant')
+    iup.add_argument('-f', '--fix', action='store_true', default=False, help='Raw fix with no control change')
     iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
 
@@ -159,7 +160,7 @@ def main():
             readings_list(connection, options)
     except KeyboardInterrupt:
         print('')
-    except Exception as e:
+    #except Exception as e:
         print("Error => {0}".format(e))
 
 # ==============
@@ -353,7 +354,8 @@ def instrument_rename(connection, options):
     cursor.execute("SELECT mac_address FROM tess_t WHERE name == :oldname", row)
     result = cursor.fetchone()
     if not result:
-        raise IndexError("Cannot rename. Existing instrument with old name %s does not exist." % (options.old_name,) )
+        raise IndexError("Cannot rename. Existing instrument with old name %s does not exist." 
+            % (options.old_name,) )
     cursor.execute("SELECT mac_address FROM tess_t WHERE name == :newname", row)
     result = cursor.fetchone()
     if result:
@@ -372,8 +374,55 @@ def instrument_rename(connection, options):
     paging(cursor,["TESS","MAC Addr.","Calibration","Site","Longitude","Latitude","Elevation"])
 
 
-
 def instrument_update(connection, options):
+    if options.fix:
+        instrument_raw_update(connection, options)
+    else:
+        instrument_controlled_update(connection, options)
+
+
+def instrument_raw_update(connection, options):
+    '''Raw update lastest instrument calibration constant (with 'Current' state)'''
+    cursor = connection.cursor()
+    row = {}
+    row['name']       = options.name
+    row['calib_flag'] = CURRENT
+    cursor.execute(
+        '''
+        SELECT name, mac_address, location_id 
+        FROM tess_t 
+        WHERE name == :name
+        AND calibrated_state == :calib_flag 
+        ''', row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot rename. Existing instrument with name %s does not exist."
+         % (options.name,) )
+    row['mac']           = result[1]
+    row['calib']         = options.new_value
+    cursor.execute(
+        '''
+        UPDATE tess_t SET calibration_k = :calib
+        WHERE mac_address == :mac AND calibrated_state == :calib_flag
+        ''', row)
+    connection.commit()
+    print("Operation complete.")
+    cursor.execute(
+        '''
+        SELECT name, calibration_k, calibrated_state, calibrated_since, calibrated_until, site
+        FROM   tess_v
+        WHERE  name == :name AND calibrated_state == :calib_flag 
+        ''', row)
+    paging(cursor,["TESS","Calibration","State","Since","Until", "Site"])
+
+
+
+
+def instrument_controlled_update(connection, options):
+    '''
+    Update lastest instrument calibration constant with control change
+    creating a new row with new calibration state and valid interval
+    '''
     cursor = connection.cursor()
     row = {}
     row['name']       = options.name
