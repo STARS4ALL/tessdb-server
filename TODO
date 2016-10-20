@@ -14,15 +14,6 @@ Prioridad Alta
  - se muere porque no responden con PINGACK dentro del perioddo y hace un self.transport.loseconnection
  - Subir el periodo y cambiar a self.disconnect en la MQTT library
 
-*) Poner log.warn a los 3 casos de discard messages para averiguar que esta pasando con esto:
-		2016-10-19T13:00:14+0000 [mqtt.client.factory.MQTTFactory#info] Starting factory <mqtt.client.factory.MQTTFactory instance at 0x76157f80>
-		2016-10-19T13:00:14+0000 [mqtt#info] no need to unsubscribe
-		2016-10-19T13:00:14+0000 [mqtt#info] Subscribing to topics=[('STARS4ALL/register', 2), ('STARS4ALL/+/reading', 2)]
-		2016-10-19T13:00:14+0000 [mqtt#info] Connected and subscribed to tcp:astrix.fis.ucm.es:1883
-		2016-10-19T13:00:25+0000 [dbase#info] End sunrise/sunset computation process
-		2016-10-19T14:00:14+0000 [dbase#info] Sunrise Task: ON BOOT = False today = 2016/10/19 12:00:00
-		2016-10-19T14:00:14+0000 [mqtt#info] MQTT Stats [Total, Reads, Register, Discard] = [725, 708, 0, 17]
-
 
 Prioridad baja
 =============
@@ -37,6 +28,11 @@ evolución hacia un TESS multicanal. (frequency2,magnitude2, frequency3,magnitud
  - muchos de los metadatos irán en la info de mensaje de registro del TESS.
 *) Estudiar si merece la pena poner nuevas constraints UNIQUE NOT NULL a tess_t.name y tess_t.mac_address
 *) Embeber servidor web de twisted.
+
+NOTE
+====
+
+He averiguado que los descartes son por el 'retained' flag
 
 ADDENDUM
 ========

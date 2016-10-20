@@ -343,19 +343,19 @@ class MQTTService(ClientService):
 
         # Discard retained messages to avoid duplicates in the database
         if retain:
-            log.warn('Discarded payload from {name} by retained flag', name=row['name'])
+            log.debug('Discarded payload from {name} by retained flag', name=row['name'])
             self.nfilter += 1
             return
 
         # Apply White List filter
         if len(self.options['tess_whitelist']) and not row['name'] in self.options['tess_whitelist']:
-            log.warn('Discarded payload from {name} by whitelist', name=row['name'])
+            log.debug('Discarded payload from {name} by whitelist', name=row['name'])
             self.nfilter += 1
             return
 
         # Apply Black List filter
         if len(self.options['tess_blacklist']) and row['name'] in self.options['tess_blacklist']:
-            log.warn('Discarded payload from {name} by blacklist', name=row['name'])
+            log.debug('Discarded payload from {name} by blacklist', name=row['name'])
             self.nfilter += 1
             return
 
