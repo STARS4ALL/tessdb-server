@@ -163,8 +163,10 @@ class MQTTService(ClientService):
         '''
         Connect to MQTT broker
         '''
-        self.protocol = protocol
-        self.protocol.onPublish = self.onPublish
+        self.protocol                 = protocol
+        self.protocol.onPublish       = self.onPublish
+        self.protocol.onDisconnection = self.onDisconnection
+
         try:
             yield self.protocol.connect("TwistedMQTT-subs", 
                 username=self.options['username'], password=self.options['password'], 
@@ -324,6 +326,13 @@ class MQTTService(ClientService):
             else:
                 self.parent.queue['tess_readings'].append(row)
 
+
+    def onDisconnection(self):
+        '''
+        Disconenction handler.
+        Tells ClientService what to do when the conenction is lost
+        '''
+        self.whenConnected().addCallback(self.connectToBroker)
 
 
     def onPublish(self, topic, payload, qos, dup, retain, msgId):
