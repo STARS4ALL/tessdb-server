@@ -327,7 +327,7 @@ class MQTTService(ClientService):
                 self.parent.queue['tess_readings'].append(row)
 
 
-    def onDisconnection(self):
+    def onDisconnection(self, reason):
         '''
         Disconenction handler.
         Tells ClientService what to do when the conenction is lost
