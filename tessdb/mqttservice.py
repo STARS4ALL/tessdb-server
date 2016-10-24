@@ -332,6 +332,7 @@ class MQTTService(ClientService):
         Disconenction handler.
         Tells ClientService what to do when the conenction is lost
         '''
+        log.warn("tessdb lost connection with its MQTT broker")
         self.whenConnected().addCallback(self.connectToBroker)
 
 
