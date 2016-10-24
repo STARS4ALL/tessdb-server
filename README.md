@@ -2,7 +2,7 @@
 
 Linux service to collect measurements pubished by TESS Sky Quality Meter via MQTT. TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www.observatorioremoto.com/TESS.pdf)
 
-TESSDB is being used as part of the [STARS4ALL Project](https://guaix.fis.ucm.es/splpr/TESS-V1).
+**tessdb** is being used as part of the [STARS4ALL Project](https://guaix.fis.ucm.es/splpr/TESS-V1).
 
 ## Description
 
