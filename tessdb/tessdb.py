@@ -17,6 +17,7 @@ from   collections import deque
 # Twisted imports
 # ---------------
 
+from twisted          import __version__ as __twisted_version__
 from twisted.logger   import Logger, LogLevel
 from twisted.internet import task
 from twisted.internet.defer  import inlineCallbacks, returnValue
@@ -66,7 +67,8 @@ class TESSDBService(MultiService):
 
     @inlineCallbacks
     def startService(self):
-        log.info('starting {tessdb}', tessdb=VERSION_STRING)
+        log.info('starting {tessdb} using Twisted {tw_version}', 
+            tessdb=VERSION_STRING, tw_version=__twisted_version__)
         self.dbaseService   = self.getServiceNamed(DBaseService.NAME)
         self.mqttService    = self.getServiceNamed(MQTTService.NAME)
         yield self.dbaseService.startService()    # This is asynchronous !
