@@ -79,6 +79,7 @@ def _populate(transaction, rows):
             name,
             mac_address,
             calibration_k,
+            filter,
             calibrated_since,
             calibrated_until,
             calibrated_state,
@@ -88,6 +89,7 @@ def _populate(transaction, rows):
             :name,
             :mac_address,
             :calibration_k,
+            :filter,
             :calibrated_since,
             :calibrated_until,
             :calibrated_state,
@@ -165,6 +167,7 @@ def _createViews(cursor):
             tess_t.name,
             tess_t.mac_address,
             tess_t.calibration_k,
+            tess_t.filter,
             tess_t.calibrated_since,
             tess_t.calibrated_until,
             tess_t.calibrated_state,
@@ -212,7 +215,8 @@ class TESS(Table):
             calibrated_since   TEXT,
             calibrated_until   TEXT,
             calibrated_state   TEXT,
-            location_id     INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id)
+            location_id        INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id),
+            filter             TEXT DEFAULT 'DG'
             );
             '''
         )
@@ -337,7 +341,7 @@ class TESS(Table):
         row['calib_flag'] = CURRENT
         return self.pool.runQuery(
             '''
-            SELECT name, mac_address, calibration_k, location_id 
+            SELECT name, mac_address, calibration_k, location_id, filter 
             FROM tess_t 
             WHERE mac_address == :mac
             AND calibrated_state == :calib_flag
@@ -353,7 +357,7 @@ class TESS(Table):
         row['calib_flag'] = CURRENT
         return self.pool.runQuery(
             '''
-            SELECT tess_id, mac_address, calibration_k, location_id 
+            SELECT tess_id, mac_address, calibration_k, location_id, filter 
             FROM tess_t 
             WHERE name == :name
             AND calibrated_state == :calib_flag 
