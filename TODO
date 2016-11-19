@@ -4,8 +4,30 @@ Prioridad Alta
 * SQL excepcion => Imprimir la fila de los datos
 
 * Añadir columna filter
-- Tocar el diagrama con Dia
-- añadir a mano ALTER TABLE tess_t ADD COLUMN filter TEXT DEFAULT 'Clear';
+- añadir a mano 
+   ALTER TABLE tess_t ADD COLUMN filter TEXT DEFAULT 'DG';
+   DROP VIEW tess_v;
+   CREATE VIEW IF NOT EXISTS tess_v 
+        AS SELECT
+            tess_t.tess_id,
+            tess_t.name,
+            tess_t.mac_address,
+            tess_t.calibration_k,
+            tess_t.filter,
+            tess_t.calibrated_since,
+            tess_t.calibrated_until,
+            tess_t.calibrated_state,
+            location_t.contact_email,
+            location_t.site,
+            location_t.longitude,
+            location_t.latitude,
+            location_t.elevation,
+            location_t.zipcode,
+            location_t.location,
+            location_t.province,
+            location_t.country
+        FROM tess_t JOIN location_t USING (location_id); 
+      
 - añadir la columna en tess.py
 - modificar el metodo register para poner bajo cambio versionado esta columna también
   teniendo en cuenta que en el protocolo de registro este campo puede ser opcional
