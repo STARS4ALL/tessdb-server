@@ -140,7 +140,7 @@ def createParser():
     iup.add_argument('name',   type=str,   help='instrument friendly name')
     iup.add_argument('-z', '--zero-point', default=UNKNOWN_ZP,  type=float, help='new zero point')
     iup.add_argument('-f', '--filter', default=UNKNOWN_FILTER,  type=str,  help='new filter glass')
-    iup.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control))'
+    iup.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
     iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
 
