@@ -46,7 +46,7 @@ TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 # Default values for Zer Point and Filter type
 UNKNOWN_ZP     = -99
 DEFAULT_ZP     = 20.5   #  TESS magnitudes / arcsec^2
-UNKOWN_FILTER  = "Unknown"
+UNKNOWN_FILTER  = "Unknown"
 DEFAULT_FILTER = "DG"   # Dichroic Glass
 
 # -----------------------
