@@ -386,32 +386,36 @@ If for some reason, an instrument needs to change the friendly user name, this c
 
 ```
 +---------+-------------------+---------------+----------+-------------+------------+-------------+
-| TESS    | MAC Addr.         |   Calibration | Site     |   Longitude |   Latitude |   Elevation |
+| TESS    | MAC Addr.         |   Zero Point | Site     |   Longitude |   Latitude |   Elevation |
 +=========+===================+===============+==========+=============+============+=============+
 | pruebas | 18:FE:34:9C:AD:ED |          1.61 | Pamplona |    n.nnnnn |    nn.nnnn |         nnn |
 +---------+-------------------+---------------+----------+-------------+------------+-------------+
 ```
 
 
-### Updating the calibration constant
-If, for some reason, we need to change the instrument calibration constant, this command allows you to do so.
-`tess instrument update {name} {new calibration constant}`
+### Updating the zero point or the filter
+If, for some reason, we need to change the instrumental zero point or the filter (or both), this command allows you to do so. Note that you must especify at least a new zero point or a new filter.
+
+Since the filter and zero point are versioned columns in the database, a new instrument entry is made with updated `valid_since`, `valid_until` and `valid_state` columns. However, If the  `--latest` flag is passed, the update command only changes the **current** TESS zero point or filter. This is useful to fix errors in the current TESS instrument definition.
+
+`tess instrument update {name} --zero-point {new zp} --filter {new filter} [--latest]`
+
+Example 1:
+`tess instrument update stars3 --zero-point 23.45 --filter BG39`
+
+Example 2:
+`tess instrument update stars3 --zero-point 19.99 --filter DG --latest`
+
 
 ```
-+---------+---------------+---------+---------------------+---------------------+----------+
-| TESS    |   Calibration | State   | Since               | Until               | Site     |
-+=========+===============+=========+=====================+=====================+==========+
-| pruebas |          1.65 | Expired | 2016-04-06T14:35:52 | 2016-05-07T16:36:22 | Pamplona |
-+---------+---------------+---------+---------------------+---------------------+----------+
-| pruebas |          1.6  | Expired | 2016-05-07T16:36:22 | 2016-07-30T14:29:25 | Pamplona |
-+---------+---------------+---------+---------------------+---------------------+----------+
-| pruebas |          1.69 | Expired | 2016-07-30T14:29:25 | 2016-07-30T14:39:01 | Pamplona |
-+---------+---------------+---------+---------------------+---------------------+----------+
-| pruebas |          1.63 | Expired | 2016-07-30T14:39:01 | 2016-07-30T16:05:31 | Pamplona |
-+---------+---------------+---------+---------------------+---------------------+----------+
-| pruebas |          1.61 | Current | 2016-07-30T16:05:31 | 2999-12-31T23:59:59 | Pamplona |
-+---------+---------------+---------+---------------------+---------------------+----------+
++--------+--------------+----------+---------+---------------------+---------------------+--------------------------+
+| TESS   |   Zero Point | Filter   | State   | Since               | Until               | Site                     |
++========+==============+==========+=========+=====================+=====================+==========================+
+| stars3 |        19.99 | DG       | Current | 2016-09-08T13:59:12 | 2999-12-31T23:59:59 | Facultad de Fisicas, UCM |
++--------+--------------+----------+---------+---------------------+---------------------+--------------------------+
 ```
+
+
 
 ### Listing TESS readings
 `test readings list`
