@@ -78,21 +78,21 @@ def _populate(transaction, rows):
             tess_id,
             name,
             mac_address,
-            calibration_k,
+            zero_point,
             filter,
-            calibrated_since,
-            calibrated_until,
-            calibrated_state,
+            valid_since,
+            valid_until,
+            valid_state,
             location_id
         ) VALUES (
             :tess_id,
             :name,
             :mac_address,
-            :calibration_k,
+            :zero_point,
             :filter,
-            :calibrated_since,
-            :calibrated_until,
-            :calibrated_state,
+            :valid_since,
+            :valid_until,
+            :valid_state,
             :location_id
         )
         ''', rows)
@@ -117,23 +117,23 @@ def _updateCalibration(cursor, row):
     '''
     row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
     row['exp_date']      = INFINITE_TIME
-    row['calib_expired'] = EXPIRED
-    row['calib_flag']    = CURRENT
+    row['valid_expired'] = EXPIRED
+    row['valid_flag']    = CURRENT
 
     cursor.execute(
         '''
-        UPDATE tess_t SET calibrated_until = :eff_date, calibrated_state = :calib_expired
-        WHERE mac_address == :mac AND calibrated_state == :calib_flag
+        UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
+        WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
     cursor.execute(
         '''
         INSERT INTO tess_t (
             name,
             mac_address, 
-            calibration_k,
-            calibrated_since,
-            calibrated_until,
-            calibrated_state,
+            zero_point,
+            valid_since,
+            valid_until,
+            valid_state,
             location_id
         ) VALUES (
             :name,
@@ -141,7 +141,7 @@ def _updateCalibration(cursor, row):
             :calib,
             :eff_date,
             :exp_date,
-            :calib_flag,
+            :valid_flag,
             :location
         )
         ''',  row)
@@ -166,11 +166,11 @@ def _createViews(cursor):
             tess_t.tess_id,
             tess_t.name,
             tess_t.mac_address,
-            tess_t.calibration_k,
+            tess_t.zero_point,
             tess_t.filter,
-            tess_t.calibrated_since,
-            tess_t.calibrated_until,
-            tess_t.calibrated_state,
+            tess_t.valid_since,
+            tess_t.valid_until,
+            tess_t.valid_state,
             location_t.contact_email,
             location_t.site,
             location_t.longitude,
@@ -208,15 +208,15 @@ class TESS(Table):
             '''
             CREATE TABLE IF NOT EXISTS tess_t
             (
-            tess_id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            name               TEXT,
-            mac_address        TEXT, 
-            calibration_k      REAL,
-            calibrated_since   TEXT,
-            calibrated_until   TEXT,
-            calibrated_state   TEXT,
-            location_id        INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id),
-            filter             TEXT DEFAULT 'DG'
+            tess_id       INTEGER PRIMARY KEY AUTOINCREMENT,
+            name          TEXT,
+            mac_address   TEXT, 
+            zero_point    REAL,
+            filter        TEXT DEFAULT 'DG',
+            valid_since   TEXT,
+            valid_until   TEXT,
+            valid_state   TEXT,
+            location_id   INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id)
             );
             '''
         )
@@ -338,13 +338,13 @@ class TESS(Table):
         row is a dictionary with at least the following keys: 'mac'
         Returns a Deferred.
         '''
-        row['calib_flag'] = CURRENT
+        row['valid_flag'] = CURRENT
         return self.pool.runQuery(
             '''
-            SELECT name, mac_address, calibration_k, location_id, filter 
+            SELECT name, mac_address, zero_point, location_id, filter 
             FROM tess_t 
             WHERE mac_address == :mac
-            AND calibrated_state == :calib_flag
+            AND valid_state == :valid_flag
             ''', row)
 
 
@@ -354,13 +354,13 @@ class TESS(Table):
         row is a dictionary with at least the following keys: 'name'
         Returns a Deferred.
         '''
-        row['calib_flag'] = CURRENT
+        row['valid_flag'] = CURRENT
         return self.pool.runQuery(
             '''
-            SELECT tess_id, mac_address, calibration_k, location_id, filter 
+            SELECT tess_id, mac_address, zero_point, location_id, filter 
             FROM tess_t 
             WHERE name == :name
-            AND calibrated_state == :calib_flag 
+            AND valid_state == :valid_flag 
             ''', row)
 
 
@@ -373,23 +373,23 @@ class TESS(Table):
         '''
         row['eff_date']   = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
         row['exp_date']   = INFINITE_TIME
-        row['calib_flag'] = CURRENT
+        row['valid_flag'] = CURRENT
         return self.pool.runOperation( 
             '''
             INSERT INTO tess_t (
                 name,
                 mac_address,
-                calibration_k,
-                calibrated_since,
-                calibrated_until,
-                calibrated_state
+                zero_point,
+                valid_since,
+                valid_until,
+                valid_state
             ) VALUES (
                 :name,
                 :mac,
                 :calib,
                 :eff_date,
                 :exp_date,
-                :calib_flag
+                :valid_flag
             )
             ''', row)
 

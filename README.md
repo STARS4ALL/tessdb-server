@@ -208,11 +208,12 @@ This dimension holds the current list of TESS instruments.
 * A TESS instrument name can be changed as long as there is no other instrument with the same name.
 * The `location_id` is a reference to the current location assigned to the instrument.
 * Location id -1 denotes the "Unknown" location.
-* The `calibration_k` holds the current value of the instrument calibration constant.
-* A history of calibration constant changes are maintained in the `tess_t` table if the instrument is ever recalibrated. 
-* Columns `calibrated_since` and `calibrated_until`hold the timestamps where the calibration constant is valid. 
-* Column `calibrated_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
-* The current calibration constant has its indicator set to `Current` and the expiration date in a far away future (Y2999).
+* The `zero_point` holds the current value of the instrument calibration constant.
+* The `filter` holds the current TESS filter (i.e. 'DG' or Dichroic Glass)
+* A history of zero point & filter changes are maintained in the `tess_t` table if the instrument is recalibrated or its filter is changed. 
+* Columns `valid_since` and `valid_until` hold the timestamps where the changes to zero point and filter are valid. 
+* Column `valid_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
+* The current valid TESS instrument has its `valid_state` set to `Current` and the expiration date in a far away future (Y2999).
 
 #### Unit dimension
 
@@ -257,7 +258,7 @@ Payloads are transmitted in JSON format, with the format described below.
 |:----------:|:------:|:-----:|:--------:|:----------------------------------|
 | name  | string | - | mand | Instrument friendly name. Should be unique as it identifies the device. |
 | mac   | string | - | mand. | Device MAC address, format “xx:yy:zz:rr:ss:tt” |
-| calib | float  | mag/arcsec^2 | mand | Per-device calibrated Instrumental constant. Transmitted as NN.NN floating point. |
+| calib | float  | mag/arcsec^2 | mand | Per-device Zero Point. Transmitted as NN.NN floating point. |
 | rev   | int    | - | mand | Payload data format revision number. Current version is 1. |
 | chan  | string | - | opt | Channel where this instrument will publish its readings. |
 
@@ -440,13 +441,13 @@ ORDER BY d.sql_date DESC;
 EOF
 ```
 
-2. Extract all readings for a given instrument:
+2. Extract a CSV (semicolon separated) with all readings for an instrument passed as a command line argument:
 
 ```sh
 #!/bin/bash
 instrument_name=$1
 sqlite3 -csv -header /var/dbase/tess.db <<EOF
-SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time) AS timestamp, r.sequence_number, l.site, i.name, r.frequency, r.magnitude, i.calibration_k, r.sky_temperature, r.ambient_temperature
+SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time) AS timestamp, r.sequence_number, l.site, i.name, r.frequency, r.magnitude, i.zero_point, r.sky_temperature, r.ambient_temperature
 FROM tess_readings_t AS r
 JOIN tess_t          AS i USING (tess_id)
 JOIN location_t      AS l USING (location_id)
@@ -455,7 +456,30 @@ JOIN time_t          AS t USING (time_id)
 WHERE i.name = "${instrument_name}"
 ORDER BY r.date_id ASC, r.time_id ASC;
 EOF
-
 ```
 
+3. Show current TESS instruments. Note that we are using the `tess_v` View,so that the current location info is already incorporated.
+
+```sh
+sqlite3 /var/dbase/tess.db <<EOF
+.mode column
+.headers on
+SELECT v.name AS Name, v.mac_address AS MAC, (v.latitude || ' ' || v.longitude) AS Coordinates , (v.site || ', ' || v.location || ', ' || v.province) AS Location, v.contact_email as User, v.zero_point as ZP, v.filter as Filter
+FROM tess_v AS v
+WHERE v.valid_state = "Current"
+ORDER BY v.name ASC;
+EOF
+```
+
+4. Show TESS instruments changes
+
+```sh
+sqlite3 /var/dbase/tess.db <<EOF
+.mode column
+.headers on;
+SELECT i.name AS Name, i.zero_point as ZP, i.filter as Filter, i.valid_since AS Since, i.valid_until AS Until, i.valid_state AS 'Change State'
+FROM tess_t AS i
+ORDER BY i.name ASC, i.valid_since ASC;
+EOF
+```
 

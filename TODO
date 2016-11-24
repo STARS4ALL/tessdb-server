@@ -3,57 +3,17 @@ Prioridad Alta
 
 * SQL excepcion => Imprimir la fila de los datos
 
-* Añadir columna filter
-- añadir a mano 
-   ALTER TABLE tess_t ADD COLUMN filter TEXT DEFAULT 'DG';
-   DROP VIEW tess_v;
-   CREATE VIEW IF NOT EXISTS tess_v 
-        AS SELECT
-            tess_t.tess_id,
-            tess_t.name,
-            tess_t.mac_address,
-            tess_t.calibration_k,
-            tess_t.filter,
-            tess_t.calibrated_since,
-            tess_t.calibrated_until,
-            tess_t.calibrated_state,
-            location_t.contact_email,
-            location_t.site,
-            location_t.longitude,
-            location_t.latitude,
-            location_t.elevation,
-            location_t.zipcode,
-            location_t.location,
-            location_t.province,
-            location_t.country
-        FROM tess_t JOIN location_t USING (location_id); 
-      
-- añadir la columna en tess.py
-- modificar el metodo register para poner bajo cambio versionado esta columna también
+* Actualizar Manual de operaciones de la utilidad tess
+
+Prioridad baja
+=============
+
+ *) modificar el metodo register para poner bajo cambio versionado la columna tess_t.filter también
   teniendo en cuenta que en el protocolo de registro este campo puede ser opcional
   - tratar valor por defecto en el mqttservice.py
   - añadir filter en findName()
   - ver si ha cambiado el ZP, el valor del filtro o los 2. Puede servir el mismo UPDATE SQL.
-- test unitarios de register
-
-* Informes diarios de instrumentos registrados
-  - Instrumentos actuales y su localización. Cabeceras tal y como las pinta Jaime en su informe
-  - Añadir cosas al scrpt sql de copiado que di a Jaime.
-  - Historico de cambios en los instumentos (solo el ZP y el filtro y las fechas)
-
-* Mejorar la utilidad de tess para gestionar el campo filter (y el zp) asi como el resto
-  de dimensiones
-    sub-operacion de modify con campos opcionales que indican la columna
-    estoimplica hacer SQL a medida para solo actualizar las columnas dadas 
-  opcion --latest para fikjar solo el valor actiañ del zp y filter 
-
-* Manual de operaciones de la utilidad tess
-
-
-
-
-Prioridad baja
-=============
+  - test unitarios de register
 
 *) Renombra la columnas frequency y magnitude a frequency1 y magnitude1 en previsiónde una posible
 evolución hacia un TESS multicanal. (frequency2,magnitude2, frequency3,magnitude3, etc.)

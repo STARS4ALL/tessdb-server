@@ -224,7 +224,7 @@ def instrument_assign(connection, options):
         '''
         SELECT name,site,longitude,latitude,elevation 
         FROM tess_v
-        WHERE calibrated_state == :state
+        WHERE valid_state == :state
         AND name = :tess
         ''',row)
     paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
@@ -236,9 +236,9 @@ def instrument_list(connection, options):
     row = {'state': CURRENT}
     cursor.execute(
             '''
-            SELECT name,mac_address,calibration_k,filter,site,longitude,latitude,elevation 
+            SELECT name,mac_address,zero_point,filter,site,longitude,latitude,elevation 
             FROM tess_v
-            WHERE calibrated_state == :state
+            WHERE valid_state == :state
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Longitude","Latitude","Elevation"], size=100)
@@ -248,21 +248,21 @@ def instrument_export(connection, options):
 
     def instrument_map(item):
         return {
-            'tess_id':          item[0], 
-            'name':             item[1], 
-            'mac_address':      item[2], 
-            'calibration_k':    item[3],
-            'filter':           item[4], 
-            'calibrated_since': item[5], 
-            'calibrated_until': item[6], 
-            'calibrated_state': item[7], 
-            'location_id':      item[8],
+            'tess_id':     item[0], 
+            'name':        item[1], 
+            'mac_address': item[2], 
+            'zero_point':  item[3],
+            'filter':      item[4], 
+            'valid_since': item[5], 
+            'valid_until': item[6], 
+            'valid_state': item[7], 
+            'location_id': item[8],
         }
 
     cursor = connection.cursor()
     cursor.execute(
             '''
-            SELECT tess_id,name,mac_address,calibration_k,filter,calibrated_since,calibrated_until,calibrated_state,location_id 
+            SELECT tess_id,name,mac_address,zero_point,filter,valid_since,valid_until,valid_state,location_id 
             FROM tess_t
             ORDER BY tess_id ASC;
             ''')
@@ -280,21 +280,21 @@ def instrument_import(connection, options):
             tess_id,
             name,
             mac_address,
-            calibration_k,
+            zero_point,
             filter,
-            calibrated_since,
-            calibrated_until,
-            calibrated_state,
+            valid_since,
+            valid_until,
+            valid_state,
             location_id
         ) VALUES (
             :tess_id,
             :name,
             :mac_address,
-            :calibration_k,
+            :zero_point,
             :filter,
-            :calibrated_since,
-            :calibrated_until,
-            :calibrated_state,
+            :valid_since,
+            :valid_until,
+            :valid_state,
             :location_id
         )
         ''', rows)
@@ -308,7 +308,7 @@ def instrument_create(connection, options):
     row['mac']        = options.mac
     row['zp']         = options.zp
     row['filter']     = options.filter
-    row['calib_flag'] = CURRENT
+    row['valid_flag'] = CURRENT
     row['eff_date']   = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
     row['exp_date']   = INFINITE_TIME
     
@@ -318,7 +318,7 @@ def instrument_create(connection, options):
         SELECT name, mac_address
         FROM tess_t 
         WHERE mac_address == :mac
-        AND calibrated_state == :calib_flag
+        AND valid_state == :valid_flag
         ''', row)
     result = cursor.fetchone()
     if result:
@@ -329,7 +329,7 @@ def instrument_create(connection, options):
         SELECT name, mac_address
         FROM tess_t 
         WHERE name == :name
-        AND calibrated_state == :calib_flag 
+        AND valid_state == :valid_flag 
         ''', row)
     result = cursor.fetchone()
     if result:
@@ -340,11 +340,11 @@ def instrument_create(connection, options):
         INSERT INTO tess_t (
             name,
             mac_address, 
-            calibration_k,
+            zero_point,
             filter,
-            calibrated_since,
-            calibrated_until,
-            calibrated_state
+            valid_since,
+            valid_until,
+            valid_state
         ) VALUES (
             :name,
             :mac,
@@ -352,17 +352,17 @@ def instrument_create(connection, options):
             :filter,
             :eff_date,
             :exp_date,
-            :calib_flag
+            :valid_flag
         )
         ''',  row)
     connection.commit()
     # Now display it
     cursor.execute(
         '''
-        SELECT name, mac_address, calibration_k, filter, site, longitude, latitude, elevation 
+        SELECT name, mac_address, zero_point, filter, site, longitude, latitude, elevation 
         FROM   tess_v
         WHERE  name == :name
-        AND    calibrated_state == :calib_flag
+        AND    valid_state == :valid_flag
         ''', row)
     paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Site","Longitude","Latitude","Elevation"])
 
@@ -385,13 +385,13 @@ def instrument_rename(connection, options):
     cursor.execute("UPDATE tess_t SET name = :newname WHERE name == :oldname", row)
     connection.commit()
     # Now display it
-    row['calib_flag'] = CURRENT
+    row['valid_flag'] = CURRENT
     cursor.execute(
         '''
-        SELECT name,mac_address,calibration_k,filter,site,longitude,latitude,elevation 
+        SELECT name,mac_address,zero_point,filter,site,longitude,latitude,elevation 
         FROM   tess_v
         WHERE  name == :newname
-        AND    calibrated_state == :calib_flag
+        AND    valid_state == :valid_flag
         ''', row)
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Longitude","Latitude","Elevation"])
 
@@ -408,13 +408,13 @@ def instrument_raw_update(connection, options):
     cursor = connection.cursor()
     row = {}
     row['name']       = options.name
-    row['calib_flag'] = CURRENT
+    row['valid_flag'] = CURRENT
     cursor.execute(
         '''
         SELECT name, mac_address, location_id 
         FROM tess_t 
         WHERE name == :name
-        AND calibrated_state == :calib_flag 
+        AND valid_state == :valid_flag 
         ''', row)
     result = cursor.fetchone()
     if not result:
@@ -427,8 +427,8 @@ def instrument_raw_update(connection, options):
         row['zp']            = options.zero_point
         cursor.execute(
         '''
-        UPDATE tess_t SET calibration_k = :zp
-        WHERE mac_address == :mac AND calibrated_state == :calib_flag
+        UPDATE tess_t SET zero_point = :zp
+        WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
     if options.filter != UNKNOWN_FILTER:
@@ -436,16 +436,16 @@ def instrument_raw_update(connection, options):
         cursor.execute(
         '''
         UPDATE tess_t SET filter = :filter
-        WHERE mac_address == :mac AND calibrated_state == :calib_flag
+        WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
     connection.commit()
     print("Operation complete.")
     cursor.execute(
         '''
-        SELECT name, calibration_k, filter, calibrated_state, calibrated_since, calibrated_until, site
+        SELECT name, zero_point, filter, valid_state, valid_since, valid_until, site
         FROM   tess_v
-        WHERE  name == :name AND calibrated_state == :calib_flag 
+        WHERE  name == :name AND valid_state == :valid_flag 
         ''', row)
     paging(cursor,["TESS","Zero Point","Filter","State","Since","Until", "Site"])
 
@@ -460,13 +460,13 @@ def instrument_controlled_update(connection, options):
     cursor = connection.cursor()
     row = {}
     row['name']       = options.name
-    row['calib_flag'] = CURRENT
+    row['valid_flag'] = CURRENT
     cursor.execute(
         '''
         SELECT name, mac_address, location_id 
         FROM tess_t 
         WHERE name == :name
-        AND calibrated_state == :calib_flag 
+        AND valid_state == :valid_flag 
         ''', row)
     result = cursor.fetchone()
     if not result:
@@ -477,14 +477,14 @@ def instrument_controlled_update(connection, options):
     row['location']      = result[2]
     row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
     row['exp_date']      = INFINITE_TIME
-    row['calib_expired'] = EXPIRED
+    row['valid_expired'] = EXPIRED
     row['zp']            = DEFAULT_ZP if options.zero_point == UNKNOWN_ZP else options.zero_point
     row['filter']        = DEFAULT_FILTER if options.filter == UNKNOWN_FILTER else options.filter
 
     cursor.execute(
         '''
-        UPDATE tess_t SET calibrated_until = :eff_date, calibrated_state = :calib_expired
-        WHERE mac_address == :mac AND calibrated_state == :calib_flag
+        UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
+        WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
     cursor.execute(
@@ -492,11 +492,11 @@ def instrument_controlled_update(connection, options):
         INSERT INTO tess_t (
             name,
             mac_address, 
-            calibration_k,
+            zero_point,
             filter,
-            calibrated_since,
-            calibrated_until,
-            calibrated_state,
+            valid_since,
+            valid_until,
+            valid_state,
             location_id
         ) VALUES (
             :name,
@@ -505,7 +505,7 @@ def instrument_controlled_update(connection, options):
             :filter,
             :eff_date,
             :exp_date,
-            :calib_flag,
+            :valid_flag,
             :location
             )
         ''',  row)
@@ -514,7 +514,7 @@ def instrument_controlled_update(connection, options):
     
     cursor.execute(
         '''
-        SELECT name, calibration_k, filter, calibrated_state, calibrated_since, calibrated_until, site
+        SELECT name, zero_point, filter, valid_state, valid_since, valid_until, site
         FROM   tess_v
         WHERE  name == :name
         ''', row)

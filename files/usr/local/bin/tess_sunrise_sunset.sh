@@ -11,6 +11,6 @@ sqlite3 /var/dbase/tess.db <<EOF > ${out_dir}/${name}.${suffix}.txt
 SELECT i.name, l.site, l.sunrise, l.sunset
 FROM tess_t     AS i
 JOIN location_t AS l USING (location_id)
-WHERE i.calibrated_state = 'Current'
+WHERE i.valid_state = 'Current'
 ORDER BY i.name ASC;
 EOF
