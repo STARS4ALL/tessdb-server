@@ -384,12 +384,13 @@ If automatic registration fails, this command allows manual creation of a TESS i
 If for some reason, an instrument needs to change the friendly user name, this command allows you to do so.
 `tess instrument rename {old name} {new name}`
 
+```
 +---------+-------------------+---------------+----------+-------------+------------+-------------+
 | TESS    | MAC Addr.         |   Calibration | Site     |   Longitude |   Latitude |   Elevation |
 +=========+===================+===============+==========+=============+============+=============+
 | pruebas | 18:FE:34:9C:AD:ED |          1.61 | Pamplona |    n.nnnnn |    nn.nnnn |         nnn |
 +---------+-------------------+---------------+----------+-------------+------------+-------------+
-
+```
 
 
 ### Updating the calibration constant

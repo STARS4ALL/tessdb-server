@@ -104,7 +104,7 @@ def createParser():
     #   tess instrument import
     #   tess instrument create <friendly name> <MAC address> <Calibration Constant>
     #   tess instrument rename <old friendly name> <new friendly name>
-    #   tess instrument update <friendly name> <new zeo point>
+    #   tess instrument update <friendly name> --zero-point <new zero point> --filter <new filter> --latest
     #
     subparser = parser_instrument.add_subparsers()
     parser_instrument_assign = subparser.add_parser('assign', help='assign instrument to location')
@@ -397,6 +397,9 @@ def instrument_rename(connection, options):
 
 
 def instrument_update(connection, options):
+    if options.zero_point == UNKNOWN_ZP and options.filter == UNKNOWN_FILTER:
+        raise ValueError("No Zero Point or Filter was specified.")
+    
     if options.latest:
         instrument_raw_update(connection, options)
     else:
