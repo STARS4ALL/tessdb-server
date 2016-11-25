@@ -67,6 +67,8 @@ Type `sudo update-rc.d tessdb defaults` to start it at boot time.
 
 ## Windows installation
 
+**WARNING**: The Windows version is currently untested due to the lack of a real usage need. We recomemnd using the *Linux version*.
+
 ## Requirements
 
 (Tested on Windows XP SP1 & python 2.7.10)
@@ -203,7 +205,7 @@ The figure below shows the layout of **tessdb**.
 This dimension holds the current list of TESS instruments. 
 
 * The real key is an artificial key `tess_id` linked to the Fact table.
-* The `mac_address` could be the natural key if it weren't for the calibration constant history tracking.
+* The `mac_address` could be the natural key if it weren't for the zero point and filter history tracking.
 * The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name.
 * A TESS instrument name can be changed as long as there is no other instrument with the same name.
 * The `location_id` is a reference to the current location assigned to the instrument.
@@ -211,14 +213,13 @@ This dimension holds the current list of TESS instruments.
 * The `zero_point` holds the current value of the instrument calibration constant.
 * The `filter` holds the current TESS filter (i.e. 'DG' or Dichroic Glass)
 * A history of zero point & filter changes are maintained in the `tess_t` table if the instrument is recalibrated or its filter is changed. 
-* Columns `valid_since` and `valid_until` hold the timestamps where the changes to zero point and filter are valid. 
+* Columns `valid_since` and `valid_until` hold the timestamps where the changes to zero point and/or filter are valid. 
 * Column `valid_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
 * The current valid TESS instrument has its `valid_state` set to `Current` and the expiration date in a far away future (Y2999).
 
 #### Unit dimension
 
-The `tess_units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects various labels denoting
-the current measurement units of samples in the fact table. 
+The `tess_units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects various labels denoting the current measurement units of samples in the fact table. 
 
 * Columns `valid_since`, `valid_until` and `valid_state` keep track of units change in a similar technique as above should the units change.
 
@@ -286,7 +287,7 @@ Activating this filter have the following conecuences:
 
 ## SQLite Database Maintenance
 ***Only in Linux*** The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program 
-is first put in pause mode, do the copy and then resumes operation.
+is first put in pause mode, perform the backup and then resumes operation.
 
 ## The `tess` utility
 
@@ -466,6 +467,7 @@ EOF
 3. Show current TESS instruments. Note that we are using the `tess_v` View,so that the current location info is already incorporated.
 
 ```sh
+#!/bin/bash
 sqlite3 /var/dbase/tess.db <<EOF
 .mode column
 .headers on
@@ -479,6 +481,7 @@ EOF
 4. Show TESS instruments changes
 
 ```sh
+#!/bin/bash
 sqlite3 /var/dbase/tess.db <<EOF
 .mode column
 .headers on;

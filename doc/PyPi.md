@@ -39,13 +39,17 @@ How to upload a new package release into PyPi
 	`git tag`
 
 
-3. tag the current X.Y.Z release. We use the annotated tags
+3. tag the current MAJOR.MINOR.PATCH release. We use the annotated tags
 to upload them to GitHub and mark releases there as well.
 
-	- If it is a bug, then increment Z. 
-	- If it is a minor change (new feature), then increment Y
+Given a version number MAJOR.MINOR.PATCH, increment the:
+
+	1. MAJOR version when you make incompatible API changes,
+	2. MINOR version when you add functionality in a backwards-compatible manner, and
+	3. PATCH version when you make backwards-compatible bug fixes.
+
 	
-	`git tag -a  X.Y.Z`
+	`git tag -a MAJOR.MINOR.PATCH`
 
 	(to delete a tag type `git tag -d <tag>`)
 

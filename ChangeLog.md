@@ -1,6 +1,8 @@
 # Change Log
 
+## 1.0.1
 
+* Doc fixes.
 
 ## 1.0.0
 

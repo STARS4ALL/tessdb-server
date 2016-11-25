@@ -2,11 +2,11 @@ Prioridad Alta
 ==============
 
 * SQL excepcion => Imprimir la fila de los datos
+* --starrt-time en tess instrument update utility
 
-* Actualizar Manual de operaciones de la utilidad tess
 
-Prioridad baja
-=============
+Prioridad media
+===============
 
  *) modificar el metodo register para poner bajo cambio versionado la columna tess_t.filter también
   teniendo en cuenta que en el protocolo de registro este campo puede ser opcional
@@ -14,6 +14,9 @@ Prioridad baja
   - añadir filter en findName()
   - ver si ha cambiado el ZP, el valor del filtro o los 2. Puede servir el mismo UPDATE SQL.
   - test unitarios de register
+
+Prioridad baja
+==============
 
 *) Renombra la columnas frequency y magnitude a frequency1 y magnitude1 en previsiónde una posible
 evolución hacia un TESS multicanal. (frequency2,magnitude2, frequency3,magnitude3, etc.)
