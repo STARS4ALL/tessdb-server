@@ -3,6 +3,7 @@
 ## 1.0.1
 
 * Doc fixes.
+* Added context (row info) to logfile in SQL Exception when writting samples.
 
 ## 1.0.0
 

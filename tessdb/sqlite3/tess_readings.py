@@ -214,7 +214,7 @@ class TESSReadings(Table):
             log.error("TESSReadings.update(): tess id={id} is sending readings too fast", id=tess[0])
             self.rejDuplicate += 1
         except Exception as e:
-            log.error("TESSReadings.update(): exception {excp!s}", excp=e)
+            log.error("TESSReadings.update(): exception {excp!s} for row {row!r}", excp=e, row=row)
             self.rejOther += 1
 
     # ==============
