@@ -140,10 +140,12 @@ def createParser():
     iup.add_argument('name',   type=str,   help='instrument friendly name')
     iup.add_argument('-z', '--zero-point', default=UNKNOWN_ZP,  type=float, help='new zero point')
     iup.add_argument('-f', '--filter', default=UNKNOWN_FILTER,  type=str,  help='new filter glass')
-    iup.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
     iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-
+    iupex = iup.add_mutually_exclusive_group()
+    now = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+    iupex.add_argument("-s", "--start-time", type=str, default=now, metavar="YYYYMMDDTHHMMSS", help='update start date')
+    iupex.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
+    
     return parser
 
 def main():
@@ -403,7 +405,12 @@ def instrument_update(connection, options):
     if options.latest:
         instrument_raw_update(connection, options)
     else:
-        instrument_controlled_update(connection, options)
+        try:
+            datetime.datetime.strptime(options.start_time, TSTAMP_FORMAT)
+        except ValueError as e:
+            print("Invalid start date YYYY-MM-DDTHH:MM:SS format: => %s" % (options.start_time,) )
+        else:
+            instrument_controlled_update(connection, options)
 
 
 def instrument_raw_update(connection, options):
@@ -466,7 +473,7 @@ def instrument_controlled_update(connection, options):
     row['valid_flag'] = CURRENT
     cursor.execute(
         '''
-        SELECT name, mac_address, location_id 
+        SELECT name, mac_address, location_id, valid_since 
         FROM tess_t 
         WHERE name == :name
         AND valid_state == :valid_flag 
@@ -474,11 +481,12 @@ def instrument_controlled_update(connection, options):
     result = cursor.fetchone()
     if not result:
         raise IndexError("Cannot rename. Existing instrument with name %s does not exist." % (options.name,) )
-    
+    if result[3] >= options.start_time:
+        raise ValueError("Cannot set valid_since (%s) column to an equal or earlier date (%s)" % (result[3], options.start_time) )
 
     row['mac']           = result[1]
     row['location']      = result[2]
-    row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+    row['eff_date']      = options.start_time
     row['exp_date']      = INFINITE_TIME
     row['valid_expired'] = EXPIRED
     row['zp']            = DEFAULT_ZP if options.zero_point == UNKNOWN_ZP else options.zero_point
