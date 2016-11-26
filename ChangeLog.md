@@ -4,6 +4,7 @@
 
 * Doc fixes.
 * Added context (row info) to logfile in SQL Exception when writting samples.
+* Added various options to `tess` command line utility.
 
 ## 1.0.0
 
