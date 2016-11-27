@@ -33,7 +33,7 @@ Instrument should send their readings at twice the time resolution specified in 
 
 The following components are needed and should be installed first:
 
- * python 2.7.x (tested on Ubunti python 2.7.6)
+ * python 2.7.x (tested on Ubuntu Python 2.7.6)
 
 ### Installation
 
@@ -57,13 +57,13 @@ or from GitHub:
     - pyephem
     - tabulate
     
-### Start up Verification
+### Start up and Verification
 
-Type `sudo tessdb -k` to start the service in foreground with console output.
+* Type `sudo tessdb -k` to start the service in foreground with console output.
 Verify that it starts without errors or exceptions.
 
-Type `sudo service tessdb start` to start it as a backgroud service.
-Type `sudo update-rc.d tessdb defaults` to start it at boot time.
+* Type `sudo service tessdb start` to start it as a backgroud service.
+* Type `sudo update-rc.d tessdb defaults` to start it at boot time.
 
 ## Windows installation
 
@@ -113,7 +113,7 @@ and type:
     
 ### Start up and Verification
 
-In the same CMD console, type`.\tessdb.bat`to start it in forground and verify that it starts without errors or exceptions.
+In the same CMD console, type`.\tessdb.bat` to start it in forground and verify that it starts without errors or exceptions.
 
 Go to the Services Utility and start the TESSDB database service.
 
@@ -127,7 +127,7 @@ There is a small configuration file for this service:
 
 This file is self explanatory. 
 In special, the database file name and location is specified in this file.
-Some of the properities marked in this file are makred as *reloadable property*. This means that this value can be changed and the process reloads its new value on the fly.
+Some of the properities marked in this file are marked as *reloadable property*. This means that this value can be changed and the process reloads its new value on the fly.
 
 ## Logging
 
@@ -150,9 +150,9 @@ For Windows, it requires support from an exteral log rotator software such as [L
 The start/stop/pause operations can be performed with the Windows service GUI tool
 **If the config.ini file is not located in the usual locatioon, you must supply its path to the tool as extra arguments**
 
-## Server Pause
+## Service Pause/Resume
 
-The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enquued and not written to the database. This is usefull to perform delicate operations on the database without loss of data. Examples:
+The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enqueued and not written to the database. This is useful to perform high risk operations on the database without loss of data. Examples:
 
 * Compact the database using the SQLite VACUUM pragma
 * Migrating data from tables.
@@ -170,7 +170,7 @@ Server pause/resume is made through the standard service GUI tool by clicking th
 
 ##  Service reload
 
-During a reload the service is not stopped and re-reads the new values form the configuration file and apply the changes. In general, all aspects not related to maintaining the current connection to the MQTT broker or changing the database schema can be reloaded. The full list is described in the section B above.
+During a reload the service is not stopped and re-reads the new values form the configuration file and apply the changes. In general, all aspects not related to maintaining the current connection to the MQTT broker or changing the database schema can be reloaded. The full list is described inside the configuration file.
 
 * *Linux:* The `service emadb reload` will keep the MQTT connection intact. 
 * *Windows:* There is no GUI button in the service tool for a reload. You must execute an auxiliar script `C:\emadb\winreload.py` by double-clicking on it. 
@@ -193,12 +193,22 @@ The figure below shows the layout of **tessdb**.
 
 ### Dimension Tables
 
+They are:
+
 * `date_t`      : preloaded from 2016 to 2026
 * `time_t`      : preloaded, with seconds resolution (configurable)
 * `tess_t`      : registered TESS instruments collecting data
 * `location_t`  : locations where instruments are deployed
 * `tess_units_t`     : an assorted collection of unit labels for reports, preloaded with current units.
 * `tess_v`      : View with TESS instrument and current location. It is recommended that reporting applications use this view, instead of the underlying `tess_t` and `location_t` tables.
+
+#### Date Dimension
+
+Pretty much standard date table from dimensional modelling. Contains most used attributes plus `julian_day` specific to Astronomy domain.
+
+#### Time of the day Dimension
+
+Pretty much standard time of the day table from dimensional modelling. Contains well known attributes.
 
 #### Instrument Dimension
 
@@ -211,8 +221,8 @@ This dimension holds the current list of TESS instruments.
 * The `location_id` is a reference to the current location assigned to the instrument.
 * Location id -1 denotes the "Unknown" location.
 * The `zero_point` holds the current value of the instrument calibration constant.
-* The `filter` holds the current TESS filter (i.e. 'DG' or Dichroic Glass)
-* A history of zero point & filter changes are maintained in the `tess_t` table if the instrument is recalibrated or its filter is changed. 
+* The `filter` holds the current TESS filter (i.e. 'DG' or Dichroic Glass).
+A history of zero point & filter changes are maintained in the `tess_t` table if the instrument is recalibrated or its filter is changed. 
 * Columns `valid_since` and `valid_until` hold the timestamps where the changes to zero point and/or filter are valid. 
 * Column `valid_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
 * The current valid TESS instrument has its `valid_state` set to `Current` and the expiration date in a far away future (Y2999).
@@ -221,9 +231,10 @@ This dimension holds the current list of TESS instruments.
 
 The `tess_units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects various labels denoting the current measurement units of samples in the fact table. 
 
-* Columns `valid_since`, `valid_until` and `valid_state` keep track of units change in a similar technique as above should the units change.
+* Columns `valid_since`, `valid_until` and `valid_state` keep track of any units change in a similar technique as above should the units change.
 
 ### Fact Tables
+They are:
 
 * `tess_readings_t` : Accumulating snapshot fact table containing measurements from several TESS instruments.
 
@@ -273,7 +284,7 @@ There is a master file of all locations relevant to the deployment of TESS instr
 It is not possible to assign beforehand where a given TESS instruments will be deployed. Besides, a given TESS instruments could be temporally moved from one site to another. So, to maintain the current location where a given TESS is deployed, there is another file named `config/tess_location.json` where this relationship is established.
 
 ## Instrument filtering
-*For personal use only*. In order to reject readings from other TESS instruments coming to your own personal database, you can specify an instrument name (or a list of instrument names). All readings whose instrument names do no match the one defined in the configuration file will be silently discarded.
+*For personal use only*. In order to reject readings from other TESS instruments coming to your own personal database, you can specify an instrument name (or a list of instrument names). All readings whose instrument names do not match the one defined in the configuration file will be silently discarded.
 
 ## Sunrise / Sunset filtering
 It is recommended to activate the sunrise/sunset filter to reject TESS readings coming in daytime and avoid unnecessary grouth in the database.
@@ -286,12 +297,12 @@ Activating this filter have the following conecuences:
 3. Instruments assigned to Locations with `NULL` or `Unknown` longitude, latitude or elevation columns will have their readings rejected.
 
 ## SQLite Database Maintenance
-***Only in Linux*** The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program 
+***Linux only*** The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program 
 is first put in pause mode, perform the backup and then resumes operation.
 
 ## The `tess` utility
 
-`tess` is a command line utility to perform some actions on the database without having to write SQL statements.
+`tess` is a command line utility to perform some common operations on the database without having to write SQL statements. As this utility modifies the database, it is necessary to invoke it within using `sudo`. Also, you should ensure that the database is not being written by `tessdb` to avoid *database is locked* exceptions, either by using it at daytime or by pausing the `tessdb` service.
 
 It has several subcommands. You can find the all by typing `tess --help`
 ```
@@ -431,6 +442,8 @@ Example 2:
 
 # Sample SQL Queries
 
+The following are samples queries illustraing how to use the data model. They are actually being used by the STARS4ALL project
+
 1. Get a daily report of readings per instrument:
 
 ```sh
@@ -464,7 +477,7 @@ ORDER BY r.date_id ASC, r.time_id ASC;
 EOF
 ```
 
-3. Show current TESS instruments. Note that we are using the `tess_v` View,so that the current location info is already incorporated.
+3. Show current TESS instruments. Note that we are using the `tess_v` View,so that the current location info is already included.
 
 ```sh
 #!/bin/bash
@@ -478,7 +491,7 @@ ORDER BY v.name ASC;
 EOF
 ```
 
-4. Show TESS instruments changes
+4. Show TESS instruments changes (zero point and/or filter)
 
 ```sh
 #!/bin/bash
