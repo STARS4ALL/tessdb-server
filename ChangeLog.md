@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.0.2
+
+* fixed --log option to `tess instrument list` command line utility
+
 ## 1.0.1
 
 * Doc fixes.

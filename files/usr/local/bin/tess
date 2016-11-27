@@ -243,11 +243,11 @@ def instrument_historic_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,longitude,latitude,elevation
+            SELECT name,mac_address,zero_point,filter,site,longitude,latitude,elevation,valid_since,valid_until
             FROM tess_v
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC, tess_v.valid_since ASC;
             ''')
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Longitude","Latitude","Elevation"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Longitude","Latitude","Elevation","Since","Until"], size=100)
 
 
 def instrument_current_list(connection, options):
