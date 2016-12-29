@@ -212,7 +212,7 @@ class TESS(Table):
             name          TEXT,
             mac_address   TEXT, 
             zero_point    REAL,
-            filter        TEXT DEFAULT 'DG',
+            filter        TEXT DEFAULT 'UVIR',
             valid_since   TEXT,
             valid_until   TEXT,
             valid_state   TEXT,
