@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.0.3
+
+* changed filter column default vaue from `DG` to `UVIR`
+* Updated README.md.
+
 ## 1.0.2
 
 * fixed --log option to `tess instrument list` command line utility
