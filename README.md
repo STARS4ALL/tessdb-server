@@ -19,7 +19,7 @@ The Windows version works as a Windows service, but the Linux version has furthe
 
 These data sources are available:
 
-+ individual samples (real time, 5 min. aprox between samples).
++ individual samples (real time, configurable, 1 min. aprox between samples).
 
 Instrument should send their readings at twice the time resolution specified in the config file (in seconds).
 
@@ -216,7 +216,7 @@ This dimension holds the current list of TESS instruments.
 
 * The real key is an artificial key `tess_id` linked to the Fact table.
 * The `mac_address` could be the natural key if it weren't for the zero point and filter history tracking.
-* The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name.
+* The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name in the MQTT payload.
 * A TESS instrument name can be changed as long as there is no other instrument with the same name.
 * The `location_id` is a reference to the current location assigned to the instrument.
 * Location id -1 denotes the "Unknown" location.
