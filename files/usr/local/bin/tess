@@ -77,10 +77,21 @@ def createParser():
     #   tess location list
     #
     subparser = parser_location.add_subparsers()
-    lp = subparser.add_parser('list', help='list locations')
-    lp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    lp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    llp = subparser.add_parser('list', help='list locations')
+    llp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    llp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    lcp = subparser.add_parser('create', help='create location')
+    lcp.add_argument('site', metavar='<site>', help='Unique site name')
+    lcp.add_argument('-o', '--longitude', type=float, default=0.0,       help='geographical longitude (degrees)')
+    lcp.add_argument('-a', '--latitude',  type=float, default=0.0,       help='geographical latitude (degrees)')
+    lcp.add_argument('-e', '--elevation', type=float, default=0.0,       help='elevation above sea level(meters)')
+    lcp.add_argument('-z', '--zipcode',   type=str,   default='Unknown', help='Postal Code')
+    lcp.add_argument('-l', '--location',  type=str,   default='Unknown', help='Location (village, town, city)')
+    lcp.add_argument('-p', '--province',  type=str,   default='Unknown', help='Province')
+    lcp.add_argument('-c', '--country',   type=str,   default='Unknown', help='Country')
+    lcp.add_argument('-m', '--email',     type=str,   default='Unknown', help='Contact email')
+    lcp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
 
     # ------------------------------------------
@@ -172,6 +183,8 @@ def main():
             instrument_update(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
+        elif sys.argv[1] == 'location' and sys.argv[2] == 'create':
+            location_create(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
             readings_list(connection, options)
     except KeyboardInterrupt:
@@ -563,7 +576,73 @@ def location_list(connection, options):
         ORDER BY location_id ASC
         ''')
     paging(cursor,["Name","Longitude","Latitude","Elevation"], size=100)
+
+# Location update is a nightmare ifdone properly, since we have to generate
+# SQL updates tailored to the attributes being given in the command line
+
+def location_create(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['site']      = options.site
+    row['longitude'] = options.longitude
+    row['latitude']  = options.latitude
+    row['elevation'] = options.elevation
+    row['zipcode']   = options.zipcode
+    row['location']  = options.location
+    row['province']  = options.province
+    row['country']   = options.country
+    row['email']     = options.email
+    print(row)
+    # Fetch existing site
+    cursor.execute(
+        '''
+        SELECT site 
+        FROM   location_t 
+        WHERE site == :site
+        ''', row)
+    result = cursor.fetchone()
+    if result:
+        raise IndexError("Cannot create. Existing site with name %s already exists." % (options.site,) )
+    cursor.execute(
+        '''
+        INSERT INTO location_t (
+            site,
+            longitude, 
+            latitude,
+            elevation,
+            zipcode,
+            location,
+            province,
+            country,
+            contact_email
+        ) VALUES (
+            :site,
+            :longitude,
+            :latitude,
+            :elevation,
+            :zipcode,
+            :location,
+            :province,
+            :country,
+            :email
+            )
+        ''',  row)
+    connection.commit()
+    # Read just written data
+    cursor.execute(
+        '''
+        SELECT site,longitude,latitude,elevation,contact_email,zipcode,location,province,country
+        FROM location_t 
+        WHERE site == :site
+        ORDER BY location_id ASC
+        ''', row)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Email","ZIP Code","Location","Province","Country"], size=5)
+
+
    
+# --------------------
+# READINGS SUBCOMMANDS
+# --------------------
 
 def readings_list(connection, options):
     cursor = connection.cursor()

@@ -1,5 +1,8 @@
 # Change Log
 
+#| 1.0.4
+* Added `tess location create` command to tess utility
+
 ## 1.0.3
 
 * changed filter column default vaue from `DG` to `UVIR`

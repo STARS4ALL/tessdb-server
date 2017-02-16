@@ -1,19 +1,11 @@
 Prioridad Alta
 ==============
 
-* SQL excepcion => Imprimir la fila de los datos
-* --starrt-time en tess instrument update utility
-
+* Hacer un subcomando `tess location update`
 
 Prioridad media
 ===============
 
- *) modificar el metodo register para poner bajo cambio versionado la columna tess_t.filter también
-  teniendo en cuenta que en el protocolo de registro este campo puede ser opcional
-  - tratar valor por defecto en el mqttservice.py
-  - añadir filter en findName()
-  - ver si ha cambiado el ZP, el valor del filtro o los 2. Puede servir el mismo UPDATE SQL.
-  - test unitarios de register
 
 Prioridad baja
 ==============
