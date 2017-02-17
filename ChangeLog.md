@@ -2,6 +2,7 @@
 
 #| 1.0.4
 * Added `tess location create` command to tess utility
+* Added `tess location update` command to tess utility
 
 ## 1.0.3
 
