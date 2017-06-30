@@ -1,4 +1,6 @@
 # Change Log
+#| 1.0.5
+* Added `tess instrument history` command to tess utility
 
 #| 1.0.4
 * Added `tess location create` command to tess utility

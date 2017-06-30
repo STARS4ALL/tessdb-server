@@ -46,8 +46,8 @@ TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 # Default values for Zer Point and Filter type
 UNKNOWN_ZP     = -99
 DEFAULT_ZP     = 20.5   #  TESS magnitudes / arcsec^2
-UNKNOWN_FILTER  = "Unknown"
-DEFAULT_FILTER = "DG"   # Dichroic Glass
+UNKNOWN_FILTER = "Unknown"
+DEFAULT_FILTER = "UVIR"   # Dichroic Glass
 
 # -----------------------
 # Module global variables
@@ -148,6 +148,10 @@ def createParser():
     imp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     imp.add_argument('-f', '--file', type=str, default="tess.json", help='source JSON file')
 
+    ihi = subparser.add_parser('history',  help='single instrument history')
+    ihi.add_argument('name',   type=str,   help='friendly name')
+    ihi.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     icr = subparser.add_parser('create',   help='create instrument')
     icr.add_argument('name',   type=str,   help='friendly name')
     icr.add_argument('mac',    type=str,   help='MAC address')
@@ -193,6 +197,8 @@ def main():
             instrument_rename(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'update':
             instrument_update(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'history':
+            instrument_single_history(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'create':
@@ -259,6 +265,20 @@ def instrument_assign(connection, options):
         ''',row)
     paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
     connection.commit()    
+
+
+def instrument_single_history(connection, options):
+    cursor = connection.cursor()
+    row = {'tess': options.name }
+    cursor.execute(
+            '''
+            SELECT name,tess_id,mac_address,zero_point,filter,valid_since,valid_until
+            FROM tess_t
+            WHERE name = :tess
+            ORDER BY tess_t.valid_since ASC;
+            ''',row)
+    paging(cursor,["TESS","Id","MAC Addr.","Zero Point","Filter","Since","Until"], size=100)
+
 
 def instrument_list(connection, options):
     if options.log:
