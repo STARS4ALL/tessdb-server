@@ -348,6 +348,9 @@ optional arguments:
 +-----------------------------------------+-------------+------------+-------------+
 ```
 
+### Renaming locations
+`tess location rename <old site name> <new site name>`
+
 ### Listing TESS instruments
 `tess instrument list`
 

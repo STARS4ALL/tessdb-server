@@ -105,6 +105,10 @@ def createParser():
     lup.add_argument('-m', '--email',     type=str,   default='Unknown', help='Contact email')
     lup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    lre = subparser.add_parser('rename', help='rename location')
+    lre.add_argument('old_site',  type=str, help='old site name')
+    lre.add_argument('new_site',  type=str, help='new site name')
+    lre.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     # ------------------------------------------
     # Create second level parsers for 'readings'
@@ -205,12 +209,14 @@ def main():
             location_create(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'update':
             location_update(connection, options)
+        elif sys.argv[1] == 'location' and sys.argv[2] == 'rename':
+            location_rename(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
             readings_list(connection, options)
     except KeyboardInterrupt:
         print('')
-    #except Exception as e:
-        #print("Error => {0}".format(e))
+    except Exception as e:
+        print("Error => {0}".format(e))
 
 # ==============
 # DATABASE STUFF
@@ -735,6 +741,32 @@ def location_update(connection, options):
         ''', row)
     paging(cursor,["Name","Longitude","Latitude","Elevation","Email","ZIP Code","Location","Province","Country"], size=5)
 
+
+def location_rename(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['newsite']  = options.new_site
+    row['oldsite']  = options.old_site
+    cursor.execute("SELECT site FROM location_t WHERE site == :oldsite", row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot rename. Existing site with old name %s does not exist." 
+            % (options.old_site,) )
+    
+    cursor.execute("SELECT site FROM location_t WHERE site == :newsite", row)
+    result = cursor.fetchone()
+    if result:
+        raise IndexError("Cannot rename. New site %s already exists." % (result[0],) ) 
+    cursor.execute("UPDATE location_t SET site = :newsite WHERE site == :oldsite", row)
+    connection.commit()
+    # Now display it
+    cursor.execute(
+        '''
+        SELECT site,longitude,latitude,elevation,contact_email,zipcode,location,province,country
+        FROM location_t 
+        WHERE site == :newsite
+        ''', row)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Email","ZIP Code","Location","Province","Country"], size=5)
 
 # --------------------
 # READINGS SUBCOMMANDS
