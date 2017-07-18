@@ -39,7 +39,7 @@ from mqtt.client.factory import MQTTFactory
 from tessdb.service.relopausable import Service
 
 from tessdb.error import ValidationError, ReadingKeyError, ReadingTypeError, IncorrectTimestampError
-from tessdb.logger import setLogLevel
+from tessdb.logger import setLogLevel, selective_log_factory
 from tessdb.utils  import chop
 
 # ----------------
@@ -62,7 +62,9 @@ MAX_TSTAMP_OOS = 60
 # Module global variables
 # -----------------------
 
-log = Logger(namespace='mqtt')
+log  = Logger(namespace='mqtt')
+log2 = Logger(namespace='mqtt2')
+selog = None
 
 class MQTTService(ClientService):
 
@@ -79,11 +81,18 @@ class MQTTService(ClientService):
     MANDATORY_READ = set(['seq','name','freq','mag','tamb','tsky','rev'])
 
     def __init__(self, options, **kargs):
+
+        global selog
+
         self.options    = options
         self.topics     = []
         self.regAllowed = False
         self.validate   = options['validation']
         setLogLevel(namespace='mqtt', levelStr=options['log_level'])
+
+        setLogLevel(namespace='mqtt2', levelStr='debug')
+        selog = selective_log_factory(log2, self.options['log_selected'])
+
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
         self.factory     = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
@@ -271,11 +280,12 @@ class MQTTService(ClientService):
         self.nregister += 1
         if self.validate:
             try:
-                    self.validateRegister(row)
+                self.validateRegister(row)
             except ValidationError as e:
                 log.error('Validation error in registration payload={payload!s}', payload=row)
                 log.error('{excp!r}', excp=e)
             else:
+                selog(row['name'], 'Enque registration from {name} for DB Writter', name=row['name'])
                 self.parent.queue['tess_register'].append(row)
 
 
@@ -287,6 +297,7 @@ class MQTTService(ClientService):
         if not 'tstamp' in row:
             row['tstamp_src'] = "Subscriber"
             row['tstamp']     = now     # As a datetime instead of string
+            selog(row['name'], "Adding timestamp data to {name}", name=row['name'])
             return
 
         row['tstamp_src'] = "Publisher"
@@ -298,6 +309,7 @@ class MQTTService(ClientService):
             except ValueError as e:
                 i += 1
                 log.debug("Trying next timestamp format ...")
+                selog(row['name'], "Trying next timestamp format for {name}", name=row['name'])
                 continue
             except IndexError as e:
                 raise IncorrectTimestampError(row['tstamp'])
@@ -305,7 +317,8 @@ class MQTTService(ClientService):
                 break
         delta = math.fabs((now - row['tstamp']).total_seconds())
         if delta > MAX_TSTAMP_OOS:
-            log.warn("Publisher timestamp out of sync with Subscriber by {delta} seconds", delta=delta)
+            log.warn("Publisher {name} timestamp out of sync with Subscriber by {delta} seconds", 
+                name=row['name'], delta=delta)
 
 
     def handleReadings(self, row, now):
@@ -324,6 +337,7 @@ class MQTTService(ClientService):
             except Exception as e:
                 log.error('{excp!r}', excp=e)
             else:
+                selog(row['name'], 'Enqueue reading from {name} for DB Writter', name=row['name'])
                 self.parent.queue['tess_readings'].append(row)
 
 
@@ -355,18 +369,21 @@ class MQTTService(ClientService):
         # Discard retained messages to avoid duplicates in the database
         if retain:
             log.debug('Discarded payload from {name} by retained flag', name=row['name'])
+            selog(row['name'],'Discarded payload from {name} by retained flag', name=row['name'])
             self.nfilter += 1
             return
 
         # Apply White List filter
         if len(self.options['tess_whitelist']) and not row['name'] in self.options['tess_whitelist']:
             log.debug('Discarded payload from {name} by whitelist', name=row['name'])
+            selog(row['name'],'Discarded payload from {name} by whitelist', name=row['name'])
             self.nfilter += 1
             return
 
         # Apply Black List filter
         if len(self.options['tess_blacklist']) and row['name'] in self.options['tess_blacklist']:
             log.debug('Discarded payload from {name} by blacklist', name=row['name'])
+            selog(row['name'],'Discarded payload from {name} by blacklist', name=row['name'])
             self.nfilter += 1
             return
 

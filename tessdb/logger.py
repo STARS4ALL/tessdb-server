@@ -91,4 +91,18 @@ else:
     sysLogError = syslog.syslog
 
 
-__all__ = [startLogging, setLogLevel, sysLogError, sysLogInfo]
+def selective_log_factory(logobj, iterable):
+    '''Selective logging function factory'''
+    def myinner(item, fmt, **kargs):
+        if item in iterable:
+            logobj.debug(fmt, **kargs)
+    return myinner
+    
+
+__all__ = [
+    "startLogging", 
+    "setLogLevel", 
+    "sysLogError", 
+    "sysLogInfo",
+    "selective_log_factory"
+]

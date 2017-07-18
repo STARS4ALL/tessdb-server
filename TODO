@@ -1,6 +1,7 @@
 Prioridad Alta
 ==============
 
+tessNameLogFilter -> Una clase que filtra eventos por el nombre del tess
 
 Prioridad media
 ===============

@@ -94,6 +94,7 @@ def loadCfgFile(path):
 
     options['mqtt'] = {}
     options['mqtt']['log_level']      = parser.get("mqtt","log_level")
+    options['mqtt']['log_selected']   = chop(parser.get("mqtt","log_selected"),',')
     options['mqtt']['validation']     = parser.getboolean("mqtt","validation")
     options['mqtt']['broker']         = parser.get("mqtt","broker")
     options['mqtt']['username']       = parser.get("mqtt","username")
@@ -107,6 +108,7 @@ def loadCfgFile(path):
 
     options['dbase'] = {}
     options['dbase']['log_level']         = parser.get("dbase","log_level")
+    options['dbase']['log_selected']      = chop(parser.get("dbase","log_selected"),',')
     options['dbase']['register_log_level'] = parser.get("dbase","register_log_level")
     options['dbase']['type']              = parser.get("dbase","type")
     options['dbase']['connection_string'] = parser.get("dbase","connection_string")
