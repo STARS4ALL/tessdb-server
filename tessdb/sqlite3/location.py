@@ -232,8 +232,12 @@ class Location(Table):
     def validPosition(self, location):
         '''
         Test for valid longitude,latitude elevation in result set.
+
+        location[1] - longitude
+        location[2] - latitude
+        location[3] - elevation
         '''
-        return location[1] and location[1] != UNKNOWN and  location[2] and location[2] != UNKNOWN and location[3] and location[2] != UNKNOWN
+        return location[1] and location[1] != UNKNOWN and  location[2] and location[2] != UNKNOWN and location[3] and location[3] != UNKNOWN
     
 
     def computeSunrise(self, locations, sun, noon, horizon):
@@ -252,16 +256,29 @@ class Location(Table):
         observer.pressure  = 0      # disable refraction calculation
         observer.horizon   = horizon
         observer.date      = noon
+        midnight = ephem.Date(utcnoon() - 12 * ephem.hour)
         rows = []
         for location in locations:
             if self.validPosition(location):
                 observer.lon       = math.radians(location[1])
                 observer.lat       = math.radians(location[2])
                 observer.elevation = location[3]
+                # In locations near Grenwich: (prev) sunrise < (next) sunset
+                # In location far away from Greenwich: (prev) sunset < (next) sunrise
+                prev_sunrise = observer.previous_rising(sun, use_center=True)
+                next_sunset  = observer.next_setting(sun, use_center=True)
+                prev_sunset  = observer.previous_setting(sun, use_center=True)
+                next_sunrise = observer.next_rising(sun, use_center=True)
+                if prev_sunrise < midnight: # Far West from Greenwich
+                    sunrise = str(next_sunrise)
+                    sunset  = str(prev_sunset)
+                else:                       # Our normal case in Spain
+                    sunrise = str(prev_sunrise)
+                    sunset  = str(next_sunset)
                 rows.append ({ 
                     'id'     : location[0], 
-                    'sunrise': str(observer.previous_rising(sun, use_center=True)),
-                    'sunset' : str(observer.next_setting(sun, use_center=True))
+                    'sunrise': sunrise,
+                    'sunset' : sunset
                 })
         return rows
 
@@ -274,7 +291,7 @@ class Location(Table):
         It may take a while so it is divided in batches to smooth CPU and I/O peaks
         '''
        
-        log.info("Begin sunrise/sunset computation process")
+        log.info("Begin sunrise/sunset computation process for {today!s}", today=today)
         self.finished = False
         nlocations = yield self.pool.runQuery('SELECT count(*) FROM location_t WHERE location_id >= 0')
         index = 0

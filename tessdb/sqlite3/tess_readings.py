@@ -257,17 +257,30 @@ class TESSReadings(Table):
         Computes sunrise/sunset for a given mobile instrument reading 'row'.
         Leaves the result in the same row of readings, ready to pass the snrise/sunset filter.
         '''
-        now = now.replace(hour=12, minute=0, second=0,microsecond=0)
-        sun = ephem.Sun(now)
+        utcnoon = ephem.Date(now.replace(hour=12, minute=0, second=0,microsecond=0))
+        midnight = ephem.Date(utcnoon - 12 * ephem.hour)
+        sun = ephem.Sun(utcnoon)
         observer           = ephem.Observer()
         observer.pressure  = 0      # disable refraction calculation
         observer.horizon   = self.horizon
-        observer.date      = now
+        observer.date      = utcnoon
         observer.lon       = math.radians(row['long'])
         observer.lat       = math.radians(row['lat'])
         observer.elevation = row['height']
-        row['sunrise']     = observer.previous_rising(sun, use_center=True)
-        row['sunset']      = observer.next_setting(sun, use_center=True)
+        # In locations near Grenwich: (prev) sunrise < (next) sunset
+        # In location far away from Greenwich: (prev) sunset < (next) sunrise
+        prev_sunrise = observer.previous_rising(sun, use_center=True)
+        next_sunset  = observer.next_setting(sun, use_center=True)
+        prev_sunset  = observer.previous_setting(sun, use_center=True)
+        next_sunrise = observer.next_rising(sun, use_center=True)
+        if prev_sunrise < midnight: # Far West from Greenwich
+            sunrise = str(next_sunrise)
+            sunset  = str(prev_sunset)
+        else:                       # Our normal case in Spain
+            sunrise = str(prev_sunrise)
+            sunset  = str(next_sunset)
+        row['sunrise']     = sunrise
+        row['sunset']      = sunset
     
 
     def which(self, row):

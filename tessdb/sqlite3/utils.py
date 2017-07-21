@@ -94,8 +94,16 @@ def isDaytime(sunrise, sunset, now):
     'now' is a datetime.datetime object or timestamp string
     '''
     # sunrise, sunset comes from the DB and are UNICODE strings
-    # epehm doesn't like unicode strings
-    return  ephem.Date(str(sunrise)) < ephem.Date(now)  < ephem.Date(str(sunset))
+    # ephem doesn't like unicode strings
+    # In locations near Grenwich: (prev) sunrise < (next) sunset
+    # In location far away from Greenwich: (prev) sunset < (next) sunrise
+    sunrise = ephem.Date(str(sunrise))
+    sunset = ephem.Date(str(sunset))
+    now = ephem.Date(now)
+    if sunrise < sunset:
+        return  sunrise < now  < sunset
+    else: 
+        return not (sunset < now  < sunrise)
 
 # ----------------------
 # Module Utility Classes
