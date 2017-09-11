@@ -1,7 +1,7 @@
 Prioridad Alta
 ==============
 
-tessNameLogFilter -> Una clase que filtra eventos por el nombre del tess
+
 
 Prioridad media
 ===============
@@ -9,6 +9,8 @@ Prioridad media
 
 Prioridad baja
 ==============
+
+*) tessNameLogFilter -> Una clase que filtra eventos por el nombre del tess
 
 *) Renombra la columnas frequency y magnitude a frequency1 y magnitude1 en previsiónde una posible
 evolución hacia un TESS multicanal. (frequency2,magnitude2, frequency3,magnitude3, etc.)
