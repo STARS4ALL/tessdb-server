@@ -132,6 +132,7 @@ def createParser():
     #   tess instrument create <friendly name> <MAC address> <Calibration Constant>
     #   tess instrument rename <old friendly name> <new friendly name>
     #   tess instrument update <friendly name> --zero-point <new zero point> --filter <new filter> --latest
+    #   tess instrument delete <instrument name> 
     #
     subparser = parser_instrument.add_subparsers()
     parser_instrument_assign = subparser.add_parser('assign', help='assign instrument to location')
@@ -168,6 +169,10 @@ def createParser():
     ire.add_argument('new_name',  type=str, help='new friendly name')
     ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    ide = subparser.add_parser('delete', help='delete instrument')
+    ide.add_argument('name',  type=str, help='instrument friendly name')
+    ide.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     iup = subparser.add_parser('update',   help='update instrument zero point and/or filter')
     iup.add_argument('name',   type=str,   help='instrument friendly name')
     iup.add_argument('-z', '--zero-point', default=UNKNOWN_ZP,  type=float, help='new zero point')
@@ -199,6 +204,8 @@ def main():
             instrument_create(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'rename':
             instrument_rename(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'delete':
+            instrument_delete(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'update':
             instrument_update(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'history':
@@ -466,6 +473,44 @@ def instrument_rename(connection, options):
         AND    valid_state == :valid_flag
         ''', row)
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Longitude","Latitude","Elevation"])
+
+
+def instrument_delete(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['name']  = options.name
+
+    cursor.execute("SELECT mac_address FROM tess_t WHERE name == :name", row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot delete. Instrument with name %s does not exist." 
+            % (options.name,) )
+    
+    # Find out what's being deleted
+    print("About to delete")
+    cursor.execute(
+        '''
+        SELECT name,mac_address,zero_point,filter,site,longitude,latitude,elevation 
+        FROM   tess_v
+        WHERE  name == :name
+        ''', row)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Longitude","Latitude","Elevation"])
+    
+    # Find out if it has accumulated readings
+    # This may go away if readings are stored in another database (i.e influxdb)
+    cursor.execute(
+        '''
+        SELECT i.name, count(*) AS readings
+        FROM tess_readings_t AS r
+        JOIN tess_t          AS i USING (tess_id)
+        WHERE i.name == :name
+        ''', row)
+    paging(cursor,["TESS","Acumulated Readings"])
+    raw_input("Are you sure ???? Press Enter to continue [Ctrl-C to abort] ...")
+
+    cursor.execute("DELETE FROM tess_t WHERE name == :name", row)
+    connection.commit()
+    print("Instrument deleted")
 
 
 def instrument_update(connection, options):
