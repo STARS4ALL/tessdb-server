@@ -407,6 +407,29 @@ If for some reason, an instrument needs to change the friendly user name, this c
 +---------+-------------------+---------------+----------+-------------+------------+-------------+
 ```
 
+### Deleting a TESS instrument
+**Use this option with utmost care, as it will leave orphaned readings**
+
+This will also erase the instrument history of changes, as shown in the folowing example:
+
+`tess instrument delete pruebas`
+
+```
+About to delete
++---------+-------------------+--------------+----------+--------------------------+-------------+------------+-------------+
+| TESS    | MAC Addr.         |   Zero Point | Filter   | Site                     |   Longitude |   Latitude |   Elevation |
++=========+===================+==============+==========+==========================+=============+============+=============+
+| pruebas | 18:FE:34:9C:AD:ED |         1.65 | UVIR     | Laboratorio de Cristobal |    -3.55809 |    40.4246 |         626 |
++---------+-------------------+--------------+----------+--------------------------+-------------+------------+-------------+
+| pruebas | 18:FE:34:9C:AD:ED |         1.6  | UVIR     | Laboratorio de Cristobal |    -3.55809 |    40.4246 |         626 |
++---------+-------------------+--------------+----------+--------------------------+-------------+------------+-------------+
++--------+-----------------------+
+| TESS   |   Acumulated Readings |
++========+=======================+
+|        |                     0 |
++--------+-----------------------+
+
+```
 
 ### Updating the zero point or the filter
 If, for some reason, we need to change the instrumental zero point or the filter (or both), this command allows you to do so. Note that you must especify at least a new zero point or a new filter.
