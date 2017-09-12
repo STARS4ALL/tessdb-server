@@ -53,7 +53,9 @@ from   tessdb.sqlite3.utils import Table, fromJSON, utcnoon, UNKNOWN
 # Module Constants
 # ----------------
 
-# default location if no JSON file is found 
+OUT_OF_SERVICE = 'Out of Service'
+
+# default locations if no JSON file is found 
 # Longitude/latitude are used in tessdb for sunrise/sunset calculation
 DEFAULT_LOCATION = {
     "location_id"   : -1, 
@@ -68,6 +70,18 @@ DEFAULT_LOCATION = {
     "country"       : UNKNOWN
 } 
 
+OUT_OF_SERVICE_LOCATION = {
+    "location_id"   : -2, 
+    "contact_email" : UNKNOWN, 
+    "site"          : OUT_OF_SERVICE, 
+    "longitude"     : UNKNOWN, 
+    "latitude"      : UNKNOWN, 
+    "elevation"     : UNKNOWN, 
+    "zipcode"       : UNKNOWN, 
+    "location"      : UNKNOWN, 
+    "province"      : UNKNOWN, 
+    "country"       : UNKNOWN
+} 
 
 # -----------------------
 # Module Global Variables
@@ -182,6 +196,7 @@ class Location(Table):
         '''Generate a list of rows to inject in SQLite API'''
         read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, Location.FILE), [DEFAULT_LOCATION])
         read_rows.append(DEFAULT_LOCATION)
+        read_rows.append(OUT_OF_SERVICE_LOCATION)
         returnValue(read_rows)
 
     # ===============

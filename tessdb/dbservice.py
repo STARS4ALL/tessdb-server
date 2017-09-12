@@ -136,7 +136,7 @@ class DBaseService(Service):
 
     @inlineCallbacks
     def startService(self):
-        log.info("starting DBase Service")
+        log.info("starting DBase Service on {database}", database=self.options['connection_string'])
         yield self.schema()
         self.startTasks()
         # Remainder Service initialization
