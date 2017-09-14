@@ -725,7 +725,7 @@ def location_create(connection, options):
     # Read just written data
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_person,contact_email,zipcode,location,province,country,timezone
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,zipcode,location,province,country,timezone
         FROM location_t 
         WHERE site == :site
         ORDER BY location_id ASC
@@ -795,7 +795,7 @@ def location_update(connection, options):
     # Read just written data
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_person,contact_email,zipcode,location,province,country,timezone
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,zipcode,location,province,country,timezone
         FROM location_t 
         WHERE site == :site
         ORDER BY location_id ASC
@@ -823,7 +823,7 @@ def location_rename(connection, options):
     # Now display it
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_person,contact_email,zipcode,location,province,country,timezone
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,zipcode,location,province,country,timezone
         FROM location_t 
         WHERE site == :newsite
         ''', row)
