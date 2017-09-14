@@ -12,14 +12,22 @@ Prioridad baja
 
 *) tessNameLogFilter -> Una clase que filtra eventos por el nombre del tess
 
-*) Renombra la columnas frequency y magnitude a frequency1 y magnitude1 en previsiónde una posible
-evolución hacia un TESS multicanal. (frequency2,magnitude2, frequency3,magnitude3, etc.)
-*) Meter mas metadatos a los instrumentos (ver addednum)
- - Esto implica cambios en el firmware, en el protocolo JSON/MQTT y en la BD
- - hay que hacerlo de forma coordinada.
- - Mantener compatibilidad con rev: 1
- - No snowflakes en la BD, "aplanar campos" canal1, canal2, canal3, canal4 
- - muchos de los metadatos irán en la info de mensaje de registro del TESS.
+*) Tess muticanal
+
+La estrategia para siportar e TESS multicanal implicara muy pocos cambios en el modelo de datos:
+- Cada fila de la tabla tess_t indicará un canal
+- en cada canal hay que poner los siguientes datos adicionales, específicos suyos:
+ +) 'fov' (Field of View, degrees)
+ +) 'channel' para ńúmero del canal
+ +) 'cover_offset' para el offset de una tapa adicional (defaults = 0.0)
+ +) los nombres de los angulos de inclinacion de los sensores respecto a la caja del instrumento (¿cuantos ángulos, qué nombres?) REALMENTE NO ES NECESARIO TENIENDO EL CHANNEL NUMBER
+- cada medida de tess_readings indicaró la medida de un canal
+- Hay que introducir la dimension adicional de orientación para tener datos de la orientación delos distintos sensores hacia el cielo. Por defecto, en los TESS monocanales, se asume el Zenit.
+  +) Número de angulos: 3. ¿Nombres como en aviacion?
+    Yaw   = Azimut
+    Pitch = Altura
+    Roll  = Inclinacion lateral Este-Oeste
+
 *) Estudiar si merece la pena poner nuevas constraints UNIQUE NOT NULL a tess_t.name y tess_t.mac_address
 *) Embeber servidor web de twisted.
 
@@ -30,24 +38,3 @@ He averiguado que los descartes son por el 'retained' flag
 
 ADDENDUM
 ========
-
-Formato estándar de IDA-IAU con info de la siguiente cabecera:
-
-# Device type: TESS-V1
-# Data supplier: Alejandro Sanchez de Miguel  / UCM
-# Local timezone: UTC+1
-# Time Synchronization: NTP
-# Moving / Stationary position: STATIONARY
-# Moving / Fixed look direction: FIXED
-# Number of channels: 1
-# Filters per channel: HOYA CM-500
-# Measurement direction per channel: 0., 0.
-# Field of view: 20
-
-Otro descriptor de las cabeceras que se usan actualmente es # Device type: SQM-LU
-# SQM cover offset value: -0.11
-pero en nuestro caso la calibración se realizará con la carcasa (a través de la ventana) y no es relevante.
-
-Para TESS-V1 sólo hay un canal pero habrá con suerte de varios canales (colores). Seguramente prepararemos algunos que apunten a diferentes direcciones fijas y no sólo el cénit (45 deg en dirección norte, por ejemplo). Otro asunto importante es el campo de visión FOV.
-Propongo emntonces que se tenga en cuenta añadiendo si hace falta algún campo.
-
