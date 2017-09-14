@@ -60,7 +60,8 @@ OUT_OF_SERVICE = 'Out of Service'
 DEFAULT_LOCATION = {
     "location_id"   : -1, 
     "contact_name"  : UNKNOWN,
-    "contact_email" : UNKNOWN, 
+    "contact_email" : UNKNOWN,
+    "organization"  : UNKNOWN,
     "site"          : UNKNOWN, 
     "longitude"     : UNKNOWN, 
     "latitude"      : UNKNOWN, 
@@ -75,6 +76,7 @@ OUT_OF_SERVICE_LOCATION = {
     "location_id"   : -2, 
     "contact_name"  : UNKNOWN, 
     "contact_email" : UNKNOWN, 
+    "organization"  : UNKNOWN,
     "site"          : OUT_OF_SERVICE, 
     "longitude"     : UNKNOWN, 
     "latitude"      : UNKNOWN, 
@@ -102,6 +104,7 @@ def _populate(transaction, rows):
             location_id,
             contact_name,
             contact_email,
+            organization,
             site,
             longitude,
             latitude,
@@ -114,6 +117,7 @@ def _populate(transaction, rows):
             :location_id,
             :contact_name,
             :contact_email,
+            :organization,
             :site,
             :longitude,
             :latitude,
@@ -175,7 +179,8 @@ class Location(Table):
             sunrise                 TEXT,
             sunset                  TEXT,
             contact_name            TEXT,
-            timezone                TEXT DEFAULT 'Etc/UTC'
+            timezone                TEXT DEFAULT 'Etc/UTC',
+            organization            TEXT
             );
             '''
         )

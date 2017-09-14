@@ -92,6 +92,7 @@ def createParser():
     lcp.add_argument('-c', '--country',   type=str,   default='Unknown', help='Country')
     lcp.add_argument('-w', '--owner',     type=str,   default='Unknown', help='Contact person')
     lcp.add_argument('-m', '--email',     type=str,   default='Unknown', help='Contact email')
+    lcp.add_argument('-g', '--org',       type=str,   default='Unknown', help='Organization')
     lcp.add_argument('-t', '--tzone',     type=str,   default='Etc/UTC', help='Olson Timezone')
     lcp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
@@ -106,6 +107,7 @@ def createParser():
     lup.add_argument('-c', '--country',   type=str,   default='Unknown', help='Country')
     lup.add_argument('-w', '--owner',     type=str,   default='Unknown', help='Contact person')
     lup.add_argument('-m', '--email',     type=str,   default='Unknown', help='Contact email')
+    lup.add_argument('-g', '--org',       type=str,   default='Unknown', help='Organization')
     lup.add_argument('-t', '--tzone',     type=str,   default='Etc/UTC', help='Olson Timezone')
     lup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
@@ -659,12 +661,12 @@ def location_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_name,contact_email 
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,organization 
         FROM location_t 
         WHERE location_id > -1 
         ORDER BY location_id ASC
         ''')
-    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email"], size=100)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","Organization"], size=100)
 
 # Location update is a nightmare if done properly, since we have to generate
 # SQL updates tailored to the attributes being given in the command line
@@ -682,6 +684,7 @@ def location_create(connection, options):
     row['country']   = options.country
     row['email']     = options.email
     row['owner']     = options.owner
+    row['org']       = options.org
     row['tzone']     = options.tzone
     # Fetch existing site
     cursor.execute(
@@ -706,6 +709,7 @@ def location_create(connection, options):
             country,
             contact_email,
             contact_name,
+            organization,
             timezone
         ) VALUES (
             :site,
@@ -718,6 +722,7 @@ def location_create(connection, options):
             :country,
             :email,
             :owner,
+            :org,
             :tzone
             )
         ''',  row)
@@ -725,12 +730,12 @@ def location_create(connection, options):
     # Read just written data
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_name,contact_email,zipcode,location,province,country,timezone
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,organization,zipcode,location,province,country,timezone
         FROM location_t 
         WHERE site == :site
         ORDER BY location_id ASC
         ''', row)
-    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","ZIP Code","Location","Province","Country","Timezone"], size=5)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","Organization","ZIP Code","Location","Province","Country","Timezone"], size=5)
 
 
 def location_dynamic_update(options):
@@ -764,6 +769,9 @@ def location_dynamic_update(options):
     if options.owner != 'Unknown':
         row['owner']   = options.owner
         fmt.append("contact_name = :owner")
+    if options.org != 'Unknown':
+        row['org']   = options.org
+        fmt.append("organization = :org")
     if options.tzone != 'Etc/UTC':
         row['tzone']   = options.tzone
         fmt.append("timezone = :tzone")
@@ -795,12 +803,12 @@ def location_update(connection, options):
     # Read just written data
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_name,contact_email,zipcode,location,province,country,timezone
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,organization,zipcode,location,province,country,timezone
         FROM location_t 
         WHERE site == :site
         ORDER BY location_id ASC
         ''', row)
-    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","ZIP Code","Location","Province","Country","Timezone"], size=5)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","Organization","ZIP Code","Location","Province","Country","Timezone"], size=5)
 
 
 def location_rename(connection, options):
@@ -823,11 +831,11 @@ def location_rename(connection, options):
     # Now display it
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_name,contact_email,zipcode,location,province,country,timezone
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,organization,zipcode,location,province,country,timezone
         FROM location_t 
         WHERE site == :newsite
         ''', row)
-    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","ZIP Code","Location","Province","Country","Timezone"], size=5)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","Organization","ZIP Code","Location","Province","Country","Timezone"], size=5)
 
 # --------------------
 # READINGS SUBCOMMANDS
