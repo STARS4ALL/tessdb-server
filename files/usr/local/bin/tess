@@ -659,12 +659,12 @@ def location_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation 
+        SELECT site,longitude,latitude,elevation,contact_person 
         FROM location_t 
         WHERE location_id > -1 
         ORDER BY location_id ASC
         ''')
-    paging(cursor,["Name","Longitude","Latitude","Elevation"], size=100)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact"], size=100)
 
 # Location update is a nightmare ifdone properly, since we have to generate
 # SQL updates tailored to the attributes being given in the command line
