@@ -760,10 +760,10 @@ def location_dynamic_update(options):
         fmt.append("country = :country")
     if options.email != 'Unknown':
         row['email']   = options.email
-        fmt.append("email = :email")
+        fmt.append("contact_email = :email")
     if options.owner != 'Unknown':
         row['owner']   = options.owner
-        fmt.append("email = :owner")
+        fmt.append("contact_name = :owner")
     if options.tzone != 'Etc/UTC':
         row['tzone']   = options.tzone
         fmt.append("timezone = :tzone")
