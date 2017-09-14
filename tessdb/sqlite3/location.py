@@ -59,6 +59,7 @@ OUT_OF_SERVICE = 'Out of Service'
 # Longitude/latitude are used in tessdb for sunrise/sunset calculation
 DEFAULT_LOCATION = {
     "location_id"   : -1, 
+    "contact_name"  : UNKNOWN,
     "contact_email" : UNKNOWN, 
     "site"          : UNKNOWN, 
     "longitude"     : UNKNOWN, 
@@ -72,6 +73,7 @@ DEFAULT_LOCATION = {
 
 OUT_OF_SERVICE_LOCATION = {
     "location_id"   : -2, 
+    "contact_name"  : UNKNOWN, 
     "contact_email" : UNKNOWN, 
     "site"          : OUT_OF_SERVICE, 
     "longitude"     : UNKNOWN, 
@@ -98,6 +100,7 @@ def _populate(transaction, rows):
     transaction.executemany(
         '''INSERT OR REPLACE INTO location_t (
             location_id,
+            contact_name,
             contact_email,
             site,
             longitude,
@@ -109,6 +112,7 @@ def _populate(transaction, rows):
             country
         ) VALUES (
             :location_id,
+            :contact_name,
             :contact_email,
             :site,
             :longitude,
@@ -169,7 +173,9 @@ class Location(Table):
             province                TEXT,
             country                 TEXT,
             sunrise                 TEXT,
-            sunset                  TEXT
+            sunset                  TEXT,
+            contact_name            TEXT,
+            timezone                TEXT DEFAULT 'Etc/UTC'
             );
             '''
         )
