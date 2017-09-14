@@ -106,7 +106,7 @@ def createParser():
     lup.add_argument('-c', '--country',   type=str,   default='Unknown', help='Country')
     lup.add_argument('-w', '--owner',     type=str,   default='Unknown', help='Contact person')
     lup.add_argument('-m', '--email',     type=str,   default='Unknown', help='Contact email')
-    lcp.add_argument('-t', '--tzone',     type=str,   default='Etc/UTC', help='Olson Timezone')
+    lup.add_argument('-t', '--tzone',     type=str,   default='Etc/UTC', help='Olson Timezone')
     lup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     lre = subparser.add_parser('rename', help='rename location')
