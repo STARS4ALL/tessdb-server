@@ -1,0 +1,138 @@
+#!/usr/bin/env python
+
+# GENERATE IDA-FORMAT OBSERVATIONS FILE
+
+# ----------------------------------------------------------------------
+# Copyright (c) 2017 Rafael Gonzalez.
+#
+# See the LICENSE file for details
+# ----------------------------------------------------------------------
+
+#--------------------
+# System wide imports
+# -------------------
+
+import os
+import os.path
+import sys
+import argparse
+import sqlite3
+import datetime
+
+#--------------
+# other imports
+# -------------
+
+import jinja2
+from tessdb.sqlite3.utils import UNKNOWN
+
+# ----------------
+# Module constants
+# ----------------
+
+DEFAULT_DBASE = "/var/dbase/tess.db"
+DEFAULT_TMPLT = "/etc/tessdb/IDA-template.j2"
+
+INFINITE_TIME = "2999-12-31T23:59:59"
+EXPIRED       = "Expired"
+CURRENT       = "Current"
+TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+# -----------------------
+# Module global functions
+# -----------------------
+
+def createParser():
+    # create the top-level parser
+    parser = argparse.ArgumentParser(prog=sys.argv[0])
+    parser.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    parser.add_argument('-t', '--template', default=DEFAULT_TMPLT, help='Jinja2 template file path')
+    return parser
+
+instrument = {
+	'name':      'stars1',
+	'model':     'TESS-W',
+	'firmware':     '1.0',
+	'fov':           17.0,
+	'filter':      'UVIR',
+	'zero_point':   20.50,
+	'cover_offset':   0.0,
+	'mac_address':  '5C:CF:7F:82:8D:7B',
+}
+
+location = {
+	'site': "Centro de Recursos Educativos el Cerro",
+	'location' : 'Coslada',
+	'province' : 'Madrid',
+	'country'  : 'Spain',
+	'contact_person' : 'Cristobal Garcia',
+	'organization'   : 'AstroHenares',
+	'timezone'       : 'Europe/Madrid',
+	'longitude' : -1.64543,
+	'latitude'  : 42.81732,
+	'elevation' : 450,
+}
+
+readings =  [ 
+	{ 
+		'utc':   '2017-01-03T22:32:21.000', 
+		'local': '2017-01-03T23:32:21.000',
+		'tamb':  22.8,
+		'tsky':  1.84,
+		'freq':  10.74,
+		'mag':   17.9
+	},
+	{ 
+		'utc':   '2017-01-03T22:32:23.000', 
+		'local': '2017-01-03T23:32:23.000',
+		'tamb':  22.7,
+		'tsky':  1.82,
+		'freq':  10.78,
+		'mag':   17.5
+	},
+	]
+
+context = {
+	'instrument': instrument,
+	'location': location,
+	'readings' : readings,
+}
+
+
+# -------------------
+# AUXILIARY FUNCTIONS
+# -------------------
+
+def open_database(dbase_path):
+    if not os.path.exists(dbase_path):
+	   raise IOError("No SQLite3 Database file found at {0}. Exiting ...".format(dbase_path))
+    return sqlite3.connect(dbase_path)
+
+
+def render(template_path, context):
+    if not os.path.exists(template_path):
+        raise IOError("No Jinja2 template file found at {0}. Exiting ...".format(template_path))
+    path, filename = os.path.split(template_path)
+    return jinja2.Environment(
+        loader=jinja2.FileSystemLoader(path or './')
+    ).get_template(filename).render(context)
+
+# -------------
+# MAIN FUNCTION
+# -------------
+
+def main():
+    '''
+    Utility entry point
+    '''
+    try:
+        options = createParser().parse_args(sys.argv[1:])
+        connection = open_database(options.dbase)
+        result=render(options.template, context)
+        print(result)
+    except KeyboardInterrupt:
+        print('')
+    except Exception as e:
+        print("Error => {0}".format(e))
+
+main()
