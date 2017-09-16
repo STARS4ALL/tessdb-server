@@ -6,6 +6,8 @@ Prioridad Alta
 Prioridad media
 ===============
 
+- Mas parametros a los scripts para no hard-codear rutas ni nombres
+- script de generacion de fciheros IDA.
 
 Prioridad baja
 ==============
@@ -17,9 +19,6 @@ Prioridad baja
 La estrategia para siportar e TESS multicanal implicara muy pocos cambios en el modelo de datos:
 - Cada fila de la tabla tess_t indicará un canal
 - en cada canal hay que poner los siguientes datos adicionales, específicos suyos:
- +) 'fov' (Field of View, degrees)
- +) 'channel' para ńúmero del canal
- +) 'cover_offset' para el offset de una tapa adicional (defaults = 0.0)
  +) los nombres de los angulos de inclinacion de los sensores respecto a la caja del instrumento (¿cuantos ángulos, qué nombres?) REALMENTE NO ES NECESARIO TENIENDO EL CHANNEL NUMBER
 - cada medida de tess_readings indicaró la medida de un canal
 - Hay que introducir la dimension adicional de orientación para tener datos de la orientación delos distintos sensores hacia el cielo. Por defecto, en los TESS monocanales, se asume el Zenit.
