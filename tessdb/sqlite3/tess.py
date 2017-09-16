@@ -165,12 +165,18 @@ def _createViews(cursor):
         AS SELECT
             tess_t.tess_id,
             tess_t.name,
+            tess_t.channel,
+            tess_t.model,
+            tess_t.firmware,
             tess_t.mac_address,
             tess_t.zero_point,
+            tess_t.cover_offset,
             tess_t.filter,
             tess_t.valid_since,
             tess_t.valid_until,
             tess_t.valid_state,
+            location_t.contact_person,
+            location_t.organization,
             location_t.contact_email,
             location_t.site,
             location_t.longitude,
@@ -179,7 +185,8 @@ def _createViews(cursor):
             location_t.zipcode,
             location_t.location,
             location_t.province,
-            location_t.country
+            location_t.country,
+            location_t.timezone
         FROM tess_t JOIN location_t USING (location_id);
         '''
         )
