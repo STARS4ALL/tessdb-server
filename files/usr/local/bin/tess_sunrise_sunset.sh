@@ -1,12 +1,31 @@
 #!/bin/bash
-# today's unrise/sunset for all  locations
+# today's sunrise/sunset for all locations
 
-name=$(basename $0 .sh)
 suffix=$(/bin/date +%Y%m%dT%H%M00)
-out_dir=/var/dbase/reports
 
-service tessdb pause ; sleep 2
-sqlite3 /var/dbase/tess.db <<EOF > ${out_dir}/${name}.${suffix}.txt
+# Arguments from the command line & default values
+name=$(basename $0 .sh)
+dbase="${1:-/var/dbase/tess.db}"
+out_dir="${2:-/var/dbase/reports}"
+
+
+if  [[ ! -f $dbase || ! -r $dbase ]]; then
+        echo "Database file $dbase does not exists or is not readable."
+        echo "Exiting"
+        exit 1
+fi
+
+if  [[ ! -d $out_dir  ]]; then
+        echo "Output directory $out_dir does not exists."
+        echo "Exiting"
+        exit 1
+fi
+
+
+service tessdb pause 
+sleep 2
+
+sqlite3 ${dbase} <<EOF > ${out_dir}/${name}.${suffix}.txt
 .mode line
 SELECT i.name, l.site, l.sunrise, l.sunset
 FROM tess_t     AS i
