@@ -172,6 +172,7 @@ def _createViews(cursor):
             tess_t.zero_point,
             tess_t.cover_offset,
             tess_t.filter,
+            tess_t.fov,
             tess_t.valid_since,
             tess_t.valid_until,
             tess_t.valid_state,
@@ -223,7 +224,12 @@ class TESS(Table):
             valid_since   TEXT,
             valid_until   TEXT,
             valid_state   TEXT,
-            location_id   INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id)
+            location_id   INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id),
+            model         TEXT    DEFAULT 'TESS-W',
+            firmware      TEXT    DEFAULT '1.0',
+            channel       INTEGER DEFAULT 0,
+            cover_offset  REAL    DEFAULT 0.0,
+            fov           REAL    DEFAULT 17.0
             );
             '''
         )
