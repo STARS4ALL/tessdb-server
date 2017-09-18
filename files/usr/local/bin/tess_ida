@@ -24,6 +24,7 @@ import datetime
 # -------------
 
 import jinja2
+import pytz
 from tessdb.sqlite3.utils import UNKNOWN
 
 # ----------------
@@ -33,10 +34,7 @@ from tessdb.sqlite3.utils import UNKNOWN
 DEFAULT_DBASE = "/var/dbase/tess.db"
 DEFAULT_TMPLT = "/etc/tessdb/IDA-template.j2"
 
-INFINITE_TIME = "2999-12-31T23:59:59"
-EXPIRED       = "Expired"
-CURRENT       = "Current"
-TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
+TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.000"
 
 # -----------------------
 # Module global functions
@@ -45,58 +43,98 @@ TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 def createParser():
     # create the top-level parser
     parser = argparse.ArgumentParser(prog=sys.argv[0])
+    parser.add_argument('name', metavar='<name>', help='TESS instrument name')
     parser.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     parser.add_argument('-t', '--template', default=DEFAULT_TMPLT, help='Jinja2 template file path')
     return parser
 
-instrument = {
-	'name':      'stars1',
-	'model':     'TESS-W',
-	'firmware':     '1.0',
-	'fov':           17.0,
-	'filter':      'UVIR',
-	'zero_point':   20.50,
-	'cover_offset':   0.0,
-	'mac_address':  '5C:CF:7F:82:8D:7B',
-}
 
-location = {
-	'site': "Centro de Recursos Educativos el Cerro",
-	'location' : 'Coslada',
-	'province' : 'Madrid',
-	'country'  : 'Spain',
-	'contact_person' : 'Cristobal Garcia',
-	'organization'   : 'AstroHenares',
-	'timezone'       : 'Europe/Madrid',
-	'longitude' : -1.64543,
-	'latitude'  : 42.81732,
-	'elevation' : 450,
-}
 
-readings =  [ 
-	{ 
-		'utc':   '2017-01-03T22:32:21.000', 
-		'local': '2017-01-03T23:32:21.000',
-		'tamb':  22.8,
-		'tsky':  1.84,
-		'freq':  10.74,
-		'mag':   17.9
-	},
-	{ 
-		'utc':   '2017-01-03T22:32:23.000', 
-		'local': '2017-01-03T23:32:23.000',
-		'tamb':  22.7,
-		'tsky':  1.82,
-		'freq':  10.78,
-		'mag':   17.5
-	},
-	]
+# ------------------
+# DATABASE FUNCTIONS
+# ------------------
 
-context = {
-	'instrument': instrument,
-	'location': location,
-	'readings' : readings,
-}
+def paging(cursor, headers, size=10):
+    '''
+    Pages query output and displays in tabular format
+    '''
+    ONE_PAGE = 10
+    while True:
+        result = cursor.fetchmany(ONE_PAGE)
+        print tabulate.tabulate(result, headers=headers, tablefmt='grid')
+        if len(result) < ONE_PAGE:
+            break
+        size -= ONE_PAGE
+        if size > 0:
+            raw_input("Press Enter to continue [Ctrl-C to abort] ...")
+        else:
+            break
+
+def get_metadata(connection, options):
+    cursor = connection.cursor()
+    row = {'name': options.name}
+    cursor.execute(
+            '''
+            SELECT name, channel, model, firmware, mac_address,
+                    zero_point, cover_offset, filter, fov, 
+                    contact_name, organization,
+                    site, longitude, latitude, elevation, location, province, country, timezone
+            FROM tess_v
+            WHERE valid_state == "Current"
+            AND   name == :name
+            ''', row)
+    # Solo para instrumentos TESS monocanal
+    result = cursor.fetchone()
+    instrument = {
+        'name':         result[0],
+        'channel':      result[1],
+        'model':        result[2],
+        'firmware':     result[3],
+        'mac_address':  result[4],
+        'zero_point':   result[5],
+        'cover_offset': result[6],
+        'filter':       result[7],
+        'fov':          result[8],
+    }
+    location = {
+        'contact_name'   : result[9],
+        'organization'   : result[10],
+        'site'           : result[11],
+        'longitude'      : result[12],
+        'latitude'       : result[13],
+        'elevation'      : result[14],
+        'location'       : result[15],
+        'province'       : result[16],
+        'country'        : result[17],
+        'timezone'       : result[18],
+        
+    }
+    return instrument, location
+
+def get_readings(connection, options, timezone):
+    row = {'name': options.name}
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude
+        FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.name == :name
+        AND   i.valid_state == "Current"
+        ORDER BY r.date_id DESC, r.time_id DESC
+        ''', row)
+    readings = []
+    results = cursor.fetchmany(50)
+   
+    for result in results:
+            kk = {'utc': result[0], 'tamb': result[1], 'tsky': result[2], 'freq': result[3], 'mag': result[4]}
+            tzobj = pytz.timezone(timezone)
+            dt = datetime.datetime.strptime(kk['utc'], TSTAMP_FORMAT).replace(tzinfo=pytz.utc)
+            kk['local'] = dt.astimezone(tzobj).strftime(TSTAMP_FORMAT)
+            readings.append(kk)
+    return readings
 
 
 # -------------------
@@ -105,7 +143,7 @@ context = {
 
 def open_database(dbase_path):
     if not os.path.exists(dbase_path):
-	   raise IOError("No SQLite3 Database file found at {0}. Exiting ...".format(dbase_path))
+       raise IOError("No SQLite3 Database file found at {0}. Exiting ...".format(dbase_path))
     return sqlite3.connect(dbase_path)
 
 
@@ -128,6 +166,9 @@ def main():
     try:
         options = createParser().parse_args(sys.argv[1:])
         connection = open_database(options.dbase)
+        context = {}
+        context['instrument'], context['location'] = get_metadata(connection, options)
+        context['readings'] = get_readings(connection, options, context['location']['timezone'])
         result=render(options.template, context)
         print(result)
     except KeyboardInterrupt:
