@@ -112,8 +112,10 @@ def get_metadata(connection, options):
     return instrument, location
 
 def get_readings(connection, options, timezone):
+    '''From start of month at midday UTC'''
     row = {'name': options.name}
     cursor = connection.cursor()
+    tzobj = pytz.timezone(timezone)
     cursor.execute(
         '''
         SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude
@@ -123,17 +125,17 @@ def get_readings(connection, options, timezone):
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
         AND   i.valid_state == "Current"
+        AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '+12 hours' ) 
+                                AND datetime('now')
         ORDER BY r.date_id DESC, r.time_id DESC
         ''', row)
     readings = []
-    results = cursor.fetchmany(50)
-   
+    results = cursor.fetchall()
     for result in results:
-            kk = {'utc': result[0], 'tamb': result[1], 'tsky': result[2], 'freq': result[3], 'mag': result[4]}
-            tzobj = pytz.timezone(timezone)
-            dt = datetime.datetime.strptime(kk['utc'], TSTAMP_FORMAT).replace(tzinfo=pytz.utc)
-            kk['local'] = dt.astimezone(tzobj).strftime(TSTAMP_FORMAT)
-            readings.append(kk)
+        record = {'utc': result[0], 'tamb': result[1], 'tsky': result[2], 'freq': result[3], 'mag': result[4]}
+        dt = datetime.datetime.strptime(record['utc'], TSTAMP_FORMAT).replace(tzinfo=pytz.utc)
+        record['local'] = dt.astimezone(tzobj).strftime(TSTAMP_FORMAT)
+        readings.append(record)
     return readings
 
 
