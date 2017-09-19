@@ -33,6 +33,7 @@ from tessdb.sqlite3.utils import UNKNOWN
 
 DEFAULT_DBASE = "/var/dbase/tess.db"
 DEFAULT_TMPLT = "/etc/tessdb/IDA-template.j2"
+DEFAULT_DIR   = "/var/dbase/reports/IDA"
 
 TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.000"
 
@@ -46,29 +47,12 @@ def createParser():
     parser.add_argument('name', metavar='<name>', help='TESS instrument name')
     parser.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     parser.add_argument('-t', '--template', default=DEFAULT_TMPLT, help='Jinja2 template file path')
+    parser.add_argument('-o', '--out_dir', default=DEFAULT_DIR, help='Output directory to dump record')
     return parser
-
-
 
 # ------------------
 # DATABASE FUNCTIONS
 # ------------------
-
-def paging(cursor, headers, size=10):
-    '''
-    Pages query output and displays in tabular format
-    '''
-    ONE_PAGE = 10
-    while True:
-        result = cursor.fetchmany(ONE_PAGE)
-        print tabulate.tabulate(result, headers=headers, tablefmt='grid')
-        if len(result) < ONE_PAGE:
-            break
-        size -= ONE_PAGE
-        if size > 0:
-            raw_input("Press Enter to continue [Ctrl-C to abort] ...")
-        else:
-            break
 
 def get_metadata(connection, options):
     cursor = connection.cursor()
@@ -157,6 +141,21 @@ def render(template_path, context):
         loader=jinja2.FileSystemLoader(path or './')
     ).get_template(filename).render(context)
 
+def create_directories(instrument_name, out_dir, year=None):
+    sub_dir = os.path.join(out_dir, instrument_name)
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    if not os.path.exists(sub_dir):
+        os.makedirs(sub_dir)
+   
+
+def write_IDA_file(result, instrument_name, out_dir):
+    file_name = datetime.datetime.utcnow().strftime("%Y-%M-%B.dat")
+    full_name = os.path.join(out_dir, instrument_name, file_name)
+    print(full_name)
+    with open(full_name, 'w') as outfile:
+        outfile.write(result)
+        outfile.write('\n')
 # -------------
 # MAIN FUNCTION
 # -------------
@@ -167,12 +166,13 @@ def main():
     '''
     try:
         options = createParser().parse_args(sys.argv[1:])
+        create_directories(options.name, options.out_dir)
         connection = open_database(options.dbase)
         context = {}
         context['instrument'], context['location'] = get_metadata(connection, options)
         context['readings'] = get_readings(connection, options, context['location']['timezone'])
         result=render(options.template, context)
-        print(result)
+        write_IDA_file(result, options.name, options.out_dir)
     except KeyboardInterrupt:
         print('')
     except Exception as e:
