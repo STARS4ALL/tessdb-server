@@ -22,7 +22,7 @@ if  [[ ! -d $out_dir  ]]; then
 fi
 
 
-service tessdb pause 
+/usr/sbin/service tessdb pause 
 sleep 2
 
 sqlite3 ${dbase} <<EOF > ${out_dir}/${name}.${suffix}.txt
@@ -33,4 +33,4 @@ JOIN location_t AS l USING (location_id)
 WHERE i.valid_state = 'Current'
 ORDER BY i.name ASC;
 EOF
-service tessdb resume
+/usr/sbin/service tessdb resume

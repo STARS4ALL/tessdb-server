@@ -41,7 +41,7 @@ EOF
 
 
 # Stops background database I/O
-service tessdb pause 
+/usr/sbin/service tessdb pause 
 sleep 2
 
 # Loops over the instruments file and dumping data
@@ -51,4 +51,4 @@ for instrument in $( cat $instruments_file ); do
 done
 
 # Resume background database I/O
-service tessdb resume
+/usr/sbin/service tessdb resume

@@ -28,7 +28,7 @@ ORDER by name ASC;
 EOF
 }
 
-service tessdb pause
+/usr/sbin/service tessdb pause
 sleep 2
 query_names > ${instruments_file}
-service tessdb resume
+/usr/sbin/service tessdb resume
