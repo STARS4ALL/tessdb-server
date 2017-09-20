@@ -18,6 +18,7 @@ import sys
 import argparse
 import sqlite3
 import datetime
+import time
 
 #--------------
 # other imports
@@ -34,6 +35,7 @@ from tessdb.sqlite3.utils import UNKNOWN
 DEFAULT_DBASE = "/var/dbase/tess.db"
 DEFAULT_TMPLT = "/etc/tessdb/IDA-template.j2"
 DEFAULT_DIR   = "/var/dbase/reports/IDA"
+DEFAULT_MONTH = datetime.datetime.utcnow().strftime("%Y-%m")
 
 TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.000"
 
@@ -47,6 +49,7 @@ def createParser():
     parser.add_argument('name', metavar='<name>', help='TESS instrument name')
     parser.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     parser.add_argument('-t', '--template', default=DEFAULT_TMPLT, help='Jinja2 template file path')
+    parser.add_argument('-m', '--month', type=mkmonth, default=DEFAULT_MONTH, metavar='<YYYY-MM>', help='Starting year & month. Defaults to current.')
     parser.add_argument('-o', '--out_dir', default=DEFAULT_DIR, help='Output directory to dump record')
     return parser
 
@@ -122,10 +125,41 @@ def get_readings(connection, options, timezone):
         readings.append(record)
     return readings
 
+def get_readings2(connection, options, timezone):
+    '''From start of month at midday UTC'''
+    row = {'name': options.name}
+    cursor = connection.cursor()
+    tzobj = pytz.timezone(timezone)
+    from_date = options.month.strftime(TSTAMP_FORMAT)
+    cursor.execute(
+        '''
+        SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude
+        FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.name == :name
+        AND   i.valid_state == "Current"
+        AND datetime(timestamp) BETWEEN datetime(from_date) AND datetime(from_date '+1 month', '-1 day')
+        ORDER BY r.date_id DESC, r.time_id DESC
+        ''', row)
+    readings = []
+    results = cursor.fetchall()
+    for result in results:
+        record = {'utc': result[0], 'tamb': result[1], 'tsky': result[2], 'freq': result[3], 'mag': result[4]}
+        dt = datetime.datetime.strptime(record['utc'], TSTAMP_FORMAT).replace(tzinfo=pytz.utc)
+        record['local'] = dt.astimezone(tzobj).strftime(TSTAMP_FORMAT)
+        readings.append(record)
+    return readings
+
 
 # -------------------
 # AUXILIARY FUNCTIONS
 # -------------------
+
+def mkmonth(datestr):
+    return datetime.datetime.strptime(datestr, '%Y-%m').replace(hour=12)
+
 
 def open_database(dbase_path):
     if not os.path.exists(dbase_path):
@@ -150,7 +184,7 @@ def create_directories(instrument_name, out_dir, year=None):
    
 
 def write_IDA_file(result, instrument_name, out_dir):
-    file_name = datetime.datetime.utcnow().strftime("%Y-%M-%B.dat")
+    file_name = datetime.datetime.utcnow().strftime("%Y-%m.dat")
     full_name = os.path.join(out_dir, instrument_name, file_name)
     print(full_name)
     with open(full_name, 'w') as outfile:
