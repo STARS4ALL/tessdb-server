@@ -11,6 +11,7 @@
 #--------------------
 # System wide imports
 # -------------------
+from __future__ import generators    # needs to be at the top of your module
 
 import os
 import os.path
@@ -49,13 +50,31 @@ def createParser():
     parser.add_argument('name', metavar='<name>', help='TESS instrument name')
     parser.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     parser.add_argument('-t', '--template', default=DEFAULT_TMPLT, help='Jinja2 template file path')
-    parser.add_argument('-m', '--month', type=mkmonth, default=DEFAULT_MONTH, metavar='<YYYY-MM>', help='Starting year & month. Defaults to current.')
     parser.add_argument('-o', '--out_dir', default=DEFAULT_DIR, help='Output directory to dump record')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-m', '--from-month', type=mkmonth, default=DEFAULT_MONTH, metavar='<YYYY-MM>', help='Starting year & month. Defaults to current.')
+    group.add_argument('-l', '--latest-month', action='store_true', help='Latest month only.')
     return parser
 
 # ------------------
 # DATABASE FUNCTIONS
 # ------------------
+
+def open_database(dbase_path):
+    if not os.path.exists(dbase_path):
+       raise IOError("No SQLite3 Database file found at {0}. Exiting ...".format(dbase_path))
+    return sqlite3.connect(dbase_path)
+
+
+def result_iterator(cursor, arraysize=100):
+    'An iterator that uses fetchmany to keep memory usage down'
+    while True:
+        results = cursor.fetchmany(arraysize)
+        if not results:
+            break
+        for result in results:
+            yield result
+
 
 def get_metadata(connection, options):
     cursor = connection.cursor()
@@ -98,11 +117,13 @@ def get_metadata(connection, options):
     }
     return instrument, location
 
-def get_readings(connection, options, timezone):
+
+
+
+def fetch_latest_dbreadings(connection, options):
     '''From start of month at midday UTC'''
     row = {'name': options.name}
     cursor = connection.cursor()
-    tzobj = pytz.timezone(timezone)
     cursor.execute(
         '''
         SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude
@@ -114,23 +135,15 @@ def get_readings(connection, options, timezone):
         AND   i.valid_state == "Current"
         AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '+12 hours' ) 
                                 AND datetime('now')
-        ORDER BY r.date_id DESC, r.time_id DESC
+        ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
-    readings = []
-    results = cursor.fetchall()
-    for result in results:
-        record = {'utc': result[0], 'tamb': result[1], 'tsky': result[2], 'freq': result[3], 'mag': result[4]}
-        dt = datetime.datetime.strptime(record['utc'], TSTAMP_FORMAT).replace(tzinfo=pytz.utc)
-        record['local'] = dt.astimezone(tzobj).strftime(TSTAMP_FORMAT)
-        readings.append(record)
-    return readings
+    return cursor
 
-def get_readings2(connection, options, timezone):
+
+def fetch_dbreadings_from_month(connection, options):
     '''From start of month at midday UTC'''
-    row = {'name': options.name}
+    row = {'name': options.name, 'from_date': options.from_month.strftime(TSTAMP_FORMAT)}
     cursor = connection.cursor()
-    tzobj = pytz.timezone(timezone)
-    from_date = options.month.strftime(TSTAMP_FORMAT)
     cursor.execute(
         '''
         SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude
@@ -140,31 +153,32 @@ def get_readings2(connection, options, timezone):
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
         AND   i.valid_state == "Current"
-        AND datetime(timestamp) BETWEEN datetime(from_date) AND datetime(from_date '+1 month', '-1 day')
-        ORDER BY r.date_id DESC, r.time_id DESC
+        AND datetime(timestamp) BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
+        ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
-    readings = []
-    results = cursor.fetchall()
-    for result in results:
-        record = {'utc': result[0], 'tamb': result[1], 'tsky': result[2], 'freq': result[3], 'mag': result[4]}
-        dt = datetime.datetime.strptime(record['utc'], TSTAMP_FORMAT).replace(tzinfo=pytz.utc)
-        record['local'] = dt.astimezone(tzobj).strftime(TSTAMP_FORMAT)
-        readings.append(record)
-    return readings
-
+    return cursor
+    
 
 # -------------------
 # AUXILIARY FUNCTIONS
 # -------------------
 
+def render_readings(dbreading, timezone):
+    tzobj = pytz.timezone(timezone)
+    dt = datetime.datetime.strptime(dbreading[0], TSTAMP_FORMAT).replace(tzinfo=pytz.utc)
+    record = {
+            'utc':  dbreading[0], 
+            'local': dt.astimezone(tzobj).strftime(TSTAMP_FORMAT),
+            'tamb': dbreading[1], 
+            'tsky': dbreading[2], 
+            'freq': dbreading[3], 
+            'mag':  dbreading[4],
+        }
+    return "%(utc)s;%(local)s;%(tamb)s;%(tsky)s%(freq)s;%(mag)s" % record
+
+
 def mkmonth(datestr):
     return datetime.datetime.strptime(datestr, '%Y-%m').replace(hour=12)
-
-
-def open_database(dbase_path):
-    if not os.path.exists(dbase_path):
-       raise IOError("No SQLite3 Database file found at {0}. Exiting ...".format(dbase_path))
-    return sqlite3.connect(dbase_path)
 
 
 def render(template_path, context):
@@ -175,6 +189,7 @@ def render(template_path, context):
         loader=jinja2.FileSystemLoader(path or './')
     ).get_template(filename).render(context)
 
+
 def create_directories(instrument_name, out_dir, year=None):
     sub_dir = os.path.join(out_dir, instrument_name)
     if not os.path.exists(out_dir):
@@ -182,14 +197,24 @@ def create_directories(instrument_name, out_dir, year=None):
     if not os.path.exists(sub_dir):
         os.makedirs(sub_dir)
    
+# -------------------
+# IDA FILE Generation
+# -------------------
 
-def write_IDA_file(result, instrument_name, out_dir):
-    file_name = datetime.datetime.utcnow().strftime("%Y-%m.dat")
+def write_IDA_header_file(result, instrument_name, out_dir, timestamp):
+    '''Writes the IDA header file after contained in result'''
+    file_name = timestamp.strftime("%Y-%m.dat")
     full_name = os.path.join(out_dir, instrument_name, file_name)
-    print(full_name)
     with open(full_name, 'w') as outfile:
         outfile.write(result)
+
+def write_IDA_body_file(result, instrument_name, out_dir, timestamp):
+    file_name = timestamp.strftime("%Y-%m.dat")
+    full_name = os.path.join(out_dir, instrument_name, file_name)
+    with open(full_name, 'a') as outfile:
+        outfile.write(result)
         outfile.write('\n')
+
 # -------------
 # MAIN FUNCTION
 # -------------
@@ -204,11 +229,22 @@ def main():
         connection = open_database(options.dbase)
         context = {}
         context['instrument'], context['location'] = get_metadata(connection, options)
-        context['readings'] = get_readings(connection, options, context['location']['timezone'])
-        result=render(options.template, context)
-        write_IDA_file(result, options.name, options.out_dir)
+        timezone = context['location']['timezone']
+        if options.latest_month:
+            timestamp  = datetime.datetime.utcnow()
+            cursor = fetch_latest_dbreadings(connection, options)
+        else:
+            timestamp  = options.from_month
+            cursor = fetch_dbreadings_from_month(connection, options)
+        # render IDA header file from Jinja2 template
+        header = render(options.template, context) 
+        write_IDA_header_file(header, options.name, options.out_dir, timestamp)
+        # render IDA body file by doing direct I/O
+        for reading in result_iterator(cursor):
+            body_line = render_readings(reading, timezone)
+            write_IDA_body_file(body_line, options.name, options.out_dir, timestamp)
     except KeyboardInterrupt:
-        print('')
+        print('Interrupted by user ^C')
     except Exception as e:
         print("Error => {0}".format(e))
 
