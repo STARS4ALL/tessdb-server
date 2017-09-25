@@ -82,6 +82,7 @@ DATA_FILES  = [
                               'files/usr/local/bin/tess_bulk_dump.sh', 
                               'files/usr/local/bin/tess_daily_summary.sh', 
                               'files/usr/local/bin/tess_ida',
+                              'files/usr/local/bin/tess_ida_bulk_dump.sh',
                               'files/usr/local/bin/tess_instruments_file.sh',
                               'files/usr/local/bin/tess_sunrise_sunset.sh', 
                               ]),
