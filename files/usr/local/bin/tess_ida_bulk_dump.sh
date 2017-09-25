@@ -24,6 +24,11 @@ if  [[ ! -f $dbase || ! -r $dbase ]]; then
         exit 1
 fi
 
+if  [[ ! -f $template || ! -r $template ]]; then
+        echo "IDA Template file $template does not exists or is not readable."
+        echo "Exiting"
+        exit 1
+fi
 
 
 # Stops background database I/O
@@ -32,8 +37,8 @@ sleep 2
 
 # Loops over the instruments file and dumping data
 for instrument in $( cat $instruments_file ); do
-        echo "Generating latest IDA file for TESS $instrument"
-        /usr/local/bin/tess_ida ${instrument} -l -d ${dbase} -t ${template} -o ${out_dir} 
+    echo "Generating latest month IDA file for TESS $instrument under ${out_dir}/${instrument}"
+    /usr/local/bin/tess_ida ${instrument} -l -d ${dbase} -t ${template} -o ${out_dir} 
 done
 
 # Resume background database I/O

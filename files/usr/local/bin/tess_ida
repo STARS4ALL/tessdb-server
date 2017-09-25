@@ -237,7 +237,7 @@ def main():
             timestamp  = options.from_month
             cursor = fetch_dbreadings_from_month(connection, options)
         # render IDA header file from Jinja2 template
-        header = render(options.template, context) 
+        header = render(options.template, context).encode('utf-8')
         write_IDA_header_file(header, options.name, options.out_dir, timestamp)
         # render IDA body file by doing direct I/O
         for reading in result_iterator(cursor):
@@ -245,7 +245,7 @@ def main():
             write_IDA_body_file(body_line, options.name, options.out_dir, timestamp)
     except KeyboardInterrupt:
         print('Interrupted by user ^C')
-    except Exception as e:
+    #except Exception as e:
         print("Error => {0}".format(e))
 
 main()
