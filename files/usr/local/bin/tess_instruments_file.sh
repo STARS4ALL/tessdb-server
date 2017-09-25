@@ -3,7 +3,7 @@
 
 # Arguments from the command line & default values
 dbase="${1:-/var/dbase/tess.db}"
-instruments_file="${2:-/var/dbase/tess_instruments.txt}"
+instruments_file="${2:-/var/dbase/tess_instruments_file.txt}"
 
 
 if  [[ ! -f $instruments_file || ! -r $instruments_file ]]; then

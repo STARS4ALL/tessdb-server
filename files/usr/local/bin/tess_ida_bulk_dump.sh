@@ -2,7 +2,7 @@
 # This script dumps latest month readings from every TESS given in an instrument list file.
 
 # Arguments from the command line & default values
-instruments_file="${1:-/var/dbase/tess_instruments.txt}"
+instruments_file="${1:-/var/dbase/tess_instruments_file.txt}"
 
 dbase="${2:-/var/dbase/tess.db}"
 

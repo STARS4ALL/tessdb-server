@@ -336,7 +336,9 @@ class TESS(Table):
             # If that condition is met, we add a new instrument
             instrument = yield self.findName(row) 
             if len(instrument):
-                log2.info("Registration rejected: another instrument already registered with the same name: {name}", name=row['name']) 
+                existing_mac = instrument[1]
+                log2.info("Registration rejected for new MAC {mac}: another instrument already registered with the same name: {name} and MAC: {existing_mac}", 
+                    name=row['name'], mac=row['mac'], existing_mac=existing_mac) 
                 self.rejCreaDupName += 1
             else:
                 yield self.addNew(row)
