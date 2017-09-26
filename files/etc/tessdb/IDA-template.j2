@@ -33,7 +33,4 @@
 # UTC Date & Time, Local Date & Time, Temperature, Sky Temperature , Frequency, MSAS
 # YYYY-MM-DDTHH:mm:ss.fff;YYYY-MM-DDTHH:mm:ss.fff;Celsius;Celsius;Hz;mag/arcsec^2
 # END OF HEADER
-{# For big arrays, a better strategy is not use this variable and use generators instead #}
-{% for r in readings -%}
-{{ r.utc }};{{ r.local }};{{ r.tamb }};{{ r.tsky }};{{ r.freq }};{{ r.mag }}
-{% endfor %}
+
