@@ -354,13 +354,13 @@ def instrument_unassigned(connection, options):
     row = {'state': CURRENT, 'site': UNKNOWN_SITE}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,longitude,latitude,elevation 
+            SELECT name,mac_address,zero_point,filter,site
             FROM tess_v
             WHERE valid_state == :state
             AND site = :site
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Longitude","Latitude","Elevation"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site"], size=100)
 
 
 def instrument_export(connection, options):

@@ -33,6 +33,8 @@ from tessdb.sqlite3.utils import UNKNOWN
 # Module constants
 # ----------------
 
+UNKNOWN = "Unknown"
+
 DEFAULT_DBASE = "/var/dbase/tess.db"
 DEFAULT_TMPLT = "/etc/tessdb/IDA-template.j2"
 DEFAULT_DIR   = "/var/dbase/reports/IDA"
@@ -66,7 +68,7 @@ def open_database(dbase_path):
     return sqlite3.connect(dbase_path)
 
 
-def result_iterator(cursor, arraysize=100):
+def result_iterator(cursor, arraysize=500):
     'An iterator that uses fetchmany to keep memory usage down'
     while True:
         results = cursor.fetchmany(arraysize)
