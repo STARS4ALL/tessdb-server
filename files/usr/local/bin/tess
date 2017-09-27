@@ -723,10 +723,10 @@ def location_unassigned(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT site,longitude,latitude,elevation,contact_name,contact_email 
-        FROM location_t 
-        WHERE location_id < 0 
-        ORDER BY location_id ASC
+        SELECT l.site,l.longitude,l.latitude,l.elevation,l.contact_name,l.contact_email 
+        FROM location_t        AS l 
+        LEFT OUTER JOIN tess_t AS i USING (location_id)
+        WHERE i.name IS NULL;
         ''')
     paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email"], size=100)
 
