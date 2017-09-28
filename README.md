@@ -545,3 +545,22 @@ ORDER BY i.name ASC, i.valid_since ASC;
 EOF
 ```
 
+5. Show the time span of readings per TESS
+```sql
+SELECT i.name, MIN(d.sql_date || 'T' || t.time || 'Z') AS earliest, MAX(d.sql_date || 'T' || t.time || 'Z') AS latest
+FROM tess_readings_t AS r
+JOIN tess_t          AS i USING (tess_id)
+JOIN location_t      AS l USING (location_id)
+JOIN date_t          AS d USING (date_id)
+JOIN time_t          AS t USING (time_id)
+GROUP BY i.name;
+```
+
+6. Show locations not assigned to any TESS
+```sql
+SELECT l.site
+FROM location_t        AS l 
+LEFT OUTER JOIN tess_t AS i USING (location_id)
+WHERE i.name IS NULL;
+```
+
