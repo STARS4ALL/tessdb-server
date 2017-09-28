@@ -213,9 +213,14 @@ class DBaseService(Service):
 
     def getCounters(self):
         N = len(self.nrowsStatList)
-        timeStats = [ "I/O Time (sec.)", min(self.timeStatList),  sum(self.timeStatList)/N,  max(self.timeStatList) ]
-        rowsStats = [ "Pend Samples", min(self.nrowsStatList), sum(self.nrowsStatList)/N, max(self.nrowsStatList) ]
-        efficiency = (100 * N * self.T_QUEUE_POLL) / float(self.parent.T_STAT)
+        if not N:
+            timeStats = ["UNDEF I/O Time (sec.)", 0, 0, 0]
+            rowsStats = ["UNDEF Pend Samples", 0, 0, 0]
+            efficiency = 0
+        else:
+            timeStats = [ "I/O Time (sec.)", min(self.timeStatList),  sum(self.timeStatList)/N,  max(self.timeStatList) ]
+            rowsStats = [ "Pend Samples", min(self.nrowsStatList), sum(self.nrowsStatList)/N, max(self.nrowsStatList) ]
+            efficiency = (100 * N * self.T_QUEUE_POLL) / float(self.parent.T_STAT)
         return ((timeStats, rowsStats), efficiency, N)
 
     @inlineCallbacks
