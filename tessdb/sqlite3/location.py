@@ -236,7 +236,7 @@ class Location(Table):
         param = {'id': index, 'count': count }
         return self.pool.runQuery(
             '''
-            SELECT location_id, longitude, latitude, elevation 
+            SELECT location_id, longitude, latitude, elevation, site 
             FROM location_t 
             WHERE location_id >= :id
             ORDER BY location_id
@@ -289,6 +289,7 @@ class Location(Table):
                 observer.lon       = math.radians(location[1])
                 observer.lat       = math.radians(location[2])
                 observer.elevation = location[3]
+                site               = location[4]
                 # In locations near Grenwich: (prev) sunrise < (next) sunset
                 # In location far away from Greenwich: (prev) sunset < (next) sunrise
                 prev_sunrise = observer.previous_rising(sun, use_center=True)
@@ -296,9 +297,11 @@ class Location(Table):
                 prev_sunset  = observer.previous_setting(sun, use_center=True)
                 next_sunrise = observer.next_rising(sun, use_center=True)
                 if prev_sunrise < midnight: # Far West from Greenwich
+                    log.debug("{site}: Chose Far West from Greenwich", site=site)
                     sunrise = str(next_sunrise)
                     sunset  = str(prev_sunset)
                 else:                       # Our normal case in Spain
+                    log.debug("{site}: Chose our normal case in Spain", site=site)
                     sunrise = str(prev_sunrise)
                     sunset  = str(next_sunset)
                 rows.append ({ 
