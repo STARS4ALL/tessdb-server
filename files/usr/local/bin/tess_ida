@@ -128,13 +128,12 @@ def fetch_latest_dbreadings(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude
+        SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude, i.zero_point
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
-        AND   i.valid_state == "Current"
         AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '+12 hours' ) 
                                 AND datetime('now')
         ORDER BY r.date_id ASC, r.time_id ASC
@@ -148,13 +147,12 @@ def fetch_dbreadings_from_month(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude
+        SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude, i.zero_point
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
-        AND   i.valid_state == "Current"
         AND datetime(timestamp) BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
         ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
@@ -175,8 +173,9 @@ def render_readings(dbreading, timezone):
             'tsky': dbreading[2], 
             'freq': dbreading[3], 
             'mag':  dbreading[4],
+            'zp':   dbreading[5],
         }
-    return "%(utc)s;%(local)s;%(tamb)s;%(tsky)s%(freq)s;%(mag)s" % record
+    return "%(utc)s;%(local)s;%(tamb)s;%(tsky)s%(freq)s;%(mag)s;%(zp)s" % record
 
 
 def mkmonth(datestr):
