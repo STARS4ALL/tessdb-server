@@ -28,7 +28,7 @@ bulk_dump_by_instrument() {
 instrument_name=$1
 sqlite3 -csv -header ${dbase} <<EOF
 .separator ;
-SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time || 'Z') AS timestamp, r.sequence_number, l.site, i.name, r.frequency, r.magnitude, i.zero_point, i.filter
+SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time || 'Z') AS timestamp, r.sequence_number, l.site, i.name, r.frequency, r.magnitude, i.zero_point, i.filter, r.sky_temperature, r.ambient_temperature
 FROM tess_readings_t AS r
 JOIN tess_t          AS i USING (tess_id)
 JOIN location_t      AS l USING (location_id)
