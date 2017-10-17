@@ -16,6 +16,7 @@ import sys
 import datetime
 import json
 import math
+import platform
 
 import tabulate
 
@@ -45,6 +46,8 @@ from tessdb.utils  import chop
 # ----------------
 # Module constants
 # ----------------
+
+HOSTNAME = platform.uname()[1]
 
 # Reconencting Service. Default backoff policy parameters
 
@@ -177,7 +180,7 @@ class MQTTService(ClientService):
         self.protocol.onDisconnection = self.onDisconnection
 
         try:
-            yield self.protocol.connect("TwistedMQTT-subs", 
+            yield self.protocol.connect("TwistedMQTT-subs" + '@' + HOSTNAME, 
                 username=self.options['username'], password=self.options['password'], 
                 keepalive=self.options['keepalive'])
             yield self.subscribe(self.options)
@@ -368,21 +371,21 @@ class MQTTService(ClientService):
 
         # Discard retained messages to avoid duplicates in the database
         if retain:
-            log.debug('Discarded payload from {name} by retained flag', name=row['name'])
+            log.debug('Discarded payload from {log_tag} by retained flag', log_tag=row['name'])
             selog(row['name'],'Discarded payload from {name} by retained flag', name=row['name'])
             self.nfilter += 1
             return
 
         # Apply White List filter
         if len(self.options['tess_whitelist']) and not row['name'] in self.options['tess_whitelist']:
-            log.debug('Discarded payload from {name} by whitelist', name=row['name'])
+            log.debug('Discarded payload from {log_tag} by whitelist', log_tag=row['name'])
             selog(row['name'],'Discarded payload from {name} by whitelist', name=row['name'])
             self.nfilter += 1
             return
 
         # Apply Black List filter
         if len(self.options['tess_blacklist']) and row['name'] in self.options['tess_blacklist']:
-            log.debug('Discarded payload from {name} by blacklist', name=row['name'])
+            log.debug('Discarded payload from {log_tag} by blacklist', log_tag=row['name'])
             selog(row['name'],'Discarded payload from {name} by blacklist', name=row['name'])
             self.nfilter += 1
             return
