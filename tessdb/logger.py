@@ -15,20 +15,65 @@ import sys
 # ---------------
 # Twisted imports
 # ---------------
+from zope.interface import Interface, implementer
 
 from twisted.logger   import (
     Logger, LogLevel, globalLogBeginner, textFileLogObserver, 
-    FilteringLogObserver, LogLevelFilterPredicate)
+    FilteringLogObserver, LogLevelFilterPredicate,
+    ILogFilterPredicate, PredicateResult)
 
 #--------------
 # local imports
 # -------------
 
-from .logfilter import LogTagFilterPredicate
-
 # ----------------
 # Module constants
 # ----------------
+
+# --------------
+# Module Classes 
+# --------------
+
+@implementer(ILogFilterPredicate)
+class LogTagFilterPredicate(object):
+    """
+    L{ILogFilterPredicate} that filters out events with a log tag not in a tag set.
+    Events that do not have a log_tag key are forwarded to the next filter.
+    If the tag set is empty, the events are also forwarded
+    """
+
+    def __init__(self, defaultLogTags=[]):
+        """
+        """
+        self.logTags = defaultLogTags
+
+
+    def setLogTags(self, logTags):
+        """
+        Set a new tag set. An iterable (usually a sequence)
+        """
+        self.logTags = logTags
+
+
+    def __call__(self, event):
+        eventTag = event.get("log_tag", None)
+
+        # Allow events with missing log_tag to pass through
+        if eventTag is None:
+            return PredicateResult.maybe
+
+        # Allow all events to pass through if empty tag set
+        if len(self.logTags) == 0:
+            return PredicateResult.maybe
+
+        # Allow events contained in the tag set to pass through
+        if eventTag in self.logTags:
+            return PredicateResult.maybe
+
+        return PredicateResult.no
+
+# ----------------------------------------------------------------------
+
 
 # -----------------------
 # Module global variables
