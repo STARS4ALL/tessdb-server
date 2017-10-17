@@ -61,11 +61,17 @@ TSTAMP_FORMAT = [ "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S",]
 # Max Timestamp Ouf-Of-Sync difference, in seconds
 MAX_TSTAMP_OOS = 60
 
+# Service Logging namespace
+NAMESPACE = 'mqttS'
+
+# MQTT Protocol logging namespace
+PROTOCOL_NAMESPACE = 'mqtt'
+
 # -----------------------
 # Module global variables
 # -----------------------
 
-log  = Logger(namespace='mqtt')
+log  = Logger(namespace=NAMESPACE)
 
 class MQTTService(ClientService):
 
@@ -87,7 +93,8 @@ class MQTTService(ClientService):
         self.topics     = []
         self.regAllowed = False
         self.validate   = options['validation']
-        setLogLevel(namespace='mqtt', levelStr=options['log_level'])
+        setLogLevel(namespace=NAMESPACE, levelStr=options['log_level'])
+        setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=options['protocol_log_level'])
 
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
@@ -123,7 +130,8 @@ class MQTTService(ClientService):
     @inlineCallbacks
     def reloadService(self, new_options):
         self.validate  = new_options['validation']
-        setLogLevel(namespace='mqtt', levelStr=new_options['log_level'])
+        setLogLevel(namespace=NAMESPACE, levelStr=new_options['log_level'])
+        setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=options['protocol_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
         yield self.subscribe(new_options)
         self.options = new_options
