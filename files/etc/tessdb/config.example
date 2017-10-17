@@ -19,6 +19,13 @@ log_file = /var/log/tessdb.log
 # Reloadable property
 log_level = info
 
+# Log activity for *selected instruments* only and *all* namespaces
+# as opossed to the general log
+# comma separated list of TESS instrument names.
+# Leave blank if not used
+# Reloadable property
+log_selected = 
+
 #------------------------------------------------------------------------#
 [mqtt]
 
@@ -77,12 +84,6 @@ stats = condensed
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = info
-
-# MQTT Log activity for *selected instruments* only
-# as opossed to the general log
-# comma separated list of TESS instrument names.
-# Leave blank if not used
-log_selected = 
 
 #------------------------------------------------------------------------#
 
@@ -166,9 +167,3 @@ log_level = info
 # specific registration log level (debug, info, warn, error, critical)
 # Reloadable property
 register_log_level = info
-
-# DBASE Log activity for *selected instruments* only
-# as opossed to the general log
-# comma separated list of TESS instrument names.
-# Leave blank if not used
-log_selected = 

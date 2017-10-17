@@ -307,7 +307,8 @@ class Location(Table):
                 rows.append ({ 
                     'id'     : location[0], 
                     'sunrise': sunrise,
-                    'sunset' : sunset
+                    'sunset' : sunset,
+                    'site'   : site
                 })
         return rows
 

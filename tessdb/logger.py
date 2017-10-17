@@ -36,6 +36,8 @@ from .logfilter import LogTagFilterPredicate
 
 # Global object to control globally namespace logging
 logLevelFilterPredicate = LogLevelFilterPredicate(defaultLogLevel=LogLevel.info)
+
+# Global object for filtering out events with a log_tag not in a tag set
 logTagFilterPredicate   = LogTagFilterPredicate()
 
 # ------------------------
@@ -69,8 +71,10 @@ def setLogLevel(namespace=None, levelStr='info'):
     level = LogLevel.levelWithName(levelStr)
     logLevelFilterPredicate.setLogLevelForNamespace(namespace=namespace, level=level)
 
+
 def setLogTags(logTags):
     '''
+    Set a new tag set for filtering out events
     '''
     logTagFilterPredicate.setLogTags(logTags)
 
@@ -103,19 +107,10 @@ else:
     sysLogInfo  = syslog.syslog
     sysLogError = syslog.syslog
 
-
-def selective_log_factory(logobj, iterable):
-    '''Selective logging function factory'''
-    def myinner(item, fmt, **kargs):
-        if item in iterable:
-            logobj.debug(fmt, **kargs)
-    return myinner
-    
-
 __all__ = [
     "startLogging", 
     "setLogLevel", 
+    "setLogTags",
     "sysLogError", 
     "sysLogInfo",
-    "selective_log_factory"
 ]

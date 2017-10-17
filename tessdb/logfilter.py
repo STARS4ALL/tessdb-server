@@ -38,9 +38,9 @@ from twisted.logger import ILogFilterPredicate, PredicateResult
 @implementer(ILogFilterPredicate)
 class LogTagFilterPredicate(object):
     """
-    L{ILogFilterPredicate} that filters out events with a log level lower than
-    the log level for the event's namespace.
-    Events that not not have a log level or namespace are also dropped.
+    L{ILogFilterPredicate} that filters out events with a log tag not in a tag set.
+    Events that do not have a log_tag key are forwarded to the next filter.
+    If the tag set is empty, the events are also forwarded
     """
 
     def __init__(self, defaultLogTags=[]):
@@ -51,6 +51,7 @@ class LogTagFilterPredicate(object):
 
     def setLogTags(self, logTags):
         """
+        Set a new tag set. An iterable (usually a sequence)
         """
         self.logTags = logTags
 
@@ -58,7 +59,7 @@ class LogTagFilterPredicate(object):
     def __call__(self, event):
         eventTag = event.get("log_tag", None)
 
-        # Allow events with missing log tag to pass through
+        # Allow events with missing log_tag to pass through
         if eventTag is None:
             return PredicateResult.maybe
 
@@ -66,7 +67,7 @@ class LogTagFilterPredicate(object):
         if len(self.logTags) == 0:
             return PredicateResult.maybe
 
-        # Allow events in the tag set to pass through
+        # Allow events contained in the tag set to pass through
         if eventTag in self.logTags:
             return PredicateResult.maybe
 
@@ -76,5 +77,5 @@ class LogTagFilterPredicate(object):
 
 
 __all__ = [
-    
+    "LogTagFilterPredicate"
 ]
