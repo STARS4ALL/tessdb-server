@@ -32,7 +32,7 @@ from tessdb.service.relopausable import MultiService
 from tessdb.config      import VERSION_STRING, loadCfgFile
 from tessdb.mqttservice import MQTTService
 from tessdb.dbservice   import DBaseService
-from tessdb.logger      import setLogLevel
+from tessdb.logger      import setLogLevel, setLogTags
 
 # ----------------
 # Module constants
@@ -60,6 +60,7 @@ class TESSDBService(MultiService):
         self.queue  = { 'tess_register':  deque() , 'tess_readings':   deque() }
         self.statsTask    = task.LoopingCall(self.logCounters)
         setLogLevel(namespace='tessdb', levelStr=config_opts['log_level'])
+        setLogTags(logTags=config_opts['log_selected'])
 
     # -----------
     # Service API
@@ -101,11 +102,12 @@ class TESSDBService(MultiService):
         except Exception as e:
             log.error("Error trying to reload: {excp!s}", excp=e)
         else:
-            yield self.mqttService.reloadService(config_opts['mqtt'])
-            yield self.dbaseService.reloadService(config_opts['dbase'])
             level = config_opts['tessdb']['log_level']
             setLogLevel(namespace='tessdb', levelStr=level)
             log.info("new log level is {lvl}", lvl=level)
+            setLogTags(logTags=config_opts['tessdb']['log_selected'])
+            yield self.mqttService.reloadService(config_opts['mqtt'])
+            yield self.dbaseService.reloadService(config_opts['dbase'])
             # It is very convenient to recompute all sunrise/sunset data after a reload
             # After having assigned an instrument to a location
             # Otherwise, I have to restart tssdb and loose some samples
