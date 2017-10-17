@@ -20,6 +20,12 @@ from twisted.logger   import (
     Logger, LogLevel, globalLogBeginner, textFileLogObserver, 
     FilteringLogObserver, LogLevelFilterPredicate)
 
+#--------------
+# local imports
+# -------------
+
+from .logfilter import LogTagFilterPredicate
+
 # ----------------
 # Module constants
 # ----------------
@@ -30,6 +36,7 @@ from twisted.logger   import (
 
 # Global object to control globally namespace logging
 logLevelFilterPredicate = LogLevelFilterPredicate(defaultLogLevel=LogLevel.info)
+logTagFilterPredicate   = LogTagFilterPredicate()
 
 # ------------------------
 # Module Utility Functions
@@ -41,15 +48,16 @@ def startLogging(console=True, filepath=None):
     stdout and/or a file specified in the config file
     '''
     global logLevelFilterPredicate
+    global logTagFilterPredicate
    
     observers = []
     if console:
         observers.append( FilteringLogObserver(observer=textFileLogObserver(sys.stdout),  
-            predicates=[logLevelFilterPredicate] ))
+            predicates=[logTagFilterPredicate, logLevelFilterPredicate] ))
     
     if filepath is not None and filepath != "":
         observers.append( FilteringLogObserver(observer=textFileLogObserver(open(filepath,'a')), 
-            predicates=[logLevelFilterPredicate] ))
+            predicates=[logTagFilterPredicate, logLevelFilterPredicate] ))
     globalLogBeginner.beginLoggingTo(observers)
 
 
@@ -60,6 +68,11 @@ def setLogLevel(namespace=None, levelStr='info'):
     '''
     level = LogLevel.levelWithName(levelStr)
     logLevelFilterPredicate.setLogLevelForNamespace(namespace=namespace, level=level)
+
+def setLogTags(logTags):
+    '''
+    '''
+    logTagFilterPredicate.setLogTags(logTags)
 
 # ----------------------------------------------------------------------
 
