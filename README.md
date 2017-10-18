@@ -216,13 +216,17 @@ This dimension holds the current list of TESS instruments.
 
 * The real key is an artificial key `tess_id` linked to the Fact table.
 * The `mac_address` could be the natural key if it weren't for the zero point and filter history tracking.
-* The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name in the MQTT payload.
-* A TESS instrument name can be changed as long as there is no other instrument with the same name.
+* The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name in the MQTT payload. A TESS instrument name can be changed as long as there is no other instrument with the same name.
 * The `location_id` is a reference to the current location assigned to the instrument.
 * Location id -1 denotes the "Unknown" location.
+* `model` refers to the current TESS model.
+* `firmware` contains the current firmware version.
+* `fov` contains the Field of View, in degrees.
+* `cover_offset` is an additional offset in mag/arcserc^2 to account for an additional optical window attenuation attached tothe TESS itself. Defaults to 0.
 * The `zero_point` holds the current value of the instrument calibration constant.
-* The `filter` holds the current TESS filter (i.e. 'DG' or Dichroic Glass).
+* The `filter` holds the current TESS filter (i.e. 'UVIR' or Dichroic Glass).
 A history of zero point & filter changes are maintained in the `tess_t` table if the instrument is recalibrated or its filter is changed. 
+* `channel` is the current channel identifier (defaults to 0). currently, the TESS photometer has only one channel.
 * Columns `valid_since` and `valid_until` hold the timestamps where the changes to zero point and/or filter are valid. 
 * Column `valid_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
 * The current valid TESS instrument has its `valid_state` set to `Current` and the expiration date in a far away future (Y2999).
@@ -232,6 +236,23 @@ A history of zero point & filter changes are maintained in the `tess_t` table if
 The `tess_units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects various labels denoting the current measurement units of samples in the fact table. 
 
 * Columns `valid_since`, `valid_until` and `valid_state` keep track of any units change in a similar technique as above should the units change.
+
+#### Location dimension
+
+This dimension table holds all known locations where TESS photometers are to be deployed.
+
+* `site`. Unique site name describing the this location.
+* `contact_person`. Person to account for observations.
+* `organization`. Organization where the contact person belongs to or running the facilities in the location.
+* `contact_email`. Contact person email address.
+* `longitude` Location longitude in degrees. West is negative.
+* `latitude`. Location latitude in degrees
+* `elevation`. Location elevation in meters
+* `zipcode`. Location ZIP code
+* `province`. Location country
+* `country`. Location country
+* `timezone`. Time zone (to calculate local time) in standard format described by Wikipedia[https://en.wikipedia.org/wiki/List_of_tz_database_time_zones]
+* `sunrise` & `sunset`. Computed attributes (oce per day) used to filter out readings in daylight.
 
 ### Fact Tables
 They are:
@@ -256,9 +277,10 @@ Payloads are transmitted in JSON format, with the format described below.
 | mag        | float  | mag/arcsec^2 | mandat. | Visual magnitude (formulae?) corresponding to the raw reading). Transmitted up to two decimal places NN.NN |
 | tamb       | float   | ºC    | mandat. | Ambient Temperature. Transmitted up to one decimal place. |
 | tsky       | float   | ºC    | mandat.  | Sky Temperature. Transmitted up to one decimal place. |
+| wdBm       | int     | dBm | opt | WiFi Received Signal Strength. |
 | az         | int     | deg | opt | Photometer optical axis Azimuth sent only on instruments with accelerometer. |
 | alt | int | deg | opt | Photometer optical axis Altitude (angle): sent only on instruments with accelerometer. |
-| lat | float | deg | opt | Instrument latitude. Only sent by instruments with GPS integration.
+| lat | float | deg | opt | Instrument latitude. Only sent by instruments with GPS integration. |
 | long | float | deg | opt | Instrument longitude. Only sent by instruments with GPS integration. |
 | height | float | meters | opt | Instrument height above the sea level. Only sent by instruments with GPS integration. |
 | rev | int | - | mand | Payload data format revision number. Current version is 1. |

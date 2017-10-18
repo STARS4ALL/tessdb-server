@@ -255,6 +255,8 @@ class MQTTService(ClientService):
             raise ReadingTypeError('lat', float, type(row['lat']))
         if 'height' in row and type(row['height']) != float:
             raise ReadingTypeError('height', float, type(row['height']))
+        if 'wdBm' in row and type(row['wdBm']) != int:
+            raise ReadingTypeError('wdBm', int, type(row['wdBm']))
 
 
     def validateRegister(self, row):

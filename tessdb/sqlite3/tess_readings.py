@@ -107,6 +107,7 @@ class TESSReadings(Table):
             longitude           REAL,
             latitude            REAL,
             height              REAL,
+            signal_strength     INTEGER,
             PRIMARY KEY (date_id, time_id, tess_id)
             );
             '''
@@ -297,7 +298,8 @@ class TESSReadings(Table):
                 frequency,
                 magnitude,
                 ambient_temperature,
-                sky_temperature
+                sky_temperature,
+                signal_strength
             ) VALUES (
                 :date_id,
                 :time_id,
@@ -308,7 +310,8 @@ class TESSReadings(Table):
                 :freq,
                 :mag,
                 :tamb,
-                :tsky
+                :tsky,
+                :wdBm
             )
             ''', row)
 
@@ -332,7 +335,8 @@ class TESSReadings(Table):
                 ambient_temperature,
                 sky_temperature,
                 azimith,
-                altitude
+                altitude,
+                signal_strength
             ) VALUES (
                 :date_id,
                 :time_id,
@@ -345,7 +349,8 @@ class TESSReadings(Table):
                 :tamb,
                 :tsky,
                 :az,
-                :alt
+                :alt,
+                :wdBm
             )
             ''', row)
 
@@ -370,7 +375,8 @@ class TESSReadings(Table):
                 sky_temperature,
                 longitude,
                 latitude,
-                height
+                height,
+                signal_strength
             ) VALUES (
                 :date_id,
                 :time_id,
@@ -384,7 +390,8 @@ class TESSReadings(Table):
                 :tsky,
                 :long,
                 :lat,
-                :height
+                :height,
+                :wdBm
             )
             ''', row)
 
@@ -411,7 +418,8 @@ class TESSReadings(Table):
                 altitude,
                 longitude,
                 latitude,
-                height
+                height,
+                signal_strength
             ) VALUES (
                 :date_id,
                 :time_id,
@@ -427,6 +435,7 @@ class TESSReadings(Table):
                 :alt,
                 :long,
                 :lat,
-                :height
+                :height,
+                :wdBm
             )
             ''', row)

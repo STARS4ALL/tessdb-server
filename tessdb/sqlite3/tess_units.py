@@ -62,6 +62,7 @@ DEFAULT_UNITS = {
     "longitude_units"           : "degrees",
     "latitude_units"            : "degrees",
     "height_units"              : "m",
+    "signal_strength_units"     : "dBm",
     "valid_since"               : START_TIME,
     "valid_until"               : INFINITE_TIME,
     "valid_state"               : CURRENT,
@@ -93,6 +94,7 @@ def _populate(transaction, rows):
             longitude_units,
             latitude_units,
             height_units,
+            signal_strength_units,
             valid_since,
             valid_until,
             valid_state,
@@ -108,6 +110,7 @@ def _populate(transaction, rows):
             :longitude_units,
             :latitude_units,
             :height_units,
+            :signal_strength_units,
             :valid_since,
             :valid_until,
             :valid_state,
@@ -153,10 +156,11 @@ class TESSUnits(Table):
             longitude_units           REAL,
             latitude_units            REAL,
             height_units              REAL,
+            timestamp_source          TEXT,
+            signal_strength_units     TEXT,
             valid_since               TEXT,
             valid_until               TEXT,
-            valid_state               TEXT,
-            timestamp_source          TEXT
+            valid_state               TEXT
             );
             '''
         )
