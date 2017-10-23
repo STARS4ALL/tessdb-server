@@ -131,7 +131,7 @@ class MQTTService(ClientService):
     def reloadService(self, new_options):
         self.validate  = new_options['validation']
         setLogLevel(namespace=NAMESPACE, levelStr=new_options['log_level'])
-        setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=options['protocol_log_level'])
+        setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=new_options['protocol_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
         yield self.subscribe(new_options)
         self.options = new_options
