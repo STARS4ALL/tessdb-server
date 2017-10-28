@@ -4,12 +4,13 @@
 # Arguments from the command line & default values
 instruments_file="${1:-/var/dbase/tess_instruments_file.txt}"
 
-dbase="${2:-/var/dbase/tess.db}"
+# We use a backup copy to avoid disrupting the operational database for such a long process time
+dbase="$(ls -1 /var/dbase/tess.db-*)"
 
 # Output directory is created if not exists inside the inner script
-out_dir="${3:-/var/dbase/reports/IDA}"
+out_dir="${2:-/var/dbase/reports/IDA}"
 
-template="${4:-/etc/tessdb/IDA-template.j2}"
+template="${3:-/etc/tessdb/IDA-template.j2}"
 
 
 if  [[ ! -f $instruments_file || ! -r $instruments_file ]]; then
@@ -31,9 +32,9 @@ if  [[ ! -f $template || ! -r $template ]]; then
 fi
 
 
-# Stops background database I/O
-/usr/sbin/service tessdb pause 
-sleep 2
+# Stops background database I/O (DON'T NEED THIS IN A BACKUP COPY)
+#/usr/sbin/service tessdb pause 
+#sleep 2
 
 # Loops over the instruments file and dumping data
 for instrument in $( cat $instruments_file ); do
@@ -42,4 +43,4 @@ for instrument in $( cat $instruments_file ); do
 done
 
 # Resume background database I/O
-/usr/sbin/service tessdb resume
+#/usr/sbin/service tessdb resume (DON'T NEED THIS IN A BACKUP COPY)
