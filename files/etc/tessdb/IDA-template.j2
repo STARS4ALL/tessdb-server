@@ -13,7 +13,7 @@
 # Moving / Fixed look direction: FIXED
 # Number of channels: 1
 # Filters per channel: {{ instrument.filter }}
-# Measurement direction per channel: 0., 0.
+# Measurement direction per channel: {{ instrument.azimuth }}, {{ 90.0 - instrument.altitude }}
 # Field of view: {{ instrument.fov }}
 # Number of fields per line: 6
 # TESS MAC address: {{ instrument.mac_address }}

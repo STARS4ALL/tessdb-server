@@ -173,6 +173,8 @@ def _createViews(cursor):
             tess_t.cover_offset,
             tess_t.filter,
             tess_t.fov,
+            tess_t.azimuth,
+            tess_t.altitude,
             tess_t.valid_since,
             tess_t.valid_until,
             tess_t.valid_state,
@@ -229,7 +231,9 @@ class TESS(Table):
             firmware      TEXT    DEFAULT '1.0',
             channel       INTEGER DEFAULT 0,
             cover_offset  REAL    DEFAULT 0.0,
-            fov           REAL    DEFAULT 17.0
+            fov           REAL    DEFAULT 17.0,
+            azimuth       REAL    DEFAULT 0.0,
+            altitude      REAL    DEFAULT 90.0
             );
             '''
         )

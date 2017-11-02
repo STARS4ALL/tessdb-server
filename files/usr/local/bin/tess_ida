@@ -84,7 +84,7 @@ def get_metadata(connection, options):
     cursor.execute(
             '''
             SELECT name, channel, model, firmware, mac_address,
-                    zero_point, cover_offset, filter, fov, 
+                    zero_point, cover_offset, filter, fov, azimuth, altitude,
                     contact_name, organization,
                     site, longitude, latitude, elevation, location, province, country, timezone
             FROM tess_v
@@ -103,18 +103,20 @@ def get_metadata(connection, options):
         'cover_offset': result[6],
         'filter':       result[7],
         'fov':          result[8],
+        'azimuth':      result[9],
+        'altitude':     result[10],
     }
     location = {
-        'contact_name'   : result[9],
-        'organization'   : result[10],
-        'site'           : result[11],
-        'longitude'      : result[12],
-        'latitude'       : result[13],
-        'elevation'      : result[14],
-        'location'       : result[15],
-        'province'       : result[16],
-        'country'        : result[17],
-        'timezone'       : result[18],
+        'contact_name'   : result[11],
+        'organization'   : result[12],
+        'site'           : result[13],
+        'longitude'      : result[14],
+        'latitude'       : result[15],
+        'elevation'      : result[16],
+        'location'       : result[17],
+        'province'       : result[18],
+        'country'        : result[19],
+        'timezone'       : result[20],
         
     }
     return instrument, location
