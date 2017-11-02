@@ -217,19 +217,24 @@ This dimension holds the current list of TESS instruments.
 * The real key is an artificial key `tess_id` linked to the Fact table.
 * The `mac_address` could be the natural key if it weren't for the zero point and filter history tracking.
 * The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name in the MQTT payload. A TESS instrument name can be changed as long as there is no other instrument with the same name.
-* The `location_id` is a reference to the current location assigned to the instrument.
-* Location id -1 denotes the "Unknown" location.
+* The `location_id` is a reference to the current location assigned to the instrument. Location id -1 denotes the "Unknown" location.
 * `model` refers to the current TESS model.
 * `firmware` contains the current firmware version.
 * `fov` contains the Field of View, in degrees.
-* `cover_offset` is an additional offset in mag/arcserc^2 to account for an additional optical window attenuation attached tothe TESS itself. Defaults to 0.
-* The `zero_point` holds the current value of the instrument calibration constant.
-* The `filter` holds the current TESS filter (i.e. 'UVIR' or Dichroic Glass).
-A history of zero point & filter changes are maintained in the `tess_t` table if the instrument is recalibrated or its filter is changed. 
-* `channel` is the current channel identifier (defaults to 0). currently, the TESS photometer has only one channel.
-* Columns `valid_since` and `valid_until` hold the timestamps where the changes to zero point and/or filter are valid. 
+* `cover_offset` is an additional offset in mag/arcserc^2 to account for an additional optical window attenuation attached tothe TESS itself. Defaults to 0.0.
+* `channel` is the current channel identifier. Default value is 0. Currently, the TESS photometer has only one channel.
+
+##### Version-controlled Attributes
+These attubutes are version-controlled and a historic of these is maintained. A new change in any of them will generate a new row in the `tess_t` table
+* The `zero_point` holds the current value of the instrument calibration constant. Defaults to '20.5' (uncalibrated photometer).
+* The `filter` holds the current TESS filter (i.e. 'UVIR' or Dichroic Glass). Defaults to 'UVIR'
+* The `azimuth` and `altitude` attributes hold the photometer current orientation, in degrees. Default azimuth is 0.0 and default altitude is 90.0
+
+##### Version Control Attributes
+These columns manage the version control of a given TESS attributes.
+* Columns `valid_since` and `valid_until` hold the timestamps where the changes to version controlled attributes are valid. 
 * Column `valid_state` is an indicator. Its values are either **`Current`** or **`Expired`**. 
-* The current valid TESS instrument has its `valid_state` set to `Current` and the expiration date in a far away future (Y2999).
+The current valid TESS instrument has its `valid_state` set to `Current` and the expiration date in a far away future (Y2999).
 
 #### Unit dimension
 
