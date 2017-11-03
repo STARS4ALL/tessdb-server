@@ -149,8 +149,6 @@ def createParser():
     # Choices:
     #   tess instrument list
     #   tess instrument assign <instrument name> <location name>
-    #   tess instrument export
-    #   tess instrument import
     #   tess instrument create <friendly name> <MAC address> <Calibration Constant>
     #   tess instrument rename <old friendly name> <new friendly name>
     #   tess instrument update <friendly name> --zero-point <new zero point> --filter <new filter> --latest
@@ -170,14 +168,6 @@ def createParser():
     ik = subparser.add_parser('unassigned', help='list unassigned instruments')
     ik.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ik.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-   
-    xp = subparser.add_parser('export', help='export instruments to JSON')
-    xp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    xp.add_argument('-f', '--file', type=str, default="tess.json", help='exported JSON file')
-
-    imp = subparser.add_parser('import', help='import instruments from JSON')
-    imp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    imp.add_argument('-f', '--file', type=str, default="tess.json", help='source JSON file')
 
     ihi = subparser.add_parser('history',  help='single instrument history')
     ihi.add_argument('name',   type=str,   help='friendly name')
@@ -227,10 +217,6 @@ def main():
             instrument_list(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'assign':
             instrument_assign(connection, options)
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'export':
-            instrument_export(connection, options)
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'import':
-            instrument_import(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'create':
             instrument_create(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'rename':
@@ -370,67 +356,6 @@ def instrument_unassigned(connection, options):
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"], size=100)
-
-
-def instrument_export(connection, options):
-
-    def instrument_map(item):
-        return {
-            'tess_id':     item[0], 
-            'name':        item[1], 
-            'mac_address': item[2], 
-            'zero_point':  item[3],
-            'filter':      item[4], 
-            'valid_since': item[5], 
-            'valid_until': item[6], 
-            'valid_state': item[7], 
-            'location_id': item[8],
-        }
-
-    cursor = connection.cursor()
-    cursor.execute(
-            '''
-            SELECT tess_id,name,mac_address,zero_point,filter,altitude,azimuth,valid_since,valid_until,valid_state,location_id 
-            FROM tess_t
-            ORDER BY tess_id ASC;
-            ''')
-    result = cursor.fetchall()
-    with open(options.file, 'w') as outfile:
-        json.dump(map(instrument_map, result), outfile, indent=4, sort_keys=True)
-
-
-def instrument_import(connection, options):
-    cursor = connection.cursor()
-    with open(options.file, 'r') as outfile:
-        rows = json.load(outfile)
-    cursor.executemany(
-        '''INSERT OR REPLACE INTO tess_t (
-            tess_id,
-            name,
-            mac_address,
-            zero_point,
-            filter,
-            azimuth,
-            altitude,
-            valid_since,
-            valid_until,
-            valid_state,
-            location_id
-        ) VALUES (
-            :tess_id,
-            :name,
-            :mac_address,
-            :zero_point,
-            :filter,
-            :azimuth,
-            :altitude,
-            :valid_since,
-            :valid_until,
-            :valid_state,
-            :location_id
-        )
-        ''', rows)
-    connection.commit()
 
 
 def instrument_create(connection, options):

@@ -420,7 +420,7 @@ The most important use of the tess utility is to assign an existing location to 
 ### Create a brand new TESS instrument
 If automatic registration fails, this command allows manual creation of a TESS instrument in the database
 
-`tess instrument create {name} {mac} {calibration constant}`
+`tess instrument create {name} {mac} {zero point} {filter}`
 
 ### Renaming a TESS instrument
 If for some reason, an instrument needs to change the friendly user name, this command allows you to do so.
@@ -458,18 +458,18 @@ About to delete
 
 ```
 
-### Updating the zero point or the filter
-If, for some reason, we need to change the instrumental zero point or the filter (or both), this command allows you to do so. Note that you must especify at least a new zero point or a new filter.
+### Updating the zero point / filter / azimuth / altitude
+If, for some reason, we need to change any of these, this command allows you to do so. Note that you must especify at least one magnitude.
 
-Since the filter and zero point are versioned columns in the database, a new instrument entry is made with updated `valid_since`, `valid_until` and `valid_state` columns. However, If the  `--latest` flag is passed, the update command only changes the **current** TESS zero point or filter. This is useful to fix errors in the current TESS instrument definition.
+Since these attributes versioned columns in the database, a new instrument entry is made with updated `valid_since`, `valid_until` and `valid_state` columns. However, If the  `--latest` flag is passed, the update command only changes the **current** TESS zero point or filter. This is useful to fix errors in the current TESS instrument definition.
 
-`tess instrument update {name} --zero-point {new zp} --filter {new filter} [--latest]`
+`tess instrument update {name} --zero-point {new zp} --filter {new filter} --azimuth {new azimuth} --altitude {new altitude} [--latest]`
 
 Example 1:
 `tess instrument update stars3 --zero-point 23.45 --filter BG39`
 
 Example 2:
-`tess instrument update stars3 --zero-point 19.99 --filter DG --latest`
+`tess instrument update stars3 --zero-point 19.99 --filter UVIR --latest`
 
 
 ```
