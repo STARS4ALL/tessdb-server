@@ -306,12 +306,12 @@ def instrument_assign(connection, options):
         ''', row)
     cursor.execute(
         '''
-        SELECT name,site,longitude,latitude,elevation 
+        SELECT name,site
         FROM tess_v
         WHERE valid_state == :state
         AND name = :tess
         ''',row)
-    paging(cursor,["TESS","Site","Longitude","Latitude","Elevation"])
+    paging(cursor,["TESS","Site"])
     connection.commit()    
 
 
@@ -497,12 +497,12 @@ def instrument_create(connection, options):
     # Now display it
     cursor.execute(
         '''
-        SELECT name, mac_address, zero_point, filter, azimuth, altitude, site, longitude, latitude, elevation 
+        SELECT name, mac_address, zero_point, filter, azimuth, altitude, site
         FROM   tess_v
         WHERE  name == :name
         AND    valid_state == :valid_flag
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Azimuth","Altitude","Site","Longitude","Latitude","Elevation"])
+    paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Azimuth","Altitude","Site"])
 
 
 
@@ -526,12 +526,12 @@ def instrument_rename(connection, options):
     row['valid_flag'] = CURRENT
     cursor.execute(
         '''
-        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,longitude,latitude,elevation 
+        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
         FROM   tess_v
         WHERE  name == :newname
         AND    valid_state == :valid_flag
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site","Longitude","Latitude","Elevation"])
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
 
 
 def instrument_delete(connection, options):
@@ -549,11 +549,11 @@ def instrument_delete(connection, options):
     print("About to delete")
     cursor.execute(
         '''
-        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,longitude,latitude,elevation 
+        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
         FROM   tess_v
         WHERE  name == :name
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site","Longitude","Latitude","Elevation"])
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
     
     # Find out if it has accumulated readings
     # This may go away if readings are stored in another database (i.e influxdb)
