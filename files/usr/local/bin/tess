@@ -942,5 +942,5 @@ def system_window(connection, options):
     table = [ [window_start, window_end, window_duration] ]
     print tabulate.tabulate(table, headers=["Start Time (UTC)","End Time (UTC)","Window"], tablefmt='grid')
     print "Window start given by site: %s" % sites_dict[window_start]
-    print "Window end given by site: %s" % sites_dict[window_end]
+    print "Window end   given by site: %s" % sites_dict[window_end]
 main()
