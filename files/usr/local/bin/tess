@@ -79,6 +79,7 @@ def createParser():
     parser_instrument = subparser.add_parser('instrument', help='instrument commands')
     parser_location   = subparser.add_parser('location', help='location commands')
     parser_readings   = subparser.add_parser('readings', help='readings commands')
+    parser_system     = subparser.add_parser('system', help='system related commands')
 
     # ------------------------------------------
     # Create second level parsers for 'location'
@@ -204,6 +205,16 @@ def createParser():
     iupex.add_argument("-s", "--start-time", type=str, default=now, metavar="YYYYMMDDTHHMMSS", help='update start date')
     iupex.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
     
+    # ------------------------------------------
+    # Create second level parsers for 'system'
+    # ------------------------------------------
+    # Choices:
+    #   tess location list
+    #
+    subparser = parser_system.add_subparsers()
+    syw = subparser.add_parser('window', help='show current system maintenance window')
+    syw.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     return parser
 
 def main():
@@ -241,6 +252,8 @@ def main():
             location_unassigned(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
             readings_list(connection, options)
+        elif sys.argv[1] == 'system' and sys.argv[2] == 'window':
+            system_window(connection, options)
     except KeyboardInterrupt:
         print('')
     #except Exception as e:
@@ -889,4 +902,40 @@ def readings_list(connection, options):
     paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude","RSS"], size=options.count)
    
  
+# --------------------
+# SYSTEM SUBCOMMANDS
+# --------------------
+
+def system_window(connection, options):
+    ONE_PAGE = 10
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT DISTINCT l.sunrise,l.sunset,l.longitude,l.latitude,l.elevation
+        FROM tess_t     AS t 
+        JOIN location_t AS l USING (location_id)
+        WHERE l.location_id > -1
+        AND t.valid_state = "Current"
+        ''')
+
+    sunrise_list = []
+    sunset_list  = []
+    while True:
+        result = cursor.fetchone()
+        if result is None:
+            break
+        sunrise = datetime.datetime.strptime(result[0], "%Y/%m/%d %H:%M:%S")
+        sunset  = datetime.datetime.strptime(result[1], "%Y/%m/%d %H:%M:%S")
+        if sunrise > sunset:
+            sunrise_list.append(sunrise)
+            # Good approximation, since sunset will be slightly different
+            sunset_list.append(sunset + datetime.timedelta(hours=24))  
+        else:
+            sunrise_list.append(sunrise)
+            sunset_list.append(sunset)
+    row = [max(sunrise_list), min(sunset_list)]
+    row.append(row[1] - row[0])
+    table = [ row ]
+    print tabulate.tabulate(table, headers=["Start Time (UTC)","End Time (UTC)","Window"], tablefmt='grid')
+
 main()

@@ -506,7 +506,16 @@ Example 2:
 +--------------+--------+------------+-------------+-------------+
 ```
 
+### Show system maintenance window
+This command give the start time and duration for a safe system stop. At that time, it is guaranteed that all readings from the different photometers will be discarded due to daylight.
 
+```tess system window
++---------------------+---------------------+----------+
+| Start Time (UTC)    | End Time (UTC)      | Window   |
++=====================+=====================+==========+
+| 2017-11-04 13:45:03 | 2017-11-04 14:44:35 | 0:59:32  |
++---------------------+---------------------+----------+
+```
 
 # Sample SQL Queries
 
