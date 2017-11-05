@@ -927,8 +927,9 @@ def system_window(connection, options):
             break
         sunrise = datetime.datetime.strptime(result[0], "%Y/%m/%d %H:%M:%S")
         sunset  = datetime.datetime.strptime(result[1], "%Y/%m/%d %H:%M:%S")
-        sites_dict[sunrise] = result[4] + ', ' + result[2] + ' (' + result[3] +')'
-        sites_dict[sunset]  = result[4] + ', ' + result[2] + ' (' + result[3] +')'
+        info = result[4] + ', ' + result[2] + ' (' + result[3] +')'
+        sites_dict[sunrise] = info
+        sites_dict[sunset]  = info
         if sunrise > sunset:
             sunrise_list.append(sunrise)
             # Good approximation, since sunset will be slightly different
