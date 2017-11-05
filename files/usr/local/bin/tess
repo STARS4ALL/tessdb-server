@@ -940,8 +940,12 @@ def system_window(connection, options):
     window_start = max(sunrise_list)
     window_end   = min(sunset_list)
     window_duration = window_end - window_start
-    table = [ [window_start, window_end, window_duration] ]
-    print tabulate.tabulate(table, headers=["Start Time (UTC)","End Time (UTC)","Window"], tablefmt='grid')
+    if window_start < datetime.datetime.utcnow() < window_end:
+        window_state = "OPEN"
+    else:
+        window_state = "CLOSED"
+    table = [ [window_start, window_end, window_duration, window_state] ]
+    print tabulate.tabulate(table, headers=["Start Time (UTC)","End Time (UTC)","Window", "State"], tablefmt='grid')
     print "Window start given by: %s" % sites_dict[window_start]
     print "Window end   given by: %s" % sites_dict[window_end]
 main()
