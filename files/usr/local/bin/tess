@@ -911,7 +911,7 @@ def system_window(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT DISTINCT l.sunrise,l.sunset,l.site, l.country
+        SELECT DISTINCT l.sunrise,l.sunset,l.site, l.country, t.name
         FROM tess_t     AS t 
         JOIN location_t AS l USING (location_id)
         WHERE l.location_id > -1
@@ -927,8 +927,8 @@ def system_window(connection, options):
             break
         sunrise = datetime.datetime.strptime(result[0], "%Y/%m/%d %H:%M:%S")
         sunset  = datetime.datetime.strptime(result[1], "%Y/%m/%d %H:%M:%S")
-        sites_dict[sunrise] = result[2] + ' (' + result[3] +')'
-        sites_dict[sunset]  = result[2] + ' (' + result[3] +')'
+        sites_dict[sunrise] = result[4] + ', ' + result[2] + ' (' + result[3] +')'
+        sites_dict[sunset]  = result[4] + ', ' + result[2] + ' (' + result[3] +')'
         if sunrise > sunset:
             sunrise_list.append(sunrise)
             # Good approximation, since sunset will be slightly different
@@ -941,6 +941,6 @@ def system_window(connection, options):
     window_duration = window_end - window_start
     table = [ [window_start, window_end, window_duration] ]
     print tabulate.tabulate(table, headers=["Start Time (UTC)","End Time (UTC)","Window"], tablefmt='grid')
-    print "Window start given by site: %s" % sites_dict[window_start]
-    print "Window end   given by site: %s" % sites_dict[window_end]
+    print "Window start given by: %s" % sites_dict[window_start]
+    print "Window end   given by: %s" % sites_dict[window_end]
 main()
