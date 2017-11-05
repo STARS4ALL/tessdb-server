@@ -938,7 +938,7 @@ def system_window(connection, options):
             sunrise_list.append(sunrise)
             sunset_list.append(sunset)
     window_start = max(sunrise_list)
-    window_end    = min(sunset_list)
+    window_end   = min(sunset_list)
     window_duration = window_end - window_start
     table = [ [window_start, window_end, window_duration] ]
     print tabulate.tabulate(table, headers=["Start Time (UTC)","End Time (UTC)","Window"], tablefmt='grid')
