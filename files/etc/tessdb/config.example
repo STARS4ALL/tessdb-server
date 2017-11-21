@@ -119,10 +119,10 @@ year_end   = 2026
 date_fmt = %d/%m/%Y
 
 # Day resolution (in seconds)
-# Not reloadable property.
 # Must be one of 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1
 # If changed to a lower time span it may be necessary to delete excess rows
 # in the database
+# Not reloadable property.
 secs_resolution = 1
 
 # Filter by location sunrise/sunset

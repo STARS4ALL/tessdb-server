@@ -162,14 +162,10 @@ class DBaseService(Service):
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
         setLogLevel(namespace='register', levelStr=new_options['register_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.onBoot = True  # Forces sunrise/sunset computation
         self.tess_readings.setOptions(location_filter=new_options['location_filter'], 
             location_horizon=new_options['location_horizon'])
-        yield self.date.populate(json_dir=new_options['json_dir'])
-        yield self.time.populate(json_dir=new_options['json_dir'])
-        yield self.tess_locations.populate(json_dir=new_options['json_dir'])
-        yield self.tess_units.populate(json_dir=new_options['json_dir'])
-        yield self.tess.populate(json_dir=new_options['json_dir'])
+        self.options = new_options
+        self.onBoot = True  # Forces sunrise/sunset computation
         yield self.sunrise()
 
         
