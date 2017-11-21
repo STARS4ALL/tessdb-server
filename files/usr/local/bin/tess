@@ -21,6 +21,7 @@ import os.path
 import json
 import datetime
 import shlex
+import subprocess
 
 #--------------
 # other imports
@@ -964,17 +965,16 @@ def system_window(connection, options):
     if not options.restart:
         return
 
-    if not window_open_flag:
+    if now < window_start:
+        exec_tstamp = (window_start + datetime.timedelta(minutes=1)).strftime("%H:%M")
+    elif now < window_end:
+        exec_tstamp = (window_end - datetime.timedelta(minutes=1)).strftime("%H:%M")
+    else:
         print("Cannot schedule an 'at job' for today: %s" % window_state)
         return
-
-    if now < window_start:
-        exec_tstamp = window_start + datetime.timedelta(minutes=1)
-        cmd = shlex.split("sudo service tessdb restart")
-    elif now < window_end:
-        cmd = shlex.split("sudo service tessdb restart")
-        exec_tstamp = window_end -  datetime.timedelta(minutes=1)
-    else:
-        exec_tstamp = None
+    cmd = "at %s -f /usr/local/bin/tess_restart.sh" % exec_tstamp
+    print(cmd)
+    result = subprocess.check_output(shlex.split(cmd))
+    print(result)
        
 main()
