@@ -962,6 +962,7 @@ def system_window(connection, options):
     print("Window end   given by: %s" % sites_dict[window_end])
     
     # Restart if requested
+    # The 'at' uses local time, so this works only if the system local time is UTC
     if not options.restart:
         return
 
@@ -972,9 +973,12 @@ def system_window(connection, options):
     else:
         print("Cannot schedule an 'at job' for today: %s" % window_state)
         return
-    cmd = "at %s -f /usr/local/bin/tess_restart.sh" % exec_tstamp
-    print(cmd)
-    result = subprocess.check_output(shlex.split(cmd))
-    print(result)
+    cmd1 = shlex.split('echo "sudo service tessdb restart"')
+    cmd2 = shlex.split("at %s" % exec_tstamp)
+    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
+    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
+    p1.stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
+    output = p2.communicate()[0]
+    print(output)
        
 main()
