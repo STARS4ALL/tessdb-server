@@ -945,14 +945,15 @@ def system_window(connection, options):
     window_start = max(sunrise_list)
     window_end   = min(sunset_list)
     window_duration = window_end - window_start
-    now = datetime.datetime.utcnow()
+    utcnow = datetime.datetime.utcnow()
+    utcoffset = datetime.datetime.now() - utcnow     # The 'at' command uses local time
     window_open_flag = False
     if window_start >= window_end:
         window_state = "CLOSED FOR WINTER"
-    elif window_start <  now < window_end:
+    elif window_start <  utcnow < window_end:
         window_state = "OPEN"
         window_open_flag = True
-    elif now <= window_start:
+    elif utcnow <= window_start:
         window_state = "WAITING TO OPEN"
     else:
         window_state = "CLOSED FOR TODAY"
@@ -962,14 +963,13 @@ def system_window(connection, options):
     print("Window end   given by: %s" % sites_dict[window_end])
     
     # Restart if requested
-    # The 'at' uses local time, so this works only if the system local time is UTC
     if not options.restart:
         return
 
-    if now < window_start:
-        exec_tstamp = (window_start + datetime.timedelta(minutes=1)).strftime("%H:%M")
-    elif now < window_end:
-        exec_tstamp = (window_end - datetime.timedelta(minutes=1)).strftime("%H:%M")
+    if utcnow < window_start:
+        exec_tstamp = (window_start + utcoffset + datetime.timedelta(minutes=1)).strftime("%H:%M")
+    elif utcnow < window_end:
+        exec_tstamp = (window_end + utcoffset - datetime.timedelta(minutes=1)).strftime("%H:%M")
     else:
         print("Cannot schedule an 'at job' for today: %s" % window_state)
         return
