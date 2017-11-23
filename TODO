@@ -6,17 +6,16 @@ Prioridad Alta
 Prioridad media
 ===============
 
-- Mas parametros a los scripts para no hard-codear rutas ni nombres
-- script de generacion de fciheros IDA.
+- eliminar la carga de ficheros JSON por inutil
 
 Prioridad baja
 ==============
 
-*) tessNameLogFilter -> Una clase que filtra eventos por el nombre del tess
+*) Batch load utility ?
 
 *) Tess muticanal
 
-La estrategia para siportar e TESS multicanal implicara muy pocos cambios en el modelo de datos:
+La estrategia para soportar e TESS multicanal implicara muy pocos cambios en el modelo de datos:
 - Cada fila de la tabla tess_t indicará un canal
 - en cada canal hay que poner los siguientes datos adicionales, específicos suyos:
  +) los nombres de los angulos de inclinacion de los sensores respecto a la caja del instrumento (¿cuantos ángulos, qué nombres?) REALMENTE NO ES NECESARIO TENIENDO EL CHANNEL NUMBER

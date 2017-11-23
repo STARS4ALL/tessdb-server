@@ -168,9 +168,9 @@ class TESSReadings(Table):
         self.nreadings += 1
         ret = 0
         tess = yield self.parent.tess.findName(row)
-        log.debug("TESSReadings.update({log_tag}): Found tess => {tess!s}", tess=tess, log_tag=row['name'])
+        log.debug("TESSReadings.update({log_tag}): Found TESS => {tess!s}", tess=tess, log_tag=row['name'])
         if not len(tess):
-            log.warn("TESSReadings.update(): No tess {log_tag} registered for this reading !", log_tag=row['name'])
+            log.warn("TESSReadings.update(): No TESS {log_tag} registered !", log_tag=row['name'])
             self.rejNotRegistered += 1
             returnValue(None)
 
@@ -187,7 +187,7 @@ class TESSReadings(Table):
             if  'lat' in row:   # mobile instrument
                 self.computeSunrise(row, now)
                 if  isDaytime(row['sunrise'], row['sunset'], now):
-                    log.debug("TESSReadings.update({log_tag}): reading rejected by being at daytime", 
+                    log.debug("TESSReadings.update({log_tag}): reading rejected at daytime", 
                         log_tag=row['name'])
                     self.rejSunrise += 1
                     returnValue(None)
@@ -202,7 +202,7 @@ class TESSReadings(Table):
                     self.rejLackSunrise += 1
                     returnValue(None)
                 if  isDaytime(sunrise[0], sunrise[1], now):
-                    log.debug("TESSReadings.update({log_tag}): reading rejected by being at daytime", 
+                    log.debug("TESSReadings.update({log_tag}): reading rejected at daytime", 
                         log_tag=row['name'])
                     self.rejSunrise += 1
                     returnValue(None)
@@ -218,7 +218,7 @@ class TESSReadings(Table):
         try:
             yield myupdater(row)
         except sqlite3.IntegrityError as e:
-            log.error("TESSReadings.update({log_tag}): tess id={id} is sending readings too fast", 
+            log.error("TESSReadings.update({log_tag}): TESS id={id} is sending readings too fast", 
                 id=tess[0], log_tag=row['name'])
             self.rejDuplicate += 1
         except Exception as e:
