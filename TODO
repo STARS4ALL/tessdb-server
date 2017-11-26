@@ -1,7 +1,12 @@
 Prioridad Alta
 ==============
 
-
+*) Tratamiento circumpolar
+ - coger las excepciones ephem.NeverUpError y ephem.AlwayUpError y transformarlas en valores
+   de sunrise = sunset = "Never Up"  y surise = sunset = "Never Down"
+ - tocar la funcion isDaytime() para ver primero estos 2 valores antes de continuar adelante.
+ - definir las constantes NEVER_UP y NEVER_DOWN en utils.py
+ - probar con una localización ficticia a 70 grados norte
 
 Prioridad media
 ===============
