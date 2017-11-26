@@ -37,6 +37,9 @@ INFINITE_TIME = "2999-12-31T23:59:59"
 EXPIRED       = "Expired"
 CURRENT       = "Current"
 TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
+# For sunset/sunrise in circumpolar sites
+NEVER_UP      = "Never Up"
+ALWAYS_UP     = "Always Up"
 
 # -----------------------
 # Module Global Variables
@@ -94,12 +97,18 @@ def isDaytime(sunrise, sunset, now):
     'now' is a datetime.datetime object or timestamp string
     '''
     # sunrise, sunset comes from the DB and are UNICODE strings
-    # ephem doesn't like unicode strings
+    # pyephem doesn't like unicode strings
+    sunrise = str(sunrise)
+    sunset = str(sunset)
+    if sunrise == NEVER_UP:
+        return False
+    if sunrise == ALWAYS_UP:
+        return True
+    sunrise = ephem.Date(sunrise)
+    sunset = ephem.Date(sunset)
+    now = ephem.Date(now)
     # In locations near Grenwich: (prev) sunrise < (next) sunset
     # In location far away from Greenwich: (prev) sunset < (next) sunrise
-    sunrise = ephem.Date(str(sunrise))
-    sunset = ephem.Date(str(sunset))
-    now = ephem.Date(now)
     if sunrise < sunset:
         return  sunrise < now  < sunset
     else: 

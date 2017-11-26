@@ -47,7 +47,7 @@ from twisted.internet.task import deferLater
 # local imports
 # -------------
 
-from   tessdb.sqlite3.utils import Table, fromJSON, utcnoon, UNKNOWN
+from   tessdb.sqlite3.utils import Table, fromJSON, utcnoon, UNKNOWN, NEVER_UP, ALWAYS_UP
 
 # ----------------
 # Module Constants
@@ -292,25 +292,35 @@ class Location(Table):
                 site               = location[4]
                 # In locations near Grenwich: (prev) sunrise < (next) sunset
                 # In location far away from Greenwich: (prev) sunset < (next) sunrise
-                prev_sunrise = observer.previous_rising(sun, use_center=True)
-                next_sunset  = observer.next_setting(sun, use_center=True)
-                prev_sunset  = observer.previous_setting(sun, use_center=True)
-                next_sunrise = observer.next_rising(sun, use_center=True)
-                if prev_sunrise < midnight: # Far West from Greenwich
-                    log.debug("{site}: Chose Far West from Greenwich", site=site)
-                    sunrise = str(next_sunrise)
-                    sunset  = str(prev_sunset)
-                else:                       # Our normal case in Spain
-                    log.debug("{site}: Chose our normal case in Spain", site=site)
-                    sunrise = str(prev_sunrise)
-                    sunset  = str(next_sunset)
-                rows.append ({ 
-                    'id'     : location[0], 
-                    'sunrise': sunrise,
-                    'sunset' : sunset,
-                    'site'   : site
-                })
-        return rows
+                # Circumpolar sites may raise exceptions
+                try:
+                    prev_sunrise = observer.previous_rising(sun, use_center=True)
+                    next_sunset  = observer.next_setting(sun, use_center=True)
+                    prev_sunset  = observer.previous_setting(sun, use_center=True)
+                    next_sunrise = observer.next_rising(sun, use_center=True)
+                except ephem.NeverUpError as e:
+                    sunrise = NEVER_UP
+                    sunset  = NEVER_UP
+                except ephem.AlwaysUpError as e:
+                    sunrise = ALWAYS_UP
+                    sunset  = ALWAYS_UP
+                else:
+                    if prev_sunrise < midnight: # Far West from Greenwich
+                        log.debug("{site}: Chose Far West from Greenwich", site=site)
+                        sunrise = str(next_sunrise)
+                        sunset  = str(prev_sunset)
+                    else:                       # Our normal case in Spain
+                        log.debug("{site}: Chose our normal case in Spain", site=site)
+                        sunrise = str(prev_sunrise)
+                        sunset  = str(next_sunset)
+                finally:
+                    rows.append ({ 
+                        'id'     : location[0], 
+                        'sunrise': sunrise,
+                        'sunset' : sunset,
+                        'site'   : site
+                    })
+                    return rows
 
 
     @inlineCallbacks
