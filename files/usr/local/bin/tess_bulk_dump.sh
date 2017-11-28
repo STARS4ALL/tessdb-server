@@ -1,28 +1,22 @@
 #!/bin/bash
 # This script dumps every reading from every TESS given in an instrument list file.
 
-# Arguments from the command line & default values
-instruments_file="${1:-/var/dbase/tess_instruments_file.txt}"
-dbase="${2:-/var/dbase/tess.db}"
-out_dir="${3:-/var/dbase/reports}"
+# ------------------------------------------------------------------------------
+#                             AUXILIARY FUNCTIONS
+# ------------------------------------------------------------------------------
 
-if  [[ ! -f $instruments_file || ! -r $instruments_file ]]; then
-        echo "Instrument file $instruments_file does not exists or is not readable."
-        echo "Exiting"
-        exit 1
-fi
+query_names() {
+dbase=$1
+sqlite3 ${dbase} <<EOF
+SELECT name 
+FROM tess_t 
+WHERE name like 'stars%' 
+AND valid_state = 'Current' 
+ORDER by name ASC;
+EOF
+}
 
-if  [[ ! -f $dbase || ! -r $dbase ]]; then
-        echo "Database file $dbase does not exists or is not readable."
-        echo "Exiting"
-        exit 1
-fi
-
-if  [[ ! -d $out_dir  ]]; then
-        echo "Output directory $out_dir does not exists."
-        echo "Exiting"
-        exit 1
-fi
+# ------------------------------------------------------------------------------- #
 
 bulk_dump_by_instrument() {
 instrument_name=$1
@@ -39,13 +33,33 @@ ORDER BY r.date_id ASC, r.time_id ASC;
 EOF
 }
 
+# ------------------------------------------------------------------------------- #
+
+# Arguments from the command line & default values
+dbase="${1:-/var/dbase/tess.db}"
+out_dir="${2:-/var/dbase/reports}"
+
+if  [[ ! -f $dbase || ! -r $dbase ]]; then
+        echo "Database file $dbase does not exists or is not readable."
+        echo "Exiting"
+        exit 1
+fi
+
+if  [[ ! -d $out_dir  ]]; then
+        echo "Output directory $out_dir does not exists."
+        echo "Exiting"
+        exit 1
+fi
+
+
+
 
 # Stops background database I/O
 /usr/sbin/service tessdb pause 
 sleep 2
-
+photometers=$(query_names ${dbase})
 # Loops over the instruments file and dumping data
-for instrument in $( cat $instruments_file ); do
+for instrument in $photometers; do
         echo "Generating compresed CSV for TESS $instrument"
         bulk_dump_by_instrument ${instrument} ${dbase} | gzip > ${out_dir}/${instrument}.csv.gz
 done
