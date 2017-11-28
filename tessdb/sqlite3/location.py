@@ -320,7 +320,7 @@ class Location(Table):
                         'sunset' : sunset,
                         'site'   : site
                     })
-                    return rows
+        return rows
 
 
     @inlineCallbacks
