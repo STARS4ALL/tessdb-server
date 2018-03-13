@@ -28,7 +28,7 @@ import subprocess
 # -------------
 
 import tabulate
-from tessdb.sqlite3.utils import CURRENT, UNKNOWN
+from tessdb.sqlite3.utils import CURRENT, UNKNOWN, NEVER_UP, ALWAYS_UP
 
 # ----------------
 # Module constants
@@ -150,7 +150,7 @@ def createParser():
     # Create second level parsers for 'instrument'
     # --------------------------------------------
     # Choices:
-    #   tess instrument list
+    #   tess instrument list --name <instrument name>
     #   tess instrument assign <instrument name> <location name>
     #   tess instrument create <friendly name> <MAC address> <Calibration Constant>
     #   tess instrument rename <old friendly name> <new friendly name>
@@ -164,6 +164,7 @@ def createParser():
     parser_instrument_assign.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ip = subparser.add_parser('list', help='list instruments')
+    ip.add_argument('-n', '--name', type=str, default='', help='specific instrument name')
     ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
@@ -260,7 +261,7 @@ def main():
     except KeyboardInterrupt:
         print('')
     #except Exception as e:
-        print("Error => {0}".format(e))
+        #print("Error => {0}".format(e))
 
 # ==============
 # DATABASE STUFF
@@ -331,20 +332,39 @@ def instrument_single_history(connection, options):
 
 
 def instrument_list(connection, options):
-    if options.log:
-        instrument_historic_list(connection, options)
+    if options.name == '':
+        if options.log:
+            instrument_historic_list(connection, options)
+        else:
+            instrument_current_list(connection, options)
     else:
-        instrument_current_list(connection, options)
+        if options.log:
+            instrument_specific_historic_list(connection, options)
+        else:
+            instrument_specific_current_list(connection, options)
 
 def instrument_historic_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,longitude,latitude,elevation,valid_since,valid_until
+            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until
             FROM tess_v
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC, tess_v.valid_since ASC;
             ''')
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site","Longitude","Latitude","Elevation","Since","Until"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until"], size=100)
+
+
+def instrument_specific_historic_list(connection, options):
+    cursor = connection.cursor()
+    row = {'state': CURRENT, 'name': options.name}
+    cursor.execute(
+            '''
+            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until
+            FROM tess_v
+            WHERE name == :name
+            ORDER BY tess_v.valid_since ASC;
+            ''',row)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until"], size=100)
 
 
 def instrument_current_list(connection, options):
@@ -352,12 +372,25 @@ def instrument_current_list(connection, options):
     row = {'state': CURRENT}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,longitude,latitude,elevation 
+            SELECT name,mac_address,zero_point,filter,site 
             FROM tess_v
             WHERE valid_state == :state
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site","Longitude","Latitude","Elevation"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site"], size=100)
+
+
+def instrument_specific_current_list(connection, options):
+    cursor = connection.cursor()
+    row = {'state': CURRENT, 'name': options.name}
+    cursor.execute(
+            '''
+            SELECT name,mac_address,zero_point,filter,site 
+            FROM tess_v
+            WHERE valid_state == :state
+            AND name == :name;
+            ''', row)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site"], size=100)
 
 
 def instrument_unassigned(connection, options):
@@ -928,18 +961,22 @@ def system_window(connection, options):
         result = cursor.fetchone()
         if result is None:
             break
-        sunrise = datetime.datetime.strptime(result[0], "%Y/%m/%d %H:%M:%S")
-        sunset  = datetime.datetime.strptime(result[1], "%Y/%m/%d %H:%M:%S")
-        info = result[4] + ', ' + result[2] + ' (' + result[3] +')'
-        sites_dict[sunrise] = info
-        sites_dict[sunset]  = info
-        if sunrise > sunset:
-            sunrise_list.append(sunrise)
-            # Good approximation, since sunset will be slightly different
-            sunset_list.append(sunset + datetime.timedelta(hours=24))  
+        try:
+            info = result[4] + ', ' + result[2] + ' (' + result[3] +')'
+            sunrise = datetime.datetime.strptime(result[0], "%Y/%m/%d %H:%M:%S")
+            sunset  = datetime.datetime.strptime(result[1], "%Y/%m/%d %H:%M:%S")
+        except Exception as e:
+            if result[0] == NEVER_UP: print("FUNCIONALIDAD INACABADA ...")
         else:
-            sunrise_list.append(sunrise)
-            sunset_list.append(sunset)
+            sites_dict[sunrise] = info
+            sites_dict[sunset]  = info
+            if sunrise > sunset:
+                sunrise_list.append(sunrise)
+                # Good approximation, since sunset will be slightly different
+                sunset_list.append(sunset + datetime.timedelta(hours=24))  
+            else:
+                sunrise_list.append(sunrise)
+                sunset_list.append(sunset)
     
     # Find out the Window State
     window_start = max(sunrise_list)
