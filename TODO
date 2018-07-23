@@ -1,5 +1,25 @@
 Prioridad Alta
 ==============
+*) INDICE MULTICOLUMNA
+
+Probarlo en el código
+
+CREATE INDEX IF NOT EXISTS tess_readings_i ON tess_readings_t(tess_id,location_id,date_id,time_id);
+
+sqlite> EXPLAIN QUERY PLAN SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time || 'Z') AS timestamp, r.sequence_number, l.site, i.name, r.frequency, r.magnitude, i.zero_point, i.filter, r.sky_temperature, r.ambient_temperature
+   ...> FROM tess_readings_t AS r
+   ...> JOIN tess_t          AS i USING (tess_id)
+   ...> JOIN location_t      AS l USING (location_id)
+   ...> JOIN date_t          AS d USING (date_id)
+   ...> JOIN time_t          AS t USING (time_id)
+   ...> WHERE i.name = "stars1"
+   ...> ORDER BY r.date_id ASC, r.time_id ASC;
+0|0|1|SEARCH TABLE tess_t AS i USING INDEX tess_name_i (name=?)
+0|1|0|SEARCH TABLE tess_readings_t AS r USING INDEX tess_reandings_i (tess_id=?)
+0|2|2|SEARCH TABLE location_t AS l USING INTEGER PRIMARY KEY (rowid=?)
+0|3|3|SEARCH TABLE date_t AS d USING INTEGER PRIMARY KEY (rowid=?)
+0|4|4|SEARCH TABLE time_t AS t USING INTEGER PRIMARY KEY (rowid=?)
+0|0|0|USE TEMP B-TREE FOR ORDER BY
 
 *) Tratamiento circumpolar
  - coger las excepciones ephem.NeverUpError y ephem.AlwayUpError y transformarlas en valores

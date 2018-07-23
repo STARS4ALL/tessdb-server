@@ -18,12 +18,22 @@ EOF
 
 # ------------------------------------------------------------------------------- #
 
-# We use a backup copy to avoid disrupting the operational database for such a long process time
-dbase="$(ls -1 /var/dbase/tess.db-*)"
+
+DEFAULT_DATABASE="/var/dbase/tess.db"
+DEFAULT_REPORTS_DIR="/var/dbase/reports/IDA"
+
+# Either the default or the rotated tess.db-* database
+dbase="${1:-$DEFAULT_DATABASE}"
+# wildcard expansion ...
+dbase="$(ls -1 $dbase)"
 
 # Output directory is created if not exists inside the inner script
-out_dir="${1:-/var/dbase/reports/IDA}"
+out_dir="${2:-$DEFAULT_REPORTS_DIR}"
 
+# get the name from the script name without extensions
+name=$(basename ${0%.sh})
+
+# Jinja2 template to render IDA format file
 template="${2:-/etc/tessdb/IDA-template.j2}"
 
 if  [[ ! -f $dbase || ! -r $dbase ]]; then
@@ -38,10 +48,14 @@ if  [[ ! -f $template || ! -r $template ]]; then
         exit 1
 fi
 
-
-# Stops background database I/O (DON'T NEED THIS IN A BACKUP COPY)
-#/usr/sbin/service tessdb pause 
-#sleep 2
+# Stops background database I/O when using the operational database
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Pausing tessdb service."
+    	/usr/sbin/service tessdb pause 
+		sleep 2
+else
+	echo "Using backup database, no need to pause tessdb service."
+fi
 
 photometers=$(query_names ${dbase})
 # Loops over the instruments file and dumping data
@@ -50,5 +64,11 @@ for instrument in $photometers; do
     /usr/local/bin/tess_ida ${instrument} -l -d ${dbase} -t ${template} -o ${out_dir} 
 done
 
+
 # Resume background database I/O
-#/usr/sbin/service tessdb resume (DON'T NEED THIS IN A BACKUP COPY)
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Resuming tessdb service."
+    	/usr/sbin/service tessdb resume 
+else
+	echo "Using backup database, no need to resume tessdb service."
+fi

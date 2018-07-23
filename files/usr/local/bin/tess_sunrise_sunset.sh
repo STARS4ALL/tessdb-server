@@ -18,13 +18,20 @@ EOF
 }
 # ------------------------------------------------------------------------------
 
-suffix=$(/bin/date +%Y%m%dT%H%M00)
+
+DEFAULT_DATABASE="/var/dbase/tess.db"
+DEFAULT_REPORTS_DIR="/var/dbase/reports"
 
 # Arguments from the command line & default values
-name=$(basename $0 .sh)
-dbase="${1:-/var/dbase/tess.db}"
-out_dir="${2:-/var/dbase/reports}"
 
+# Either the default or the rotated tess.db-* database
+dbase="${1:-$DEFAULT_DATABASE}"
+dbase="$(ls -1 $dbase)"
+
+out_dir="${2:-$DEFAULT_REPORTS_DIR}"
+# get the name from the script name without extensions
+name=$(basename ${0%.sh})
+suffix=$(/bin/date +%Y%m%dT%H%M00)
 
 if  [[ ! -f $dbase || ! -r $dbase ]]; then
         echo "Database file $dbase does not exists or is not readable."
@@ -38,13 +45,22 @@ if  [[ ! -d $out_dir  ]]; then
         exit 1
 fi
 
-# -------------------
-# AUXILIARY FUNCTIONS
-# -------------------
 
-/usr/sbin/service tessdb pause 
-sleep 2
+# Stops background database I/O when using the operational database
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Pausing tessdb service."
+    	/usr/sbin/service tessdb pause 
+		sleep 2
+else
+	echo "Using backup database, no need to pause tessdb service."
+fi
 
 query_sunrise_data ${dbase} > ${out_dir}/${name}.${suffix}.txt
 
-/usr/sbin/service tessdb resume
+# Resume background database I/O
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Resuming tessdb service."
+    	/usr/sbin/service tessdb resume 
+else
+	echo "Using backup database, no need to resume tessdb service."
+fi

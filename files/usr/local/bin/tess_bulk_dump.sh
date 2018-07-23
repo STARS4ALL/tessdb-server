@@ -35,9 +35,20 @@ EOF
 
 # ------------------------------------------------------------------------------- #
 
+DEFAULT_DATABASE="/var/dbase/tess.db"
+DEFAULT_REPORTS_DIR="/var/dbase/reports"
+
 # Arguments from the command line & default values
-dbase="${1:-/var/dbase/tess.db}"
-out_dir="${2:-/var/dbase/reports}"
+
+# Either the default or the rotated tess.db-* database
+dbase="${1:-$DEFAULT_DATABASE}"
+# wildcard expansion ...
+dbase="$(ls -1 $dbase)"
+
+out_dir="${2:-$DEFAULT_REPORTS_DIR}"
+
+# get the name from the script name without extensions
+name=$(basename ${0%.sh})
 
 if  [[ ! -f $dbase || ! -r $dbase ]]; then
         echo "Database file $dbase does not exists or is not readable."
@@ -51,12 +62,15 @@ if  [[ ! -d $out_dir  ]]; then
         exit 1
 fi
 
+# Stops background database I/O when using the operational database
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Pausing tessdb service."
+    	/usr/sbin/service tessdb pause 
+		sleep 2
+else
+	echo "Using backup database, no need to pause tessdb service."
+fi
 
-
-
-# Stops background database I/O
-/usr/sbin/service tessdb pause 
-sleep 2
 photometers=$(query_names ${dbase})
 # Loops over the instruments file and dumping data
 for instrument in $photometers; do
@@ -65,4 +79,11 @@ for instrument in $photometers; do
 done
 
 # Resume background database I/O
-/usr/sbin/service tessdb resume
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Resuming tessdb service."
+    	/usr/sbin/service tessdb resume 
+else
+	echo "Using backup database, no need to resume tessdb service."
+fi
+
+

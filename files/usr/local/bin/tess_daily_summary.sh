@@ -24,9 +24,17 @@ EOF
 # may be we need it ..
 TODAY=$(date +%Y%m%d)
 
+DEFAULT_DATABASE="/var/dbase/tess.db"
+DEFAULT_REPORTS_DIR="/var/dbase/reports"
+
 # Arguments from the command line & default values
-dbase="${1:-/var/dbase/tess.db}"
-out_dir="${2:-/var/dbase/reports}"
+
+# Either the default or the rotated tess.db-* database
+dbase="${1:-$DEFAULT_DATABASE}"
+# wildcard expansion ...
+dbase="$(ls -1 $dbase)"
+
+out_dir="${2:-$DEFAULT_REPORTS_DIR}"
 
 # get the name from the script name without extensions
 name=$(basename ${0%.sh})
@@ -37,7 +45,22 @@ if  [[ ! -f $dbase || ! -r $dbase ]]; then
         exit 1
 fi
 
-/usr/sbin/service tessdb pause
-sleep 2
+# Stops background database I/O when using the operational database
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Pausing tessdb service."
+    	/usr/sbin/service tessdb pause 
+		sleep 2
+else
+	echo "Using backup database, no need to pause tessdb service."
+fi
+
 report_by_tess ${dbase} > ${out_dir}/${name}.txt
-/usr/sbin/service tessdb resume
+
+# Resume background database I/O
+if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+        echo "Resuming tessdb service."
+    	/usr/sbin/service tessdb resume 
+else
+	echo "Using backup database, no need to resume tessdb service."
+fi
+
