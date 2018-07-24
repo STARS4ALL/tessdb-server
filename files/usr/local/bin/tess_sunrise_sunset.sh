@@ -26,6 +26,7 @@ DEFAULT_REPORTS_DIR="/var/dbase/reports"
 
 # Either the default or the rotated tess.db-* database
 dbase="${1:-$DEFAULT_DATABASE}"
+# wildcard expansion ...
 dbase="$(ls -1 $dbase)"
 
 out_dir="${2:-$DEFAULT_REPORTS_DIR}"

@@ -11,6 +11,7 @@
 	endscript
 	postrotate
 		/usr/sbin/service tessdb resume > /dev/null 2>/dev/null || true
+		/usr/local/bin/tessdb_index.sh  > /dev/null 2>/dev/null
 	endscript
 }
 

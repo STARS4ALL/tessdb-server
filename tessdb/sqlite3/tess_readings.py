@@ -65,11 +65,6 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _createIndices(cursor):
-    '''
-    Create table Indices
-    '''
-    cursor.execute("CREATE INDEX IF NOT EXISTS tess_readings_i ON tess_readings_t(tess_id,location_id,date_id,time_id);")
 
 
 # ============================================================================ #
@@ -87,14 +82,6 @@ class TESSReadings(Table):
         self.setOptions(location_filter=True)
         self.resetCounters()
 
-
-    def indices(self):
-        '''
-        Create the SQLite TESS Readings indices.
-        Returns a Deferred
-        '''
-        log.info("Creating tess_readings_t Indexes if not exists")
-        return self.pool.runInteraction(_createIndices)
 
     def table(self):
         '''
