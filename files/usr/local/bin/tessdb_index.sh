@@ -17,15 +17,17 @@ EOF
 # Arguments from the command line & default values
 
 # wildcard expansion ...
-dbase="$(ls -1 /var/dbase/tess.db-*)"
+dbases="$(ls -1 /var/dbase/tess.db-*)"
 
-
-if  [[ ! -f $dbase || ! -r $dbase ]]; then
+for dbase in $dbases; do
+    if  [[ ! -f $dbase || ! -r $dbase ]]; then
         echo "Database file $dbase does not exists or is not readable."
         echo "Exiting"
         exit 1
-fi
+    fi
+done
 
-
-echo "Generating indexes for queries in database ${dbase}"
-create_indices ${dbase}
+for dbase in $dbases; do
+    echo "Generating indexes for queries in database ${dbase}"
+    create_indices ${dbase}
+done

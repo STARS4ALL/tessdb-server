@@ -10,7 +10,7 @@
 		sleep 2
 	endscript
 	postrotate
-		/usr/sbin/service tessdb resume > /dev/null 2>/dev/null || true
+		/usr/sbin/service tessdb resume > /dev/null 2>/dev/null 
 		/usr/local/bin/tessdb_index.sh  > /dev/null 2>/dev/null
 	endscript
 }

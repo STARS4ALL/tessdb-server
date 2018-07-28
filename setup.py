@@ -84,7 +84,7 @@ DATA_FILES  = [
                               'files/usr/local/bin/tess_ida',
                               'files/usr/local/bin/tess_ida_bulk_dump.sh',
                               'files/usr/local/bin/tess_sunrise_sunset.sh', 
-                              'files/usr/local/bin/tessdb_indices.sh',
+                              'files/usr/local/bin/tessdb_index.sh',
                               ]),
   ('/etc/logrotate_astro.d', ['files/etc/logrotate.d/tessdb']),
   ('/var/dbase',             ['files/var/dbase/placeholder.txt']),
