@@ -66,7 +66,7 @@ fi
 if  [[ $dbase = $DEFAULT_DATABASE ]]; then
         echo "Pausing tessdb service."
     	/usr/sbin/service tessdb pause 
-		sleep 2
+		/bin/sleep 2
 else
 	echo "Using backup database, no need to pause tessdb service."
 fi

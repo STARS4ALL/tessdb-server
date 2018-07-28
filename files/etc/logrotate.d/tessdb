@@ -7,7 +7,7 @@
 	notifempty
 	prerotate
 		/usr/sbin/service tessdb pause > /dev/null 2>/dev/null || true
-		sleep 2
+		/bin/sleep 2
 	endscript
 	postrotate
 		/usr/sbin/service tessdb resume > /dev/null 2>/dev/null 
