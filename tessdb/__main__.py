@@ -34,6 +34,9 @@ from .config import cmdline
 
 options = cmdline()
 
+if options.version:
+	print(options.version)
+	sys.exit(0)
 
 if os.name == "nt":
 	if not options.interactive:

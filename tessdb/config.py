@@ -35,7 +35,7 @@ from . import __version__
 # ----------------
 
 
-VERSION_STRING = "tessdb/{0}/Python {1}.{2}".format(__version__, sys.version_info.major, sys.version_info.minor)
+VERSION_STRING = "tessdb {0} on Python {1}.{2}".format(__version__, sys.version_info.major, sys.version_info.minor)
 
 # Default config file path
 if os.name == "nt":
@@ -60,11 +60,13 @@ def cmdline():
     The rest goes into the config file.
     '''
     parser = argparse.ArgumentParser(prog='tessdb')
-    parser.add_argument('--version',            action='version', version='{0}'.format(VERSION_STRING))
+    parser.add_argument('-v' , '--version',     action='version', version='{0}'.format(VERSION_STRING), help='print version and exit.')
     parser.add_argument('-k' , '--console',     action='store_true', help='log to console')
     parser.add_argument('-i' , '--interactive', action='store_true', help='run in foreground (Windows only)')
     parser.add_argument('-c' , '--config', type=str,  action='store', metavar='<config file>', help='detailed configuration file')
     parser.add_argument('-s' , '--startup', type=str, action='store', metavar='<auto|manual>', help='Windows service starup mode')
+  
+    
     group = parser.add_mutually_exclusive_group()
     group.add_argument(' install', type=str, nargs='?', help='install Windows service')
     group.add_argument(' start',   type=str, nargs='?', help='start Windows service')
