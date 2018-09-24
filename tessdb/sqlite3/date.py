@@ -96,7 +96,8 @@ class Date(Table):
             year           INTEGER
             );
             '''
-        ).commit()
+        )
+        self.connection.commit()
 
 
     def populate(self, json_dir):
@@ -108,7 +109,8 @@ class Date(Table):
         self.connection.executemany( 
             "INSERT OR REPLACE INTO date_t VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", 
             self.rows() 
-            ).commit()
+        )
+        self.connection.commit()
 
 
     # --------------

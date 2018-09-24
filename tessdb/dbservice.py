@@ -97,10 +97,12 @@ class DBaseService(Service):
         
         # Import appropiate DAO module
         if self.options['type'] == "sqlite3":
+            import sqlite3
             from .sqlite3 import getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
             if not os.path.exists(options['connection_string']):
                  raise IOError("No SQLite3 Database file found in {0}. Exiting ...".format(options['connection_string']))
             connection = sqlite3.connect(options['connection_string'])
+            self.getPoolFunc = getPool
         else:
             msg = "No database driver found for '{0}'".format(self.options['type'])
             raise ImportError( msg )
@@ -146,7 +148,7 @@ class DBaseService(Service):
         log.info("starting DBase Service on {database}", database=self.options['connection_string'])
         self.schema()
         # setup the connection pool for asynchronouws adbapi
-        self.pool  = getPool(self.options['connection_string'])
+        self.pool  = self.getPoolFunc(self.options['connection_string'])
         self.tess.pool           = self.pool
         self.tess_units.pool     = self.pool
         self.tess_readings.pool  = self.pool

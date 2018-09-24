@@ -152,7 +152,8 @@ class Location(Table):
             organization            TEXT
             );
             '''
-        ).commit()
+        )
+        self.connection.commit()
 
 
     def populate(self, json_dir):
@@ -188,7 +189,8 @@ class Location(Table):
             :location,
             :province,
             :country
-        )''', read_rows).commit()
+        )''', read_rows)
+        self.connection.commit()
       
 
 
@@ -202,7 +204,7 @@ class Location(Table):
         read_rows = fromJSON(os.path.join(json_dir, Location.FILE), [DEFAULT_LOCATION])
         read_rows.append(DEFAULT_LOCATION)
         read_rows.append(OUT_OF_SERVICE_LOCATION)
-        returnValue(read_rows)
+        return (read_rows)
 
     # ===============
     # OPERATIONAL API

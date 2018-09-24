@@ -110,7 +110,8 @@ class TESSReadings(Table):
             PRIMARY KEY (date_id, time_id, tess_id)
             );
             '''
-        ).commit()
+        )
+        self.connection.commit()
 
     def populate(self, json_dir):
         return

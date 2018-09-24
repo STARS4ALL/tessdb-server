@@ -148,7 +148,8 @@ class TESS(Table):
             altitude      REAL    DEFAULT 90.0
             );
             '''
-        ).commit()
+        )
+        self.connection.commit()
 
     def indices(self):
         '''
@@ -158,7 +159,7 @@ class TESS(Table):
         cursor = self.connection.cursor()
         cursor.execute("CREATE INDEX IF NOT EXISTS tess_name_i ON tess_t(name);")
         cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
-        cursor.commit()
+        self.connection.commit()
 
 
     def views(self):
@@ -199,7 +200,8 @@ class TESS(Table):
                 location_t.timezone
             FROM tess_t JOIN location_t USING (location_id);
             '''
-        ).commit()
+        )
+        self.connection.commit()
 
 
     def populate(self, json_dir):
@@ -232,7 +234,8 @@ class TESS(Table):
                     :location_id
                 )
                 '''
-                , read_rows).commit()
+                , read_rows)
+            self.connection.commit()
 
         log.info("Assigning locations to instruments")
         read_rows = fromJSON(os.path.join(json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
@@ -243,7 +246,8 @@ class TESS(Table):
                 )
                 WHERE name == :name
             '''
-            , read_rows ).commit()
+            , read_rows )
+        self.connection.commit()
 
 
     # -------------

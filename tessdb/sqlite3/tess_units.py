@@ -124,7 +124,8 @@ class TESSUnits(Table):
             valid_state               TEXT
             );
             '''
-        ).commit()
+        )
+        self.connection.commit()
 
 
     def populate(self, json_dir):
@@ -168,7 +169,8 @@ class TESSUnits(Table):
                 :timestamp_source
             )'''
             , read_rows 
-        ).commit()
+        )
+        self.connection.commit()
       
     
     # --------------

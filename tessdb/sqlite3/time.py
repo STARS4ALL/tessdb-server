@@ -94,7 +94,8 @@ class TimeOfDay(Table):
             day_fraction   REAL
             );
             '''
-        ).commit()
+        )
+        self.connection.commit()
 
 
     def populate(self, json_dir):
@@ -105,7 +106,8 @@ class TimeOfDay(Table):
         self.connection.executemany( 
             "INSERT OR REPLACE INTO time_t VALUES(?,?,?,?,?,?)", 
             self.rows() 
-        ).commit()
+        )
+        self.connection.commit()
 
     # --------------
     # Helper methods
