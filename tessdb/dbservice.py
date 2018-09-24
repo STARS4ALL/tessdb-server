@@ -148,20 +148,14 @@ class DBaseService(Service):
         log.info("starting DBase Service on {database}", database=self.options['connection_string'])
         self.schema()
         # setup the connection pool for asynchronouws adbapi
-        self.pool  = self.getPoolFunc(self.options['connection_string'])
-        self.tess.pool           = self.pool
-        self.tess_units.pool     = self.pool
-        self.tess_readings.pool  = self.pool
-        self.tess_locations.pool = self.pool
-        self.date.pool           = self.pool
-        self.time.pool           = self.pool
+        self.openPool()
         self.startTasks()
         # Remainder Service initialization
         Service.startService(self)
         log.info("Database operational.")
       
     def stopService(self):
-        self.pool.close()
+        self.closePool()
         d = Service.stopService()
         log.info("Database stopped.")
         return d
@@ -189,10 +183,12 @@ class DBaseService(Service):
     def pauseService(self):
         log.info('TESS database writer paused')
         self.paused = True
+        self.closePool()
         return defer.succeed(None)
 
     def resumeService(self):
         log.info('TESS database writer resumed')
+        self.openPool()
         self.paused = False
         return defer.succeed(None)
 
@@ -359,5 +355,31 @@ class DBaseService(Service):
         yield self.tess_locations.sunrise(batch_perc=batch_perc, 
             batch_min_size=batch_min_size, horizon=horizon, pause=pause, today=today)
       
-   
+    # ==============
+    # Helper methods
+    # ==============
 
+    def openPool(self):
+        # setup the connection pool for asynchronouws adbapi
+        self.pool  = self.getPoolFunc(self.options['connection_string'])
+        self.tess.pool           = self.pool
+        self.tess_units.pool     = self.pool
+        self.tess_readings.pool  = self.pool
+        self.tess_locations.pool = self.pool
+        self.date.pool           = self.pool
+        self.time.pool           = self.pool
+      
+
+    def closePool(self):
+        # setup the connection pool for asynchronouws adbapi
+        self.tess.pool           = None
+        self.tess_units.pool     = None
+        self.tess_readings.pool  = None
+        self.tess_locations.pool = None
+        self.date.pool           = None
+        self.time.pool           = None
+        if self.pool is not None:
+            self.pool.close()
+            self.pool = None
+   
+    
