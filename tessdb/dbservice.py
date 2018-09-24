@@ -95,6 +95,24 @@ class DBaseService(Service):
         if self.options['secs_resolution'] not in self.SECS_RESOLUTION:
             raise DiscreteValueError(self.options['secs_resolution'], self.SECS_RESOLUTION)
         
+        # Import appropiate DAO module
+        if self.options['type'] == "sqlite3":
+            from .sqlite3 import getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
+            if not os.path.exists(options['connection_string']):
+                 raise IOError("No SQLite3 Database file found in {0}. Exiting ...".format(options['connection_string']))
+            connection = sqlite3.connect(options['connection_string'])
+        else:
+            msg = "No database driver found for '{0}'".format(self.options['type'])
+            raise ImportError( msg )
+
+        # Create DAO objects
+        self.connection     = connection
+        self.tess           = TESS(connection)
+        self.tess_units     = TESSUnits(connection)
+        self.tess_readings  = TESSReadings(connection, self)
+        self.tess_locations = Location(connection)
+        self.date           = Date(connection)
+        self.time           = TimeOfDay(connection, self.options['secs_resolution'])
       
     #------------
     # Service API
@@ -106,38 +124,35 @@ class DBaseService(Service):
         self.later = reactor.callLater(2, self.writter)
         self.sunriseTask.start(self.T_SUNRISE, now=True)
 
-    @inlineCallbacks
     def schema(self):
         '''Create the schema and populate database'''
-
-        # Import appropiate DAO module
-        if self.options['type'] == "sqlite3":
-            from .sqlite3 import getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
-        else:
-            msg = "No database driver found for '{0}'".format(self.options['type'])
-            raise ImportError( msg )
-        # Create DAO objects
-        self.pool           = getPool(self.options['connection_string'])
-        self.tess           = TESS(self.pool)
-        self.tess_units     = TESSUnits(self.pool)
-        self.tess_readings  = TESSReadings(self.pool, self)
-        self.tess_locations = Location(self.pool)
-        self.date           = Date(self.pool)
-        self.time           = TimeOfDay(self.pool, self.options['secs_resolution'])
-
-        # Create and Populate Database
         self.tess_readings.setOptions(location_filter=self.options['location_filter'], location_horizon=self.options['location_horizon'])
-        yield self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'])
-        yield self.time.schema(json_dir=self.options['json_dir'])
-        yield self.tess_locations.schema(json_dir=self.options['json_dir'])
-        yield self.tess.schema(json_dir=self.options['json_dir'])
-        yield self.tess_units.schema(json_dir=self.options['json_dir'])
-        yield self.tess_readings.schema(json_dir=self.options['json_dir'])
+        self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'])
+        self.time.schema(json_dir=self.options['json_dir'])
+        self.tess_locations.schema(json_dir=self.options['json_dir'])
+        self.tess.schema(json_dir=self.options['json_dir'])
+        self.tess_units.schema(json_dir=self.options['json_dir'])
+        self.tess_readings.schema(json_dir=self.options['json_dir'])
+        self.tess.connection           = None
+        self.tess_units.connection     = None
+        self.tess_readings.connection  = None
+        self.tess_locations.connection = None
+        self.date.connection           = None
+        self.time.connection           = None
+        self.connection.close()
 
-    @inlineCallbacks
+
     def startService(self):
         log.info("starting DBase Service on {database}", database=self.options['connection_string'])
-        yield self.schema()
+        self.schema()
+        # setup the connection pool for asynchronouws adbapi
+        self.pool  = getPool(self.options['connection_string'])
+        self.tess.pool           = self.pool
+        self.tess_units.pool     = self.pool
+        self.tess_readings.pool  = self.pool
+        self.tess_locations.pool = self.pool
+        self.date.pool           = self.pool
+        self.time.pool           = self.pool
         self.startTasks()
         # Remainder Service initialization
         Service.startService(self)

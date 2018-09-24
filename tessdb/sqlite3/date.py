@@ -48,11 +48,6 @@ def julian_day(date):
     m = date.month + 12*a - 3
     return (date.day + ((153*m + 2)//5) + 365*y + y//4 - y//100 + y//400 - 32045) - 0.5
 
-def _populate(transaction, rows):
-    '''Dimension initial data loading (replace flavour)'''
-    transaction.executemany(
-        "INSERT OR REPLACE INTO date_t VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", rows)
-
 
 # ============================================================================ #
 #                               DATE TABLE (DIMENSION)
@@ -62,11 +57,10 @@ class Date(Table):
 
     ONE         = datetime.timedelta(days=1)
 
-    def __init__(self, pool):
+    def __init__(self, connection):
         '''Create and Populate the SQLite Date Table'''
-        Table.__init__(self, pool)
+        Table.__init__(self, connection)
 
-    @inlineCallbacks
     def schema(self, date_fmt, year_start, year_end):
         '''
         Overrides generic schema mehod with custom params.
@@ -74,17 +68,16 @@ class Date(Table):
         self.__fmt   = date_fmt
         self.__start = datetime.date(year_start,1,1)
         self.__end   = datetime.date(year_end,12,31)
-        yield self.table()
-        yield self.populate(None)
+        self.table()
+        self.populate(None)
 
       
     def table(self):
         '''
         Create the SQLite Date Table
-        Returns a Deferred
         '''
         log.info("Creating Date Table if not exists")
-        return self.pool.runOperation(
+        self.connection.execute(
             '''
             CREATE TABLE IF NOT EXISTS date_t
             (
@@ -103,7 +96,7 @@ class Date(Table):
             year           INTEGER
             );
             '''
-        )
+        ).commit()
 
 
     def populate(self, json_dir):
@@ -112,7 +105,10 @@ class Date(Table):
         Returns a Deferred
         '''
         log.info("Populating/Replacing Date Table data")
-        return self.pool.runInteraction( _populate, self.rows() )
+        self.connection.executemany( 
+            "INSERT OR REPLACE INTO date_t VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)", 
+            self.rows() 
+            ).commit()
 
 
     # --------------

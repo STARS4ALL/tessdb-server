@@ -80,44 +80,6 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _populate(transaction, rows):
-    '''Dimension initial data loading (replace flavour)'''
-    transaction.executemany(
-        '''INSERT OR REPLACE INTO tess_units_t (
-            units_id,
-            frequency_units,
-            magnitude_units,
-            ambient_temperature_units,
-            sky_temperature_units,
-            azimuth_units,
-            altitude_units,
-            longitude_units,
-            latitude_units,
-            height_units,
-            signal_strength_units,
-            valid_since,
-            valid_until,
-            valid_state,
-            timestamp_source
-        ) VALUES (
-            :units_id,
-            :frequency_units,
-            :magnitude_units,
-            :ambient_temperature_units,
-            :sky_temperature_units,
-            :azimuth_units,
-            :altitude_units,
-            :longitude_units,
-            :latitude_units,
-            :height_units,
-            :signal_strength_units,
-            :valid_since,
-            :valid_until,
-            :valid_state,
-            :timestamp_source
-        )''', rows)
-
-
 
 # ============================================================================ #
 #                               UNITS TABLE (DIMENSION)
@@ -127,9 +89,9 @@ class TESSUnits(Table):
 
     FILE = 'tess_units.json'
     
-    def __init__(self, pool):
+    def __init__(self, connection):
         '''Create and populate the SQLite Units Table'''
-        Table.__init__(self, pool)
+        Table.__init__(self, connection)
         # Cached row ids
         self._id = {}
         self._id['Publisher']  = None
@@ -139,10 +101,9 @@ class TESSUnits(Table):
     def table(self):
         '''
         Create the SQLite Units table.
-        Returns a Deferred
         '''
         log.info("Creating tess_units_t Table if not exists")
-        return self.pool.runOperation(
+        self.connection.execute(
             '''
             CREATE TABLE IF NOT EXISTS tess_units_t
             (
@@ -163,30 +124,61 @@ class TESSUnits(Table):
             valid_state               TEXT
             );
             '''
-        )
+        ).commit()
 
 
-    @inlineCallbacks
     def populate(self, json_dir):
         '''
         Populate the SQLite Units Table.
-        Returns a Deferred
         '''
-        
-        read_rows = yield self.rows(json_dir)
+        read_rows = self.rows(json_dir)
         log.info("Populating/Replacing Units Table data")
-        yield self.pool.runInteraction( _populate, read_rows )
+        self.connection.executemany(
+            '''INSERT OR REPLACE INTO tess_units_t (
+                units_id,
+                frequency_units,
+                magnitude_units,
+                ambient_temperature_units,
+                sky_temperature_units,
+                azimuth_units,
+                altitude_units,
+                longitude_units,
+                latitude_units,
+                height_units,
+                signal_strength_units,
+                valid_since,
+                valid_until,
+                valid_state,
+                timestamp_source
+            ) VALUES (
+                :units_id,
+                :frequency_units,
+                :magnitude_units,
+                :ambient_temperature_units,
+                :sky_temperature_units,
+                :azimuth_units,
+                :altitude_units,
+                :longitude_units,
+                :latitude_units,
+                :height_units,
+                :signal_strength_units,
+                :valid_since,
+                :valid_until,
+                :valid_state,
+                :timestamp_source
+            )'''
+            , read_rows 
+        ).commit()
       
     
     # --------------
     # Helper methods
     # --------------
 
-    @inlineCallbacks
     def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESSUnits.FILE), [DEFAULT_UNITS])
-        returnValue(read_rows)
+        read_rows = fromJSON(os.path.join(json_dir, TESSUnits.FILE), [DEFAULT_UNITS])
+        return read_rows
 
    # ================
    # OPERATIONAL API

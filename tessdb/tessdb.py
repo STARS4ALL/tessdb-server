@@ -66,13 +66,12 @@ class TESSDBService(MultiService):
     # Service API
     # -----------
 
-    @inlineCallbacks
     def startService(self):
         log.info('starting {tessdb} using Twisted {tw_version}', 
             tessdb=VERSION_STRING, tw_version=__twisted_version__)
         self.dbaseService   = self.getServiceNamed(DBaseService.NAME)
         self.mqttService    = self.getServiceNamed(MQTTService.NAME)
-        yield self.dbaseService.startService()    # This is asynchronous !
+        self.dbaseService.startService()
         self.mqttService.startService()
         self.statsTask.start(self.T_STAT, now=False) # call every T seconds
 

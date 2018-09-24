@@ -60,10 +60,6 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _populate(transaction, rows):
-    '''Dimension initial data loading (replace flavour)'''
-    transaction.executemany(
-        "INSERT OR REPLACE INTO time_t VALUES(?,?,?,?,?,?)", rows)
 
 # ============================================================================ #
 #                               TIME OF DAY TABLE (DIMENSION)
@@ -75,19 +71,18 @@ class TimeOfDay(Table):
     START_TIME  = datetime.datetime(year=1900,month=1,day=1,hour=0,minute=0,second=0)
     END_TIME    = datetime.datetime(year=1900,month=1,day=1,hour=23,minute=59,second=59)
 
-    def __init__(self, pool, secs_resol):
+    def __init__(self, connection, secs_resol):
         '''Create and Populate the SQlite Time of Day Table'''
-        Table.__init__(self, pool)
+        Table.__init__(self, connection)
         self.secs_resol = secs_resol
         self.ONE        = datetime.timedelta(seconds=secs_resol)
 
     def table(self):
         '''
         Create the SQLite Time of Day table.
-        Returns a Deferred.
         '''
         log.info("Creating Time of Day Table if not exists")
-        return self.pool.runOperation(
+        self.connection.execute(
             '''
             CREATE TABLE IF NOT EXISTS time_t
             (
@@ -99,16 +94,18 @@ class TimeOfDay(Table):
             day_fraction   REAL
             );
             '''
-        )
+        ).commit()
 
 
     def populate(self, json_dir):
         '''
         Populate the SQLite Time Table.
-        Returns a Deferred.
         '''
         log.info("Populating/Replacing Time Table data")
-        return self.pool.runInteraction( _populate, self.rows() )
+        self.connection.executemany( 
+            "INSERT OR REPLACE INTO time_t VALUES(?,?,?,?,?,?)", 
+            self.rows() 
+        ).commit()
 
     # --------------
     # Helper methods

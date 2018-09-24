@@ -69,46 +69,6 @@ log2 = Logger(namespace='registry')
 # Module Utility Functions
 # ------------------------
 
-# This function is no needed because of the auto-registering process
-# Anyway, we keep it for reference or future use.
-def _populate(transaction, rows):
-    '''Dimension initial data loading (replace flavour)'''
-    transaction.executemany(
-        '''INSERT OR REPLACE INTO tess_t (
-            tess_id,
-            name,
-            mac_address,
-            zero_point,
-            filter,
-            valid_since,
-            valid_until,
-            valid_state,
-            location_id
-        ) VALUES (
-            :tess_id,
-            :name,
-            :mac_address,
-            :zero_point,
-            :filter,
-            :valid_since,
-            :valid_until,
-            :valid_state,
-            :location_id
-        )
-        ''', rows)
-
-
-def _deployInstr(transaction, rows):
-    '''Update location id of given TESS instruments'''
-    transaction.executemany(
-        '''UPDATE tess_t SET location_id = (
-            SELECT location_id FROM location_t
-            WHERE  location_t.site == :site
-           )
-           WHERE name == :name
-        ''', rows)
-
-
 def _updateCalibration(cursor, row):
     '''
     Updates Instrument calibration constant keeping its history
@@ -146,53 +106,6 @@ def _updateCalibration(cursor, row):
         )
         ''',  row)
 
-def _createIndices(cursor):
-    '''
-    Create table Indices
-    '''
-    cursor.execute("CREATE INDEX IF NOT EXISTS tess_name_i ON tess_t(name);")
-    cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
-
-
-def _createViews(cursor):
-    '''
-    Create Views
-    '''
-    # This is the  outrigger to Location dimension
-    cursor.execute(
-        '''
-        CREATE VIEW IF NOT EXISTS tess_v 
-        AS SELECT
-            tess_t.tess_id,
-            tess_t.name,
-            tess_t.channel,
-            tess_t.model,
-            tess_t.firmware,
-            tess_t.mac_address,
-            tess_t.zero_point,
-            tess_t.cover_offset,
-            tess_t.filter,
-            tess_t.fov,
-            tess_t.azimuth,
-            tess_t.altitude,
-            tess_t.valid_since,
-            tess_t.valid_until,
-            tess_t.valid_state,
-            location_t.contact_person,
-            location_t.organization,
-            location_t.contact_email,
-            location_t.site,
-            location_t.longitude,
-            location_t.latitude,
-            location_t.elevation,
-            location_t.zipcode,
-            location_t.location,
-            location_t.province,
-            location_t.country,
-            location_t.timezone
-        FROM tess_t JOIN location_t USING (location_id);
-        '''
-        )
 
 
 # ============================================================================ #
@@ -204,17 +117,16 @@ class TESS(Table):
     DEPL_FILE        = 'tess_location.json'
     INSTRUMENTS_FILE = 'tess.json'
 
-    def __init__(self, pool, validate=False):
-        Table.__init__(self, pool)
+    def __init__(self, connection, validate=False):
+        Table.__init__(self, connection)
         self.resetCounters()
 
     def table(self):
         '''
         Create the SQLite Units table.
-        Returns a Deferred
         '''
         log.info("Creating tess_t Table if not exists")
-        return self.pool.runOperation(
+        self.connection.execute(
             '''
             CREATE TABLE IF NOT EXISTS tess_t
             (
@@ -236,39 +148,102 @@ class TESS(Table):
             altitude      REAL    DEFAULT 90.0
             );
             '''
-        )
+        ).commit()
 
     def indices(self):
         '''
         Create indices to SQLite Units table.
-        Returns a Deferred
         '''
         log.info("Creating tess_t Indexes if not exists")
-        return self.pool.runInteraction(_createIndices)
+        cursor = self.connection.cursor()
+        cursor.execute("CREATE INDEX IF NOT EXISTS tess_name_i ON tess_t(name);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
+        cursor.commit()
+
 
     def views(self):
         '''
         Create Views associated to this dimension.
-        Returns a Deferred
         '''
         log.info("Creating tess_t Views if not exists")
-        return self.pool.runInteraction(_createViews)
+        self.connection.execute(
+            '''
+            CREATE VIEW IF NOT EXISTS tess_v 
+            AS SELECT
+                tess_t.tess_id,
+                tess_t.name,
+                tess_t.channel,
+                tess_t.model,
+                tess_t.firmware,
+                tess_t.mac_address,
+                tess_t.zero_point,
+                tess_t.cover_offset,
+                tess_t.filter,
+                tess_t.fov,
+                tess_t.azimuth,
+                tess_t.altitude,
+                tess_t.valid_since,
+                tess_t.valid_until,
+                tess_t.valid_state,
+                location_t.contact_person,
+                location_t.organization,
+                location_t.contact_email,
+                location_t.site,
+                location_t.longitude,
+                location_t.latitude,
+                location_t.elevation,
+                location_t.zipcode,
+                location_t.location,
+                location_t.province,
+                location_t.country,
+                location_t.timezone
+            FROM tess_t JOIN location_t USING (location_id);
+            '''
+        ).commit()
 
 
-    @inlineCallbacks
     def populate(self, json_dir):
         '''
         Populate the SQLite Instruments Table.
-        Returns a Deferred
         '''
         if os.path.exists(os.path.join(json_dir, TESS.INSTRUMENTS_FILE)):
             log.info("Loading instruments file")
-            read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESS.INSTRUMENTS_FILE), DEFAULT_INSTRUMENT)
-            yield self.pool.runInteraction( _populate, read_rows )
+            read_rows = fromJSON(os.path.join(json_dir, TESS.INSTRUMENTS_FILE), DEFAULT_INSTRUMENT)
+            self.connection.executemany(
+                '''INSERT OR REPLACE INTO tess_t (
+                    tess_id,
+                    name,
+                    mac_address,
+                    zero_point,
+                    filter,
+                    valid_since,
+                    valid_until,
+                    valid_state,
+                    location_id
+                ) VALUES (
+                    :tess_id,
+                    :name,
+                    :mac_address,
+                    :zero_point,
+                    :filter,
+                    :valid_since,
+                    :valid_until,
+                    :valid_state,
+                    :location_id
+                )
+                '''
+                , read_rows).commit()
 
         log.info("Assigning locations to instruments")
-        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
-        yield self.pool.runInteraction( _deployInstr, read_rows )
+        read_rows = fromJSON(os.path.join(json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
+        self.connection.executemany( 
+            '''UPDATE tess_t SET location_id = (
+                SELECT location_id FROM location_t
+                    WHERE  location_t.site == :site
+                )
+                WHERE name == :name
+            '''
+            , read_rows ).commit()
 
 
     # -------------

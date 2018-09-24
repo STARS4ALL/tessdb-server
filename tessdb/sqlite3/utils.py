@@ -20,7 +20,6 @@ import ephem
 # Twisted imports
 # ---------------
 
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed
 from twisted.logger   import Logger
     
 #--------------
@@ -121,30 +120,32 @@ def isDaytime(sunrise, sunset, now):
 class Table(object):
     '''Table object with generic template method'''
 
-    def __init__(self, pool):
-        '''Create a table and stores a pool reference to the database'''
-        self.pool = pool
+    def __init__(self, connection):
+        '''Create a table and stores a synchronous reference to the database
+        for initialization purposes'''
+        self.connection = connection
+        # Asynchronous coonection pool se to None at this stage
+        self.pool = None
 
     def indices(self):
         '''
         Default index creation implementation for those tables
         that do not create indices
         '''
-        return succeed(None)
+        return
 
     def views(self):
         '''
         Create views for outrigger dimensions if neccessary
         '''
-        return succeed(None)
+        return
 
-    @inlineCallbacks
     def schema(self, json_dir):
         '''
         Generates a table, taking an open data connection
         and a replace flag.
         '''
-        yield self.table()
-        yield self.indices()
-        yield self.views()
-        yield self.populate(json_dir)
+        self.table()
+        self.indices()
+        self.views()
+        self.populate(json_dir)

@@ -66,7 +66,6 @@ log = Logger(namespace='dbase')
 # ------------------------
 
 
-
 # ============================================================================ #
 #                   REAL TIME TESS READNGS (PERIODIC SNAPSHOT FACT TABLE)
 # ============================================================================ #
@@ -74,10 +73,10 @@ log = Logger(namespace='dbase')
 class TESSReadings(Table):
 
    
-    def __init__(self, pool, parent):
+    def __init__(self, connection, parent):
         '''Create the SQLite TESS Readings table'''
 
-        Table.__init__(self, pool)
+        Table.__init__(self, connection)
         self.parent = parent
         self.setOptions(location_filter=True)
         self.resetCounters()
@@ -86,10 +85,9 @@ class TESSReadings(Table):
     def table(self):
         '''
         Create the SQLite TESS Readings table.
-        Returns a Deferred
         '''
         log.info("Creating tess_readings_t Table if not exists")
-        return self.pool.runOperation(
+        self.connection.execute(
             '''
             CREATE TABLE IF NOT EXISTS tess_readings_t
             (
@@ -112,10 +110,10 @@ class TESSReadings(Table):
             PRIMARY KEY (date_id, time_id, tess_id)
             );
             '''
-        )
+        ).commit()
 
     def populate(self, json_dir):
-        return succeed(None)
+        return
 
     # -------------
     # log stats API

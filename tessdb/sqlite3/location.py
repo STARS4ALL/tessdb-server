@@ -97,10 +97,72 @@ log = Logger(namespace='dbase')
 # Module Utility Functions
 # ------------------------
 
-def _populate(transaction, rows):
-    '''Dimension initial data loading (replace flavour)'''
+
+def _updateSunrise(transaction, rows):
+    '''Update sunrise/sunset in given rows'''
     transaction.executemany(
-        '''INSERT OR REPLACE INTO location_t (
+        '''
+        UPDATE location_t SET sunrise = :sunrise, sunset = :sunset
+        WHERE location_id == :id
+        ''', rows)
+       
+# ============================================================================ #
+#                               LOCATION TABLE (DIMENSION)
+# ============================================================================ #
+
+# This table does not represent the exact instrument location 
+# but the general area where is deployed.
+
+class Location(Table):
+
+    FILE = 'locations.json'
+
+    def __init__(self, connection):
+        '''Create and populate the SQLite Location Table'''
+        Table.__init__(self, connection)
+
+    # ==========
+    # SCHEMA API
+    # ==========
+
+    def table(self):
+        '''
+        Create the SQLite Location table
+        Returns a Deferred
+        '''
+        log.info("Creating location_t Table if not exists")
+        self.connection.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS location_t
+            (
+            location_id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact_email           TEXT,
+            site                    TEXT,
+            longitude               REAL,
+            latitude                REAL,
+            elevation               REAL,
+            zipcode                 TEXT,
+            location                TEXT,
+            province                TEXT,
+            country                 TEXT,
+            sunrise                 TEXT,
+            sunset                  TEXT,
+            contact_name            TEXT,
+            timezone                TEXT DEFAULT 'Etc/UTC',
+            organization            TEXT
+            );
+            '''
+        ).commit()
+
+
+    def populate(self, json_dir):
+        '''
+        Populate the SQLite Location Table
+        '''
+        read_rows = self.rows(json_dir)
+        log.info("Populating/Replacing Units Table data")
+        self.connection.executemany( 
+            '''INSERT OR REPLACE INTO location_t (
             location_id,
             contact_name,
             contact_email,
@@ -126,75 +188,7 @@ def _populate(transaction, rows):
             :location,
             :province,
             :country
-        )''', rows)
-        
-
-def _updateSunrise(transaction, rows):
-    '''Update sunrise/sunset in given rows'''
-    transaction.executemany(
-        '''
-        UPDATE location_t SET sunrise = :sunrise, sunset = :sunset
-        WHERE location_id == :id
-        ''', rows)
-       
-# ============================================================================ #
-#                               LOCATION TABLE (DIMENSION)
-# ============================================================================ #
-
-# This table does not represent the exact instrument location 
-# but the general area where is deployed.
-
-class Location(Table):
-
-    FILE = 'locations.json'
-
-    def __init__(self, pool):
-        '''Create and populate the SQLite Location Table'''
-        Table.__init__(self, pool)
-
-    # ==========
-    # SCHEMA API
-    # ==========
-
-    def table(self):
-        '''
-        Create the SQLite Location table
-        Returns a Deferred
-        '''
-        log.info("Creating location_t Table if not exists")
-        return self.pool.runOperation(
-            '''
-            CREATE TABLE IF NOT EXISTS location_t
-            (
-            location_id             INTEGER PRIMARY KEY AUTOINCREMENT,
-            contact_email           TEXT,
-            site                    TEXT,
-            longitude               REAL,
-            latitude                REAL,
-            elevation               REAL,
-            zipcode                 TEXT,
-            location                TEXT,
-            province                TEXT,
-            country                 TEXT,
-            sunrise                 TEXT,
-            sunset                  TEXT,
-            contact_name            TEXT,
-            timezone                TEXT DEFAULT 'Etc/UTC',
-            organization            TEXT
-            );
-            '''
-        )
-
-
-    @inlineCallbacks
-    def populate(self, json_dir):
-        '''
-        Populate the SQLite Location Table
-        Returns a Deferred
-        '''
-        read_rows = yield self.rows(json_dir)
-        log.info("Populating/Replacing Units Table data")
-        yield self.pool.runInteraction( _populate, read_rows )
+        )''', read_rows).commit()
       
 
 
@@ -202,10 +196,10 @@ class Location(Table):
     # Helper methods
     # --------------
 
-    @inlineCallbacks
+
     def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = yield deferToThread(fromJSON, os.path.join(json_dir, Location.FILE), [DEFAULT_LOCATION])
+        read_rows = fromJSON(os.path.join(json_dir, Location.FILE), [DEFAULT_LOCATION])
         read_rows.append(DEFAULT_LOCATION)
         read_rows.append(OUT_OF_SERVICE_LOCATION)
         returnValue(read_rows)
