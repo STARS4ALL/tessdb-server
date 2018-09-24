@@ -108,6 +108,7 @@ class DBaseService(Service):
             raise ImportError( msg )
 
         # Create DAO objects
+        self.pool           = None
         self.connection     = connection
         self.tess           = TESS(connection)
         self.tess_units     = TESSUnits(connection)
@@ -182,14 +183,16 @@ class DBaseService(Service):
         
     def pauseService(self):
         log.info('TESS database writer paused')
-        self.paused = True
-        self.closePool()
+        if not self.paused:
+            self.paused = True
+            self.closePool()
         return defer.succeed(None)
 
     def resumeService(self):
         log.info('TESS database writer resumed')
-        self.openPool()
-        self.paused = False
+        if self.paused:
+            self.openPool()
+            self.paused = False
         return defer.succeed(None)
 
     # ---------------
@@ -371,15 +374,14 @@ class DBaseService(Service):
       
 
     def closePool(self):
-        # setup the connection pool for asynchronouws adbapi
+        '''setup the connection pool for asynchronouws adbapi'''
+        self.pool.close()
+        self.pool                = None
         self.tess.pool           = None
         self.tess_units.pool     = None
         self.tess_readings.pool  = None
         self.tess_locations.pool = None
         self.date.pool           = None
         self.time.pool           = None
-        if self.pool is not None:
-            self.pool.close()
-            self.pool = None
-   
+       
     
