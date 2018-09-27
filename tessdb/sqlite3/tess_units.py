@@ -199,7 +199,7 @@ class TESSUnits(Table):
             AND timestamp_source == :timestamp_source
             ''', row)
 
-        if self._id[timestamp_source] is None:
+        if self._id.get(timestamp_source) is None:
             row = yield queryLatest(self.pool, timestamp_source)
             self._id[timestamp_source] = row[0][0]
         returnValue(self._id[timestamp_source])

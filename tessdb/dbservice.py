@@ -178,6 +178,8 @@ class DBaseService(Service):
             location_horizon=new_options['location_horizon'])
         self.options = new_options
         self.onBoot = True  # Forces sunrise/sunset computation
+        self.tess.invalidCache()
+        self.tess_locations.invalidCache()
         yield self.sunrise()
 
         

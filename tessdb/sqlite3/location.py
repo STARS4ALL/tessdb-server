@@ -37,11 +37,11 @@ import ephem
 # Twisted imports
 # ---------------
 
-from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks, returnValue
-from twisted.logger         import Logger
+from twisted.internet         import reactor, defer
+from twisted.internet.defer   import inlineCallbacks, returnValue
+from twisted.logger           import Logger
 from twisted.internet.threads import deferToThread
-from twisted.internet.task import deferLater
+from twisted.internet.task    import deferLater
 
 #--------------
 # local imports
@@ -120,6 +120,7 @@ class Location(Table):
     def __init__(self, connection):
         '''Create and populate the SQLite Location Table'''
         Table.__init__(self, connection)
+        self._cache = dict()
 
     # ==========
     # SCHEMA API
@@ -206,6 +207,18 @@ class Location(Table):
         read_rows.append(OUT_OF_SERVICE_LOCATION)
         return (read_rows)
 
+    def invalidCache(self):
+        '''Invalid sunrise/sunset cache'''
+        log.info("location_t sunset cache invalidated with size = {size}", size=len(self._cache))
+        self._cache = dict()
+
+    def updateCache(self, resultset, loc_id):
+        '''Update sunrise/asunset cache if found'''
+        if(len(resultset)):
+            self._cache[loc_id] = resultset
+        return resultset
+
+
     # ===============
     # OPERATIONAL API
     # ===============
@@ -215,13 +228,18 @@ class Location(Table):
         Find location given by 'ident'
         Returns a Deferred.
         '''
+        if ident in self._cache.keys():
+            return defer.succeed(self._cache.get(ident))
+
         param = {'id': ident }
-        return self.pool.runQuery(
+        d = self.pool.runQuery(
             '''
             SELECT sunrise, sunset 
             FROM location_t 
             WHERE location_id == :id
             ''', param)
+        d.addCallback(self.updateCache, ident)
+        return d
 
     def getLocations(self, index, count):
         '''

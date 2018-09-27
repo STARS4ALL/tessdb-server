@@ -36,9 +36,10 @@ import datetime
 # Twisted imports
 # ---------------
 
-from twisted.internet.defer import inlineCallbacks, returnValue
+from twisted.internet         import defer
+from twisted.internet.defer   import inlineCallbacks, returnValue
 from twisted.internet.threads import deferToThread
-from twisted.logger         import Logger
+from twisted.logger           import Logger
 
 #--------------
 # local imports
@@ -120,6 +121,7 @@ class TESS(Table):
     def __init__(self, connection, validate=False):
         Table.__init__(self, connection)
         self.resetCounters()
+        self._cache = dict()
 
     def table(self):
         '''
@@ -249,6 +251,16 @@ class TESS(Table):
             , read_rows )
         self.connection.commit()
 
+    def invalidCache(self):
+        '''Invalid TESS names cache'''
+        log.info("tess_t cache invalidated with size = {size}", size=len(self._cache))
+        self._cache = dict()
+
+    def updateCache(self, resultset, name):
+        '''Update TESS names cache if found'''
+        if(len(resultset)):
+            self._cache[name] = resultset
+        return resultset
 
     # -------------
     # log stats API
@@ -352,14 +364,19 @@ class TESS(Table):
         row is a dictionary with at least the following keys: 'name'
         Returns a Deferred.
         '''
+        if row['name'] in self._cache.keys():
+            return defer.succeed(self._cache.get(row['name']))
+
         row['valid_flag'] = CURRENT
-        return self.pool.runQuery(
+        d = self.pool.runQuery(
             '''
             SELECT tess_id, mac_address, zero_point, location_id, filter 
             FROM tess_t 
             WHERE name == :name
             AND valid_state == :valid_flag 
             ''', row)
+        d.addCallback(self.updateCache, row['name'])
+        return d
 
 
 
