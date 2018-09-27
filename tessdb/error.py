@@ -9,7 +9,7 @@ class DiscreteValueError(ValueError):
     def __str__(self):
         s = self.__doc__
         if self.args:
-            s = '{0}: {1} -> {2}'.format(s, self.args[0], str(self.args[1]))
+            s = ' {0}: {1} -> {2}'.format(s, self.args[0], str(self.args[1]))
         s = '{0}.'.format(s)
         return s
 
@@ -24,7 +24,7 @@ class ReadingKeyError(ValidationError):
     def __str__(self):
         s = self.__doc__
         if self.args:
-            s = '{0}: {1}'.format(s, str(self.args[0]))
+            s = ' {0}: {1}'.format(s, str(self.args[0]))
         s = '{0}.'.format(s)
         return s
 
@@ -33,6 +33,6 @@ class ReadingTypeError(ValidationError):
     def __str__(self):
         s = self.__doc__
         if self.args:
-            s = '{0}: "{1}". Should be {2}, got {3}'.format(s, self.args[0], self.args[1], self.args[2])
+            s = ' {0}: "{1}". Should be {2}, got {3}'.format(s, self.args[0], self.args[1], self.args[2])
         s = '{0}.'.format(s)
         return s

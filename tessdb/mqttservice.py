@@ -289,7 +289,7 @@ class MQTTService(ClientService):
                 self.validateRegister(row)
             except ValidationError as e:
                 log.error('Validation error in registration payload={payload!s}', payload=row)
-                log.error('{excp!r}', excp=e)
+                log.error('{excp!s}', excp=e)
             else:
                 log.debug('Enque registration from {log_tag} for DB Writter', log_tag=row['name'])
                 row['name'] = row['name'].lower()  # Get rid of upper case TESS names
@@ -341,7 +341,7 @@ class MQTTService(ClientService):
             except IncorrectTimestampError as e:
                 log.error("Source timestamp unknown format {tstamp}", tstamp=row['tstamp'])
             except Exception as e:
-                log.error('{excp!r}', excp=e)
+                log.error('{excp!s}', excp=e)
             else:
                 log.debug('Enqueue reading from {log_tag} for DB Writter', log_tag=row['name'])
                 row['name'] = row['name'].lower() # Get rid of upper case TESS names
@@ -370,7 +370,7 @@ class MQTTService(ClientService):
             row = json.loads(payload)
         except Exception as e:
             log.error('Invalid JSON in payload={payload}', payload=payload)
-            log.error('{excp!r}', excp=e)
+            log.error('{excp!s}', excp=e)
             return
 
         # Discard retained messages to avoid duplicates in the database
