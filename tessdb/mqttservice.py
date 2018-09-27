@@ -292,6 +292,7 @@ class MQTTService(ClientService):
                 log.error('{excp!r}', excp=e)
             else:
                 log.debug('Enque registration from {log_tag} for DB Writter', log_tag=row['name'])
+                row['name'] = row['name'].lower()  # Get rid of upper case TESS names
                 self.parent.queue['tess_register'].append(row)
 
 
@@ -343,13 +344,14 @@ class MQTTService(ClientService):
                 log.error('{excp!r}', excp=e)
             else:
                 log.debug('Enqueue reading from {log_tag} for DB Writter', log_tag=row['name'])
+                row['name'] = row['name'].lower() # Get rid of upper case TESS names
                 self.parent.queue['tess_readings'].append(row)
 
 
     def onDisconnection(self, reason):
         '''
         Disconenction handler.
-        Tells ClientService what to do when the conenction is lost
+        Tells ClientService what to do when the connection is lost
         '''
         log.warn("tessdb lost connection with its MQTT broker")
         self.topics = []
