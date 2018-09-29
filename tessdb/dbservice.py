@@ -180,6 +180,9 @@ class DBaseService(Service):
         self.onBoot = True  # Forces sunrise/sunset computation
         self.tess.invalidCache()
         self.tess_locations.invalidCache()
+        # It is very convenient to recompute all sunrise/sunset data after a reload
+        # After having assigned an instrument to a location
+        # Otherwise, I have to restart tssdb and loose some samples
         yield self.sunrise()
 
         

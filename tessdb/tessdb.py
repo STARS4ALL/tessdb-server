@@ -107,10 +107,6 @@ class TESSDBService(MultiService):
             setLogTags(logTags=config_opts['tessdb']['log_selected'])
             yield self.mqttService.reloadService(config_opts['mqtt'])
             yield self.dbaseService.reloadService(config_opts['dbase'])
-            # It is very convenient to recompute all sunrise/sunset data after a reload
-            # After having assigned an instrument to a location
-            # Otherwise, I have to restart tssdb and loose some samples
-            yield self.dbaseService.sunrise() # This is asynchronous !
     
     # -------------
     # log stats API
