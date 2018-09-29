@@ -184,6 +184,7 @@ class DBaseService(Service):
         # After having assigned an instrument to a location
         # Otherwise, I have to restart tssdb and loose some samples
         yield self.sunrise()
+        returnValue(None)
 
         
     def pauseService(self):
