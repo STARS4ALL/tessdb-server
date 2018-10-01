@@ -182,8 +182,9 @@ class DBaseService(Service):
         self.tess_locations.invalidCache()
         # It is very convenient to recompute all sunrise/sunset data after a reload
         # After having assigned an instrument to a location
-        # Otherwise, I have to restart tssdb and loose some samples
-        yield self.sunrise()
+        # Otherwise, I have to restart tessdb and loose some samples
+        if not self.paused:
+            yield self.sunrise()
         returnValue(None)
 
         
@@ -371,6 +372,7 @@ class DBaseService(Service):
     def openPool(self):
         # setup the connection pool for asynchronouws adbapi
         self.pool  = self.getPoolFunc(self.options['connection_string'])
+        log.info("Opened a DB Connection to {conn!s}", conn=self.options['connection_string'])
         self.tess.pool           = self.pool
         self.tess_units.pool     = self.pool
         self.tess_readings.pool  = self.pool
@@ -382,6 +384,7 @@ class DBaseService(Service):
     def closePool(self):
         '''setup the connection pool for asynchronouws adbapi'''
         self.pool.close()
+        log.info("Closed a DB Connection to {conn!s}", conn=self.options['connection_string'])
         self.pool                = None
         self.tess.pool           = None
         self.tess_units.pool     = None
