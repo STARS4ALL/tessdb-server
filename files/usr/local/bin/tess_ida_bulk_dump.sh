@@ -34,7 +34,7 @@ out_dir="${2:-$DEFAULT_REPORTS_DIR}"
 name=$(basename ${0%.sh})
 
 # Jinja2 template to render IDA format file
-template="${2:-/etc/tessdb/IDA-template.j2}"
+template="${3:-/etc/tessdb/IDA-template.j2}"
 
 if  [[ ! -f $dbase || ! -r $dbase ]]; then
         echo "Database file $dbase does not exists or is not readable."
