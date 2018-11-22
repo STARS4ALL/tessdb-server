@@ -71,6 +71,7 @@ CLASSIFIERS  = [
 
 DATA_FILES  = [ 
   ('/etc/init.d' ,           ['files/etc/init.d/tessdb']),
+  ('/etc/systemd/system',    ['files/etc/systemd/system/tessdb.service'])
   ('/etc/default',           ['files/etc/default/tessdb']),
   ('/etc/tessdb',            ['files/etc/tessdb/config.example', 
                               'files/etc/tessdb/tess_units.example.json', 
