@@ -60,7 +60,6 @@ CLASSIFIERS  = [
     'Intended Audience :: Science/Research',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: MIT License',
-    'Operating System :: Microsoft :: Windows :: Windows XP',
     'Operating System :: POSIX :: Linux',
     'Programming Language :: Python :: 2.7',
     'Programming Language :: SQL',

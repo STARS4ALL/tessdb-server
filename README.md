@@ -2,20 +2,20 @@
 
 Linux service to collect measurements pubished by TESS Sky Quality Meter via MQTT. TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www.observatorioremoto.com/TESS.pdf)
 
-**tessdb** is being used as part of the [STARS4ALL Project](https://guaix.fis.ucm.es/splpr/TESS-V1).
+**tessdb** is being used as part of the [STARS4ALL Project](http://www.stars4all.eu/).
 
 ## Description
 
 **tessdb** is a software package that collects measurements from one or several
-TESS instruments into a SQLite Database.  
+TESS instruments into database (currently a SQLite Database).  
 
 It is a [Python Twisted Application](https://twistedmatrix.com/trac/)
 that uses a [custom Twisted library implementing the MQTT protocol](https://github.com/astrorafael/twisted-mqtt)
 
 Desktop applicatons may query the database to generate reports and graphs
-using the accumulated, historic data.
+using the accumulated, historic data. There are some reports scripts already included in the package, specially an IDA-format monthly report script.
 
-The Windows version works as a Windows service, but the Linux version has further functionality like servcie reload and automatic daily logfile and rotation.
+**Note**: The Windows version has been dropped, as it was never used.
 
 These data sources are available:
 
@@ -23,11 +23,11 @@ These data sources are available:
 
 Instrument should send their readings at twice the time resolution specified in the config file (in seconds).
 
-**Warning**: Time is UTC, not local time.
+**Warning**: Time referencie is always UTC, not local time.
 
 # INSTALLATION
     
-## Linux installation (Debian)
+## Linux installation
 
 ## Requirements
 
@@ -35,18 +35,17 @@ The following components are needed and should be installed first:
 
  * python 2.7.x (tested on Ubuntu Python 2.7.6)
 
+**Note:** It is foreseen a Python 3 migration in the future, retaining Python 2.7.x compatibility.
+
 ### Installation
 
-Installation via PyPi repository
-
-  `sudo pip install tessdb`
-
-or from GitHub:
+Installation is done from GitHub:
 
     git clone https://github.com/astrorafael/tessdb.git
     cd tessdb
     sudo python setup.py install
 
+**Note:** Installation from PyPi is now obsolete. Do not use the package uploaded in PyPi.
 
 * All executables are copied to `/usr/local/bin`
 * The database is located at `/var/dbase/tess.db` by default
@@ -56,74 +55,28 @@ or from GitHub:
     - twisted-mqtt
     - pyephem
     - tabulate
+    - pytz (for IDA reports generation)
+    - jinja2 (for IDA reports generation)
     
 ### Start up and Verification
 
 * Type `sudo tessdb -k` to start the service in foreground with console output.
-Verify that it starts without errors or exceptions.
+Verify that it starts without errors or exceptions. When done, abort it with `^C`
 
-* Type `sudo service tessdb start` to start it as a backgroud service.
-* Type `sudo update-rc.d tessdb defaults` to start it at boot time.
+From tessdb release 1.2.0, the background execution is handled as a `systemd` service instead of the old system V style init script:
 
-## Windows installation
+    `sudo systemctl start tessdb`
 
-**WARNING**: The Windows version is currently untested due to the lack of a real usage need. We recomemnd using the *Linux version*.
+although the old `sudo service tessdb start` command still works.
+* It is strongly recommended to enable the service at boot time by issuing:
 
-## Requirements
-
-(Tested on Windows XP SP1 & python 2.7.10)
-* Have [Python 2.7 for Windows](https://www.python.org/downloads/windows/) installed.
-* Have [PythonWin extensions](http://sourceforge.net/projects/pywin32/files/pywin32/) installed. select the latest build
-fpr the **Pyhton2.7 version**
-* Have the [Microsoft Visual C++ Compiler for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266) installed. Thos is necessary to install `twisted` later on. Systems requirements state for Windows 7+, but it works fine for Windows XP, 32bits. 
-
-### Installation
-
-The Windows python 2.7 distro comes with the pip utility included. 
-
-1. Open a `CMD.exe` console, **with Administrator privileges for Windows 7 and higher**
-2. Inside this console type:
-
-`pip install twisted`
-
-Twisted will install (15.5.0 at this moment)
-
-You can test that this installation went fine by opening a python command line (IDLE or Python CMD)
-and type:
-
-	```
-	>>> import twisted
-	>>> print twisted.__version__
-	15.5.0
-	>>> _
-	```
-
-3. Inside this new created folder type:
-
- `pip install tessdb`
-
-* The executables (.bat files) are located in the same folder `C:\tessdb`
-* The database is located at `C:\tessdb\dbase` by default. It is strongly recommeded that you leave it there.
-* The log file is located at `C:\tessdb\log\tessdb.log`
-* The following required PIP packages will be automatically installed:
-    - twisted,
-    - twisted-mqtt
-    - pyephem
-    - tabulate
-    
-### Start up and Verification
-
-In the same CMD console, type`.\tessdb.bat` to start it in forground and verify that it starts without errors or exceptions.
-
-Go to the Services Utility and start the TESSDB database service.
-
+`sudo systemctl enable tessdb`
 
 # CONFIGURATION
 
 There is a small configuration file for this service:
 
 * `/etc/tessdb/config` (Linux)
-* `C:\tessdb\config.ini` (Windows)
 
 This file is self explanatory. 
 In special, the database file name and location is specified in this file.
@@ -134,48 +87,46 @@ Some of the properities marked in this file are marked as *reloadable property*.
 Log file is usually placed under `/var/log/tessdb.log` in Linux or under `C:\tessdb\log` folder on Windows. 
 Default log level is `info`. It generates very litte logging at this level.
 File is rotated by logrotate **only under Linux**. 
-For Windows, it requires support from an exteral log rotator software such as [LogRotateWin](http://sourceforge.net/projects/logrotatewin/)
 
-## Server Start/Stop/Restart
+## Server Status/Start/Stop/Restart
 
-### Under Linux
-
-* Service status: `sudo service emadb status`
-* Start Service:  `sudo service emadb start`
-* Stop Service:   `sudo service emadb stop`
-* Restart Service: `sudo service emadb restart`. A service restart kills the process and then starts a new one
-
-### Under Windows
-
-The start/stop/pause operations can be performed with the Windows service GUI tool
-**If the config.ini file is not located in the usual locatioon, you must supply its path to the tool as extra arguments**
+* Service status: `sudo systemctl status tessdb` or `sudo service tessdb status`
+* Start Service:  `sudo systemctl start tessdb` or `sudo service tessdb start`
+* Stop Service:   `sudo systemctl stop tessdb` or `sudo service tessdb stop`
+* Restart Service: `sudo systemctl restart tessdb` or `sudo service tessdb stop`
 
 ## Service Pause/Resume
 
-The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enqueued and not written to the database. This is useful to perform high risk operations on the database without loss of data. Examples:
+The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enqueued and not written to the database. Also, all connections to the database are closed. This allows to perform high risk operations on the database without loss of incoming data. Examples:
 
-* Compact the database using the SQLite VACUUM pragma
+* Compact the database using the SQLite `VACUUM` pragma
 * Migrating data from tables.
 * etc.
 
-### Under Linux
+Service pause/resume use internally signals `SIGUSR1` and `SIGUSR2`.
 
-To pause the server, type: `sudo service emadb pause` and watch the log file output wit `tail -f /var/log/emadb.log`
+To pause the server, type: `sudo tessdb_pause` and watch the log file output wit `tail -f /var/log/tessdb.log`:
 
-To resume normal operation type `sudo service tessdb resume` and wautch the same log file. Service pause/resume use signals `SIGUSR1` and `SIGUSR2`.
+```
+2018-11-23T13:08:25+0100 [dbase#info] TESS database writer paused
+2018-11-23T13:08:25+0100 [dbase#info] Closed a DB Connection to /var/dbase/tess.db
+```
 
-### Under Windows
+**Note:** The old  `sudo service tessdb pause` command do not work anymore.
 
-Server pause/resume is made through the standard service GUI tool by clicking the Pasue and Resume buttons.
+To resume normal operation type `sudo tessdb_resume` and watch the same log file:
+
+```
+2018-11-23T13:10:37+0100 [dbase#info] TESS database writer resumed
+2018-11-23T13:10:37+0100 [dbase#info] Opened a DB Connection to /var/dbase/tess.db
+```
+
 
 ##  Service reload
 
-During a reload the service is not stopped and re-reads the new values form the configuration file and apply the changes. In general, all aspects not related to maintaining the current connection to the MQTT broker or changing the database schema can be reloaded. The full list is described inside the configuration file.
+During a reload the service is not stopped and re-reads the new values form the configuration file and apply the changes. In general, all aspects not related to maintaining the current connection to the MQTT broker or changing the database schema can be reloaded. The full list of reloadadble properties is described inside the configuration file.
 
-* *Linux:* The `service emadb reload` will keep the MQTT connection intact. 
-* *Windows:* There is no GUI button in the service tool for a reload. You must execute an auxiliar script `C:\emadb\winreload.py` by double-clicking on it. 
-
-In both cases, watch the log file to ensure this is done.
+* Type `sudo systemctl reload tessdb` or `sudo service tessdb reload`. 
 
 
 # DATA MODEL
@@ -324,8 +275,8 @@ Activating this filter have the following conecuences:
 3. Instruments assigned to Locations with `NULL` or `Unknown` longitude, latitude or elevation columns will have their readings rejected.
 
 ## SQLite Database Maintenance
-***Linux only*** The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program 
-is first put in pause mode, perform the backup and then resumes operation.
+
+The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program is first set in pause mode, perform the backup and then resumes operation.
 
 ## The `tess` utility
 
