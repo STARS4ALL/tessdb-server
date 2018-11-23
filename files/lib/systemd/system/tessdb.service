@@ -7,7 +7,6 @@ Type=simple
 User=root
 KillMode=process
 ExecStart=/usr/bin/python -m tessdb --config /etc/tessdb/config
-#PIDFile=/var/run/tessdb.pid
 ExecReload=/bin/kill -s HUP -- $MAINPID
 
 [Install]
