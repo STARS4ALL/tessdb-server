@@ -70,8 +70,9 @@ CLASSIFIERS  = [
 ]
 
 DATA_FILES  = [ 
-  ('/etc/init.d' ,           ['files/etc/init.d/tessdb']),
-  ('/etc/systemd/system',    ['files/etc/systemd/system/tessdb.service'])
+  # System V init file will soon dissapear
+  #('/etc/init.d' ,           ['files/etc/init.d/tessdb']),
+  ('/lib/systemd/system',    ['files/lib/systemd/system/tessdb.service']),
   ('/etc/default',           ['files/etc/default/tessdb']),
   ('/etc/tessdb',            ['files/etc/tessdb/config.example', 
                               'files/etc/tessdb/tess_units.example.json', 
@@ -119,6 +120,10 @@ if os.name == "posix":
   # Some fixes after setup
   args = shlex.split( "chmod 644 /etc/logrotate_astro.d/tessdb")
   subprocess.call(args)
+  args = shlex.split( "systemctl daemon-reload")
+  subprocess.call(args)
+
+
 
 elif os.name == "nt":
 
