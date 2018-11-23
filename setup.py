@@ -80,6 +80,8 @@ DATA_FILES  = [
                               'files/etc/tessdb/locations.example.json',
                               'files/etc/tessdb/IDA-template.j2']),
   ('/usr/local/bin',         ['files/usr/local/bin/tessdb',
+                              'files/usr/local/bin/tessdb_pause',
+                              'files/usr/local/bin/tessdb_resume',
                               'files/usr/local/bin/tess', 
                               'files/usr/local/bin/tess_bulk_dump.sh', 
                               'files/usr/local/bin/tess_daily_summary.sh', 
