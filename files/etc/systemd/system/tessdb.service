@@ -1,0 +1,13 @@
+[Unit]
+Description=TESS Quality Sky Meter database service
+Documentation=https://github.com/STARS4ALL/tessdb/blob/master/README.md
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python -m tessdb --config /etc/tessdb/config
+PIDFile=/var/run/tessdb.pid
+ExecReload=/bin/kill ­HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
