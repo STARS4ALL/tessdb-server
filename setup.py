@@ -69,10 +69,7 @@ CLASSIFIERS  = [
 ]
 
 DATA_FILES  = [ 
-  # System V init file will soon dissapear
-  #('/etc/init.d' ,           ['files/etc/init.d/tessdb']),
   ('/lib/systemd/system',    ['files/lib/systemd/system/tessdb.service']),
-  ('/etc/default',           ['files/etc/default/tessdb']),
   ('/etc/tessdb',            ['files/etc/tessdb/config.example', 
                               'files/etc/tessdb/tess_units.example.json', 
                               'files/etc/tessdb/tess_location.example.json', 
@@ -123,8 +120,6 @@ if os.name == "posix":
   subprocess.call(args)
   args = shlex.split( "systemctl daemon-reload")
   subprocess.call(args)
-
-
 
 elif os.name == "nt":
 
