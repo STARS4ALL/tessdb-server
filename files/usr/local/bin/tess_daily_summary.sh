@@ -45,8 +45,17 @@ if  [[ ! -f $dbase || ! -r $dbase ]]; then
         exit 1
 fi
 
+dbname=$(basename $dbase)
+oper_dbname=$(basename $DEFAULT_DATABASE)
+
+if [[ "$dbname" = "$oper_dbname" ]]; then
+    operational_dbase="yes"
+else
+    operational_dbase="no"
+fi
+
 # Stops background database I/O when using the operational database
-if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+if  [[ operational_dbase="yes" ]]; then
         echo "Pausing tessdb service."
     	/usr/local/bin/tessdb_pause 
 		/bin/sleep 2
@@ -57,7 +66,7 @@ fi
 report_by_tess ${dbase} > ${out_dir}/${name}.txt
 
 # Resume background database I/O
-if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+if  [[ operational_dbase="yes" ]]; then
         echo "Resuming tessdb service."
     	/usr/local/bin/tessdb_resume 
 else

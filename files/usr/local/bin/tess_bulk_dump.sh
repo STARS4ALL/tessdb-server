@@ -62,8 +62,17 @@ if  [[ ! -d $out_dir  ]]; then
         exit 1
 fi
 
+dbname=$(basename $dbase)
+oper_dbname=$(basename $DEFAULT_DATABASE)
+
+if [[ "$dbname" = "$oper_dbname" ]]; then
+    operational_dbase="yes"
+else
+    operational_dbase="no"
+fi
+
 # Stops background database I/O when using the operational database
-if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+if  [[ operational_dbase="yes" ]]; then
         echo "Pausing tessdb service."
     	/usr/local/bin/tessdb_pause 
 		/bin/sleep 2
@@ -79,7 +88,7 @@ for instrument in $photometers; do
 done
 
 # Resume background database I/O
-if  [[ $dbase = $DEFAULT_DATABASE ]]; then
+if  [[ operational_dbase="yes" ]]; then
         echo "Resuming tessdb service."
     	/usr/local/bin/tessdb_resume 
 else
