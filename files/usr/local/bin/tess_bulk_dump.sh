@@ -65,7 +65,7 @@ fi
 # Stops background database I/O when using the operational database
 if  [[ $dbase = $DEFAULT_DATABASE ]]; then
         echo "Pausing tessdb service."
-    	/usr/sbin/service tessdb pause 
+    	/usr/local/bin/tessdb_pause 
 		/bin/sleep 2
 else
 	echo "Using backup database, no need to pause tessdb service."
@@ -81,7 +81,7 @@ done
 # Resume background database I/O
 if  [[ $dbase = $DEFAULT_DATABASE ]]; then
         echo "Resuming tessdb service."
-    	/usr/sbin/service tessdb resume 
+    	/usr/local/bin/tessdb_resume 
 else
 	echo "Using backup database, no need to resume tessdb service."
 fi

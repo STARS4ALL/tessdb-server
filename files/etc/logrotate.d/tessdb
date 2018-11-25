@@ -1,3 +1,5 @@
+# Original tessdb package file. 
+# It will be customized by Ansible.
 /var/dbase/tess.db {
 	copy
 	daily
@@ -6,11 +8,11 @@
 	missingok
 	notifempty
 	prerotate
-		/usr/sbin/service tessdb pause > /dev/null 2>/dev/null || true
+		/usr/local/bin/tessdb_pause > /dev/null 2>/dev/null || true
 		/bin/sleep 2
 	endscript
 	postrotate
-		/usr/sbin/service tessdb resume > /dev/null 2>/dev/null 
+		/usr/local/bin/tessdb_resume > /dev/null 2>/dev/null 
 		/usr/local/bin/tessdb_index.sh  > /dev/null 2>/dev/null
 	endscript
 }
