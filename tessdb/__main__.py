@@ -43,4 +43,4 @@ elif os.name == "posix":
 	import tessdb.main_posix
 else:
 	print("ERROR: unsupported OS")
-	sys.exit(1)
+	sys.exit(5)

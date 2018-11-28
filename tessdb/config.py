@@ -114,6 +114,7 @@ def loadCfgFile(path):
     options['dbase']['register_log_level'] = parser.get("dbase","register_log_level")
     options['dbase']['type']              = parser.get("dbase","type")
     options['dbase']['connection_string'] = parser.get("dbase","connection_string")
+    options['dbase']['close_when_pause']  = parser.getboolean("dbase","close_when_pause")
     options['dbase']['json_dir']          = parser.get("dbase","json_dir")
     options['dbase']['year_start']        = parser.getint("dbase","year_start")
     options['dbase']['year_end']          = parser.getint("dbase","year_end")

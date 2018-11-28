@@ -101,6 +101,7 @@ class DBaseService(Service):
             from .sqlite3 import getPool, Date, TimeOfDay, TESSUnits, Location, TESS, TESSReadings
             if not os.path.exists(options['connection_string']):
                  raise IOError("No SQLite3 Database file found in {0}. Exiting ...".format(options['connection_string']))
+            # synchronous database initialization uses standard API, not adbapi
             connection = sqlite3.connect(options['connection_string'])
             self.getPoolFunc = getPool
         else:
@@ -192,13 +193,16 @@ class DBaseService(Service):
         log.info('TESS database writer paused')
         if not self.paused:
             self.paused = True
-            self.closePool()
+            if self.options["close_when_pause"]:
+                self.closePool()
         return defer.succeed(None)
+
 
     def resumeService(self):
         log.info('TESS database writer resumed')
         if self.paused:
-            self.openPool()
+            if self.options["close_when_pause"]:
+                self.openPool()
             self.paused = False
         return defer.succeed(None)
 
@@ -371,26 +375,20 @@ class DBaseService(Service):
 
     def openPool(self):
         # setup the connection pool for asynchronouws adbapi
+        log.info("Opening a DB Connection to {conn!s}", conn=self.options['connection_string'])
         self.pool  = self.getPoolFunc(self.options['connection_string'])
-        log.info("Opened a DB Connection to {conn!s}", conn=self.options['connection_string'])
         self.tess.pool           = self.pool
         self.tess_units.pool     = self.pool
         self.tess_readings.pool  = self.pool
         self.tess_locations.pool = self.pool
         self.date.pool           = self.pool
         self.time.pool           = self.pool
-      
+        log.info("Opened a DB Connection to {conn!s}", conn=self.options['connection_string'])
+
 
     def closePool(self):
         '''setup the connection pool for asynchronouws adbapi'''
+        log.info("Closing a DB Connection to {conn!s}", conn=self.options['connection_string'])
         self.pool.close()
         log.info("Closed a DB Connection to {conn!s}", conn=self.options['connection_string'])
-        self.pool                = None
-        self.tess.pool           = None
-        self.tess_units.pool     = None
-        self.tess_readings.pool  = None
-        self.tess_locations.pool = None
-        self.date.pool           = None
-        self.time.pool           = None
-       
-    
+        
