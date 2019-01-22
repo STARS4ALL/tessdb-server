@@ -79,7 +79,7 @@ for instrument in $photometers; do
         echo "Generating latest month IDA file for TESS $instrument under ${out_dir}/${instrument}"
         /usr/local/bin/tess_ida ${instrument} -l -d ${dbase} -t ${template} -o ${out_dir}
     else
-        echo "Generating IDA file for TESS $instrument from month $month under ${out_dir}/${instrument}"
+        echo "Generating IDA file for TESS $instrument for month $month under ${out_dir}/${instrument}"
         /usr/local/bin/tess_ida ${instrument} -m $month -d ${dbase} -t ${template} -o ${out_dir}
     fi
 done
