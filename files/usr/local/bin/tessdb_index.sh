@@ -8,7 +8,7 @@ DEFAULT_DATABASE="/var/dbase/tess.db"
 # Either the default or the rotated tess.db-* database
 dbases="${1:-$DEFAULT_DATABASE}"
 # wildcard expansion for the logrotared backups ...
-dbases="$(ls -1 $dbase)"
+dbases="$(ls -1 $dbases)"
 
 
 # ------------------------------------------------------------------------------
