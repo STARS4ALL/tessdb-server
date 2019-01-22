@@ -54,7 +54,7 @@ def createParser():
     parser.add_argument('-t', '--template', default=DEFAULT_TMPLT, help='Jinja2 template file path')
     parser.add_argument('-o', '--out_dir', default=DEFAULT_DIR, help='Output directory to dump record')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-m', '--from-month', type=mkmonth, default=DEFAULT_MONTH, metavar='<YYYY-MM>', help='Starting year & month. Defaults to current.')
+    group.add_argument('-m', '--for-month', type=mkmonth, default=DEFAULT_MONTH, metavar='<YYYY-MM>', help='Starting year & month. Defaults to current.')
     group.add_argument('-l', '--latest-month', action='store_true', help='Latest month only.')
     return parser
 
@@ -143,9 +143,9 @@ def fetch_latest_dbreadings(connection, options):
     return cursor
 
 
-def fetch_dbreadings_from_month(connection, options):
+def fetch_dbreadings_for_month(connection, options):
     '''From start of month at midday UTC'''
-    row = {'name': options.name, 'from_date': options.from_month.strftime(TSTAMP_FORMAT)}
+    row = {'name': options.name, 'from_date': options.for_month.strftime(TSTAMP_FORMAT)}
     cursor = connection.cursor()
     cursor.execute(
         '''
@@ -237,8 +237,8 @@ def main():
             timestamp  = datetime.datetime.utcnow()
             cursor = fetch_latest_dbreadings(connection, options)
         else:
-            timestamp  = options.from_month
-            cursor = fetch_dbreadings_from_month(connection, options)
+            timestamp  = options.for_month
+            cursor = fetch_dbreadings_for_month(connection, options)
         # render IDA header file from Jinja2 template
         header = render(options.template, context).encode('utf-8')
         write_IDA_header_file(header, options.name, options.out_dir, timestamp)
