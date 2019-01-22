@@ -1,6 +1,16 @@
 #!/bin/bash
 # This script creates indices for reports.
 
+DEFAULT_DATABASE="/var/dbase/tess.db"
+
+# Arguments from the command line & default values
+
+# Either the default or the rotated tess.db-* database
+dbases="${1:-$DEFAULT_DATABASE}"
+# wildcard expansion for the logrotared backups ...
+dbases="$(ls -1 $dbase)"
+
+
 # ------------------------------------------------------------------------------
 #                             AUXILIARY FUNCTIONS
 # ------------------------------------------------------------------------------
@@ -13,11 +23,6 @@ EOF
 }
 
 # ------------------------------------------------------------------------------- #
-
-# Arguments from the command line & default values
-
-# wildcard expansion ...
-dbases="$(ls -1 /var/dbase/tess.db-*)"
 
 for dbase in $dbases; do
     if  [[ ! -f $dbase || ! -r $dbase ]]; then
