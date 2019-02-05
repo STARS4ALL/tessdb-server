@@ -271,7 +271,9 @@ def main():
             empty = count_latest_dbreadings(connection, options) == 0
         else:
             empty = count_dbreadings_for_month(connection, options) == 0
-        if not empty:
+        if empty:
+            print("skipping subdirs creation and IDA file generation")
+        else:
             create_directories(options.name, options.out_dir)
             if options.latest_month:
                 timestamp  = datetime.datetime.utcnow()
@@ -291,7 +293,7 @@ def main():
                 write_IDA_body_file(body_line, options.name, options.out_dir, timestamp)
     except KeyboardInterrupt:
         print('Interrupted by user ^C')
-    #except Exception as e:
+    except Exception as e:
         print("Error => {0}".format(e))
 
 main()
