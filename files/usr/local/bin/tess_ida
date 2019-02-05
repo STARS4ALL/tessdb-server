@@ -123,6 +123,44 @@ def get_metadata(connection, options):
 
 
 
+def count_latest_dbreadings(connection, options):
+    '''From start of month at midday UTC'''
+    row = {'name': options.name}
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT COUNT (r.frequency), (d.sql_date || 'T' || t.time || '.000') AS timestamp
+        FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.name == :name
+        AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '+12 hours' ) 
+                                AND datetime('now')
+        ''', row)
+    result = cursor.fetchone()
+    print(result)
+    return result[0]
+
+
+def count_dbreadings_for_month(connection, options):
+    '''From start of month at midday UTC'''
+    row = {'name': options.name, 'from_date': options.for_month.strftime(TSTAMP_FORMAT)}
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT COUNT(r.frequency), (d.sql_date || 'T' || t.time || '.000') AS timestamp
+        FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.name == :name
+        AND datetime(timestamp) BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
+        ''', row)
+    result = cursor.fetchone()
+    print(result)
+    return result[0]
+
 
 def fetch_latest_dbreadings(connection, options):
     '''From start of month at midday UTC'''
@@ -228,24 +266,29 @@ def main():
     '''
     try:
         options = createParser().parse_args(sys.argv[1:])
-        create_directories(options.name, options.out_dir)
         connection = open_database(options.dbase)
-        context = {}
-        context['instrument'], context['location'] = get_metadata(connection, options)
-        timezone = context['location']['timezone']
         if options.latest_month:
-            timestamp  = datetime.datetime.utcnow()
-            cursor = fetch_latest_dbreadings(connection, options)
+            empty = count_latest_dbreadings(connection, options) == 0
         else:
-            timestamp  = options.for_month
-            cursor = fetch_dbreadings_for_month(connection, options)
-        # render IDA header file from Jinja2 template
-        header = render(options.template, context).encode('utf-8')
-        write_IDA_header_file(header, options.name, options.out_dir, timestamp)
-        # render IDA body file by doing direct I/O
-        for reading in result_iterator(cursor):
-            body_line = render_readings(reading, timezone)
-            write_IDA_body_file(body_line, options.name, options.out_dir, timestamp)
+            empty = count_dbreadings_for_month(connection, options) == 0
+        if not empty:
+            create_directories(options.name, options.out_dir)
+            if options.latest_month:
+                timestamp  = datetime.datetime.utcnow()
+                cursor = fetch_latest_dbreadings(connection, options)
+            else:
+                timestamp  = options.for_month
+                cursor = fetch_dbreadings_for_month(connection, options)
+            # render IDA header file from Jinja2 template
+            context = {}
+            context['instrument'], context['location'] = get_metadata(connection, options)
+            timezone = context['location']['timezone']
+            header = render(options.template, context).encode('utf-8')
+            write_IDA_header_file(header, options.name, options.out_dir, timestamp)
+            # render IDA body file by doing direct I/O
+            for reading in result_iterator(cursor):
+                body_line = render_readings(reading, timezone)
+                write_IDA_body_file(body_line, options.name, options.out_dir, timestamp)
     except KeyboardInterrupt:
         print('Interrupted by user ^C')
     #except Exception as e:
