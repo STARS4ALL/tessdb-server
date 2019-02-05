@@ -265,12 +265,14 @@ def main():
         options = createParser().parse_args(sys.argv[1:])
         connection = open_database(options.dbase)
         if options.latest_month:
-            empty = count_latest_dbreadings(connection, options) == 0
+            count = count_latest_dbreadings(connection, options)
         else:
-            empty = count_dbreadings_for_month(connection, options) == 0
+            count = count_dbreadings_for_month(connection, options)
+        empty = count == 0
         if empty:
             print("skipping subdirs creation and IDA file generation")
         else:
+            print("Generating IDA file with {0} samples".format(count))
             create_directories(options.name, options.out_dir)
             if options.latest_month:
                 timestamp  = datetime.datetime.utcnow()
