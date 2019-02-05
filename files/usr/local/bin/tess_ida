@@ -129,18 +129,16 @@ def count_latest_dbreadings(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT COUNT (r.frequency), (d.sql_date || 'T' || t.time || '.000') AS timestamp
+        SELECT COUNT (r.frequency)
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
-        AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '+12 hours' ) 
+        AND datetime(d.sql_date || 'T' || t.time || '.000') BETWEEN datetime('now', 'start of month', '+12 hours' ) 
                                 AND datetime('now')
         ''', row)
-    result = cursor.fetchone()
-    print(result)
-    return result[0]
+    return cursor.fetchone()[0]
 
 
 def count_dbreadings_for_month(connection, options):
@@ -149,17 +147,16 @@ def count_dbreadings_for_month(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT COUNT(r.frequency), (d.sql_date || 'T' || t.time || '.000') AS timestamp
+        SELECT COUNT(r.frequency),
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
-        AND datetime(timestamp) BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
+        AND datetime(d.sql_date || 'T' || t.time || '.000') BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
         ''', row)
-    result = cursor.fetchone()
-    print(result)
-    return result[0]
+    return cursor.fetchone()[0]
+
 
 
 def fetch_latest_dbreadings(connection, options):
