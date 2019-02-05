@@ -270,9 +270,9 @@ def main():
             count = count_dbreadings_for_month(connection, options)
         empty = count == 0
         if empty:
-            print("skipping subdirs creation and IDA file generation")
+            print("No data: skipping subdirs creation and IDA file generation")
         else:
-            print("Generating IDA file with {0} samples".format(count))
+            print("Generating monthly IDA file with {0} samples".format(count))
             create_directories(options.name, options.out_dir)
             if options.latest_month:
                 timestamp  = datetime.datetime.utcnow()
