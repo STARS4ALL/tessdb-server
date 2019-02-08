@@ -156,6 +156,8 @@ def createParser():
     #   tess instrument rename <old friendly name> <new friendly name>
     #   tess instrument update <friendly name> --zero-point <new zero point> --filter <new filter> --latest
     #   tess instrument delete <instrument name> 
+    #   tess instrument enable <instrument name> 
+    #   tess instrument disable <instrument name> 
     #
     subparser = parser_instrument.add_subparsers()
     parser_instrument_assign = subparser.add_parser('assign', help='assign instrument to location')
@@ -172,6 +174,16 @@ def createParser():
     ik = subparser.add_parser('unassigned', help='list unassigned instruments')
     ik.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ik.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    iaz = subparser.add_parser('enable', help='enable storing instrument samples')
+    iaz.add_argument('name',  metavar='<instrument>', type=str,   help='instrument friendly name')
+    iaz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    iaz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    iuz = subparser.add_parser('disable', help='disable storing samples for instrument')
+    iuz.add_argument('name',  metavar='<instrument>', type=str,   help='instrument friendly name')
+    iuz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    iuz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ihi = subparser.add_parser('history',  help='single instrument history')
     ihi.add_argument('name',   type=str,   help='friendly name')
@@ -212,7 +224,7 @@ def createParser():
     # Create second level parsers for 'system'
     # ------------------------------------------
     # Choices:
-    #   tess location list
+    #   tess system window
     #
     subparser = parser_system.add_subparsers()
     syw = subparser.add_parser('window', help='show current system maintenance window')
@@ -244,6 +256,10 @@ def main():
             instrument_single_history(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'unassigned':
             instrument_unassigned(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'enable':
+            instrument_enable(connection, options)
+        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'disable':
+            instrument_disable(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'create':
@@ -405,6 +421,47 @@ def instrument_unassigned(connection, options):
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"], size=100)
+
+
+def instrument_enable(connection, options):
+    cursor = connection.cursor()
+    row = {'tess': options.name, 'state': CURRENT}
+    cursor.execute('''
+        UPDATE tess_t 
+        SET authorised = 1 
+        WHERE name == :tess 
+        AND valid_state == :state
+        ''',row)
+    
+    cursor.execute(
+        '''
+        SELECT name,site,authorised
+        FROM tess_v
+        WHERE valid_state == :state
+        AND name = :tess
+        ''',row)
+    paging(cursor,["TESS","Site","Authorised"])
+    connection.commit()    
+
+def instrument_disable(connection, options):
+    cursor = connection.cursor()
+    row = {'tess': options.name, 'state': CURRENT}
+    cursor.execute('''
+        UPDATE tess_t 
+        SET authorised = 0 
+        WHERE name == :tess 
+        AND valid_state == :state
+        ''',row)
+    
+    cursor.execute(
+        '''
+        SELECT name,site,authorised
+        FROM tess_v
+        WHERE valid_state == :state
+        AND name = :tess
+        ''',row)
+    paging(cursor,["TESS","Site","Authorised"])
+    connection.commit()    
 
 
 def instrument_create(connection, options):
