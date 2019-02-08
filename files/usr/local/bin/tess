@@ -46,7 +46,8 @@ EXPIRED       = "Expired"
 CURRENT       = "Current"
 TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
-UNKNOWN_SITE = "Unknown"
+UNKNOWN_SITE   = "Unknown"
+OUT_OF_SERVICE = "Out of Service"
 
 # Default values for version-controlled attributes
 UNKNOWN_ZP     = -99
@@ -363,11 +364,11 @@ def instrument_historic_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until
+            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until,authorised
             FROM tess_v
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC, tess_v.valid_since ASC;
             ''')
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled"], size=100)
 
 
 def instrument_specific_historic_list(connection, options):
@@ -375,12 +376,12 @@ def instrument_specific_historic_list(connection, options):
     row = {'state': CURRENT, 'name': options.name}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until
+            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until,authorised
             FROM tess_v
             WHERE name == :name
             ORDER BY tess_v.valid_since ASC;
             ''',row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled"], size=100)
 
 
 def instrument_current_list(connection, options):
@@ -388,12 +389,12 @@ def instrument_current_list(connection, options):
     row = {'state': CURRENT}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site 
+            SELECT name,mac_address,zero_point,filter,site,authorised 
             FROM tess_v
             WHERE valid_state == :state
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled"], size=100)
 
 
 def instrument_specific_current_list(connection, options):
@@ -401,26 +402,26 @@ def instrument_specific_current_list(connection, options):
     row = {'state': CURRENT, 'name': options.name}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site 
+            SELECT name,mac_address,zero_point,filter,site,authorised 
             FROM tess_v
             WHERE valid_state == :state
             AND name == :name;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled"], size=100)
 
 
 def instrument_unassigned(connection, options):
     cursor = connection.cursor()
-    row = {'state': CURRENT, 'site': UNKNOWN_SITE}
+    row = {'state': CURRENT, 'site1': UNKNOWN_SITE, 'site2': OUT_OF_SERVICE}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
+            SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,authorised
             FROM tess_v
             WHERE valid_state == :state
-            AND site = :site
+            AND (site == :site1 OR site == :site2)
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site","Enabled"], size=100)
 
 
 def instrument_enable(connection, options):
