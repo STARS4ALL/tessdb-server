@@ -273,8 +273,7 @@ Each location has a latitude (degrees), longitude (degrees) and elevation (meter
 Activating this filter have the following conecuences:
 1. Once a day, at arount 00:00 UTC, all locations will have their sunrise and sunset time computed, according to the local horizon defined (configurable).
 2. Instruments assigned to locations found to be in daytime will have their readings rejected.
-3. Instruments assigned to Locations with `NULL` or `Unknown` longitude, latitude or elevation columns will have their readings rejected.
-4. ***New***: ***Instruments assigned to an Unknown location will have their readings accepted***. The only way to enable or disable writting to the database is by using the *tess utility*.
+3. ***New***: ***Instruments assigned to locations with `NULL` or `Unknown` longitude, latitude or elvation will have their readings accepted anyway***. The only way to enable or disable writting to the database is by using the *tess utility*.
 
 ## SQLite Database Maintenance
 
