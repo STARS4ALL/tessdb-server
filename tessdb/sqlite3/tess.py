@@ -58,6 +58,9 @@ DEFAULT_INSTRUMENT = []
 # No predefined deployment of TESS instruments to Loacations
 DEFAULT_DEPLOYMENT = []
 
+# Value for the registered column
+AUTOMATIC = "Automatic"
+
 # -----------------------
 # Module Global Variables
 # -----------------------
@@ -95,6 +98,8 @@ def _updateCalibration(cursor, row):
             valid_since,
             valid_until,
             valid_state,
+            authorised,
+            registered,
             location_id
         ) VALUES (
             :name,
@@ -103,6 +108,8 @@ def _updateCalibration(cursor, row):
             :eff_date,
             :exp_date,
             :valid_flag,
+            :authorised,
+            :registered,
             :location
         )
         ''',  row)
@@ -147,7 +154,9 @@ class TESS(Table):
             cover_offset  REAL    DEFAULT 0.0,
             fov           REAL    DEFAULT 17.0,
             azimuth       REAL    DEFAULT 0.0,
-            altitude      REAL    DEFAULT 90.0
+            altitude      REAL    DEFAULT 90.0,
+            authorised    INTEGER DEFAULT 0,
+            registered    TEXT    DEFAULT 'Unknown'
             );
             '''
         )
@@ -188,6 +197,8 @@ class TESS(Table):
                 tess_t.valid_since,
                 tess_t.valid_until,
                 tess_t.valid_state,
+                tess_t.authorised,
+                tess_t.registered,
                 location_t.contact_person,
                 location_t.organization,
                 location_t.contact_email,
@@ -223,6 +234,7 @@ class TESS(Table):
                     valid_since,
                     valid_until,
                     valid_state,
+                    registered,
                     location_id
                 ) VALUES (
                     :tess_id,
@@ -233,6 +245,7 @@ class TESS(Table):
                     :valid_since,
                     :valid_until,
                     :valid_state,
+                    :registered,
                     :location_id
                 )
                 '''
@@ -321,7 +334,9 @@ class TESS(Table):
 
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
-                row['location'] = instrument[3] # carries over the location id
+                row['location']   = instrument[3] # carries over the location id
+                row['authorised'] = instrument[5] # carries over the authorised flag
+                row['registered'] = instrument[6] # carries over the registration method
                 yield self.updateCalibration(row)
                 self.nUpdCalibChange += 1
                 log2.info("{name} Changed instrument calibration data to {calib}", name=row['name'], calib=row['calib'])
@@ -351,7 +366,7 @@ class TESS(Table):
         row['valid_flag'] = CURRENT
         return self.pool.runQuery(
             '''
-            SELECT name, mac_address, zero_point, location_id, filter 
+            SELECT name, mac_address, zero_point, location_id, filter, authorised, registered 
             FROM tess_t 
             WHERE mac_address == :mac
             AND valid_state == :valid_flag
@@ -370,7 +385,7 @@ class TESS(Table):
         row['valid_flag'] = CURRENT
         d = self.pool.runQuery(
             '''
-            SELECT tess_id, mac_address, zero_point, location_id, filter 
+            SELECT tess_id, mac_address, zero_point, location_id, filter, authorised, registered 
             FROM tess_t 
             WHERE name == :name
             AND valid_state == :valid_flag 
@@ -389,11 +404,13 @@ class TESS(Table):
         row['eff_date']   = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
         row['exp_date']   = INFINITE_TIME
         row['valid_flag'] = CURRENT
+        row['registered'] = AUTOMATIC
         return self.pool.runOperation( 
             '''
             INSERT INTO tess_t (
                 name,
                 mac_address,
+                registered,
                 zero_point,
                 valid_since,
                 valid_until,
@@ -401,6 +418,7 @@ class TESS(Table):
             ) VALUES (
                 :name,
                 :mac,
+                :registered,
                 :calib,
                 :eff_date,
                 :exp_date,
