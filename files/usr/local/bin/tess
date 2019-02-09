@@ -241,6 +241,7 @@ def main():
     Utility entry point
     '''
     try:
+        invalid_cache = False
         options = createParser().parse_args(sys.argv[1:])
         connection = open_database(options)
         if   sys.argv[1] == 'instrument' and sys.argv[2] == 'list':
@@ -249,28 +250,37 @@ def main():
             instrument_assign(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'create':
             instrument_create(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'rename':
             instrument_rename(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'delete':
             instrument_delete(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'update':
             instrument_update(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'history':
             instrument_single_history(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'unassigned':
             instrument_unassigned(connection, options)
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'enable':
             instrument_enable(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'instrument' and sys.argv[2] == 'disable':
             instrument_disable(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
             location_list(connection, options)
         elif sys.argv[1] == 'location' and sys.argv[2] == 'create':
             location_create(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'location' and sys.argv[2] == 'update':
             location_update(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'location' and sys.argv[2] == 'rename':
             location_rename(connection, options)
+            invalid_cache = True
         elif sys.argv[1] == 'location' and sys.argv[2] == 'unassigned':
             location_unassigned(connection, options)
         elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
@@ -281,6 +291,9 @@ def main():
         print('')
     #except Exception as e:
         #print("Error => {0}".format(e))
+    finally:
+        if invalid_cache:
+            print("WARNING: Do not forget to issue 'service tessdb reload' afterwards to invalidate tessdb caches")
 
 # ==============
 # DATABASE STUFF
