@@ -49,6 +49,8 @@ TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 UNKNOWN_SITE   = "Unknown"
 OUT_OF_SERVICE = "Out of Service"
 
+MANUAL = "Manual"
+
 # Default values for version-controlled attributes
 UNKNOWN_ZP     = -99
 DEFAULT_ZP     = 20.5   #  TESS magnitudes / arcsec^2
@@ -58,6 +60,7 @@ UNKNOWN_AZIMUTH = 999
 DEFAULT_AZIMUTH = 0.0   # Degrees, 0.0 = North
 UNKNOWN_ALTITUDE = 999
 DEFAULT_ALTITUDE = 90.0 # Degrees, 90.0 = Zenith
+UNKNOWN_REGISTERED = "Unkown"
 
 # -----------------------
 # Module global variables
@@ -214,7 +217,7 @@ def createParser():
     iup.add_argument('-f', '--filter',     default=UNKNOWN_FILTER,  type=str,  help='new filter glass')
     iup.add_argument('-a', '--azimuth',    type=float, default=UNKNOWN_AZIMUTH, help='Azimuth (degrees). 0.0 = North')
     iup.add_argument('-t', '--altitude',   type=float, default=UNKNOWN_ALTITUDE, help='Altitude (degrees). 90.0 = Zenith')
-   
+    iup.add_argument('-r', '--registered', type=str, default=UNKNOWN_REGISTERED, help='Register method (Manual/Automatic)')
     iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     iupex = iup.add_mutually_exclusive_group()
     now = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
@@ -364,11 +367,11 @@ def instrument_historic_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until,authorised
+            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until,authorised,registered
             FROM tess_v
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC, tess_v.valid_since ASC;
             ''')
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled","Registered"], size=100)
 
 
 def instrument_specific_historic_list(connection, options):
@@ -376,12 +379,12 @@ def instrument_specific_historic_list(connection, options):
     row = {'state': CURRENT, 'name': options.name}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until,authorised
+            SELECT name,mac_address,zero_point,filter,site,valid_since,valid_until,authorised,registered
             FROM tess_v
             WHERE name == :name
             ORDER BY tess_v.valid_since ASC;
             ''',row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled","Registered"], size=100)
 
 
 def instrument_current_list(connection, options):
@@ -389,12 +392,12 @@ def instrument_current_list(connection, options):
     row = {'state': CURRENT}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,authorised 
+            SELECT name,mac_address,zero_point,filter,site,authorised,registered
             FROM tess_v
             WHERE valid_state == :state
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled","Registered"], size=100)
 
 
 def instrument_specific_current_list(connection, options):
@@ -402,12 +405,12 @@ def instrument_specific_current_list(connection, options):
     row = {'state': CURRENT, 'name': options.name}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,site,authorised 
+            SELECT name,mac_address,zero_point,filter,site,authorised,registered
             FROM tess_v
             WHERE valid_state == :state
             AND name == :name;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled","Registered"], size=100)
 
 
 def instrument_unassigned(connection, options):
@@ -415,13 +418,13 @@ def instrument_unassigned(connection, options):
     row = {'state': CURRENT, 'site1': UNKNOWN_SITE, 'site2': OUT_OF_SERVICE}
     cursor.execute(
             '''
-            SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,authorised
+            SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,authorised,registered
             FROM tess_v
             WHERE valid_state == :state
             AND (site == :site1 OR site == :site2)
             ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site","Enabled"], size=100)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site","Enabled","Registered"], size=100)
 
 
 def instrument_enable(connection, options):
@@ -477,6 +480,7 @@ def instrument_create(connection, options):
     row['valid_flag'] = CURRENT
     row['eff_date']   = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
     row['exp_date']   = INFINITE_TIME
+    row['registered'] = MANUAL;
     
     # Find existing MAC and abort if so
     cursor.execute(
@@ -510,6 +514,7 @@ def instrument_create(connection, options):
             filter,
             azimuth,
             altitude,
+            registered,
             valid_since,
             valid_until,
             valid_state
@@ -520,6 +525,7 @@ def instrument_create(connection, options):
             :filter,
             :azimuth,
             :altitude,
+            :registered,
             :eff_date,
             :exp_date,
             :valid_flag
@@ -529,12 +535,12 @@ def instrument_create(connection, options):
     # Now display it
     cursor.execute(
         '''
-        SELECT name, mac_address, zero_point, filter, azimuth, altitude, site
+        SELECT name, mac_address, zero_point, filter, azimuth, altitude, registered, site
         FROM   tess_v
         WHERE  name == :name
         AND    valid_state == :valid_flag
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Azimuth","Altitude","Site"])
+    paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Azimuth","Altitude","Registered","Site"])
 
 
 
@@ -630,7 +636,7 @@ def instrument_raw_update(connection, options):
     row['valid_flag'] = CURRENT
     cursor.execute(
         '''
-        SELECT name, mac_address, location_id 
+        SELECT name, mac_address, location_id
         FROM tess_t 
         WHERE name == :name
         AND valid_state == :valid_flag 
@@ -674,6 +680,15 @@ def instrument_raw_update(connection, options):
         WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
+    # This is not version controlled, anyway
+    if options.registered != UNKNOWN_REGISTERED:
+        row['registered']            = options.registered
+        cursor.execute(
+        '''
+        UPDATE tess_t SET registered = :registered
+        WHERE mac_address == :mac AND valid_state == :valid_flag
+        ''', row)
+
     connection.commit()
     print("Operation complete.")
     cursor.execute(
@@ -698,7 +713,7 @@ def instrument_controlled_update(connection, options):
     row['valid_flag'] = CURRENT
     cursor.execute(
         '''
-        SELECT name, mac_address, location_id, valid_since, zero_point, filter, azimuth, altitude 
+        SELECT name, mac_address, location_id, valid_since, zero_point, filter, azimuth, altitude, authorised, registered 
         FROM tess_t 
         WHERE name == :name
         AND valid_state == :valid_flag 
@@ -718,7 +733,8 @@ def instrument_controlled_update(connection, options):
     row['filter']        = result[5] if options.filter == UNKNOWN_FILTER else options.filter
     row['azimuth']       = result[6] if options.azimuth == UNKNOWN_AZIMUTH else options.azimuth
     row['altitude']      = result[7] if options.altitude == UNKNOWN_ALTITUDE else options.altitude
-
+    row['authorised']    = result[8]
+    row['registered']    = result[9]
     cursor.execute(
         '''
         UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
@@ -737,6 +753,8 @@ def instrument_controlled_update(connection, options):
             valid_since,
             valid_until,
             valid_state,
+            authorised,
+            registered,
             location_id
         ) VALUES (
             :name,
@@ -748,6 +766,8 @@ def instrument_controlled_update(connection, options):
             :eff_date,
             :exp_date,
             :valid_flag,
+            :authorised,
+            :registered,
             :location
             )
         ''',  row)
@@ -756,11 +776,11 @@ def instrument_controlled_update(connection, options):
     
     cursor.execute(
         '''
-        SELECT name, zero_point, filter, azimuth, altitude, valid_state, valid_since, valid_until, site
+        SELECT name, zero_point, filter, azimuth, altitude, valid_state, valid_since, valid_until, authorised, registered, site
         FROM   tess_v
         WHERE  name == :name
         ''', row)
-    paging(cursor,["TESS","Zero Point","Filter","Azimuth","Altitude","State","Since","Until", "Site"])
+    paging(cursor,["TESS","Zero Point","Filter","Azimuth","Altitude","State","Since","Until", "Authorised","Registered","Site"])
 
 
 # --------------------
