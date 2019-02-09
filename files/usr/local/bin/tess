@@ -60,7 +60,7 @@ UNKNOWN_AZIMUTH = 999
 DEFAULT_AZIMUTH = 0.0   # Degrees, 0.0 = North
 UNKNOWN_ALTITUDE = 999
 DEFAULT_ALTITUDE = 90.0 # Degrees, 90.0 = Zenith
-UNKNOWN_REGISTERED = "Unkown"
+
 
 # -----------------------
 # Module global variables
@@ -217,7 +217,6 @@ def createParser():
     iup.add_argument('-f', '--filter',     default=UNKNOWN_FILTER,  type=str,  help='new filter glass')
     iup.add_argument('-a', '--azimuth',    type=float, default=UNKNOWN_AZIMUTH, help='Azimuth (degrees). 0.0 = North')
     iup.add_argument('-t', '--altitude',   type=float, default=UNKNOWN_ALTITUDE, help='Altitude (degrees). 90.0 = Zenith')
-    iup.add_argument('-r', '--registered', type=str, default=UNKNOWN_REGISTERED, help='Register method (Manual/Automatic)')
     iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     iupex = iup.add_mutually_exclusive_group()
     now = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
@@ -677,15 +676,6 @@ def instrument_raw_update(connection, options):
         cursor.execute(
         '''
         UPDATE tess_t SET altitude = :altitude
-        WHERE mac_address == :mac AND valid_state == :valid_flag
-        ''', row)
-
-    # This is not version controlled, anyway
-    if options.registered != UNKNOWN_REGISTERED:
-        row['registered']            = options.registered
-        cursor.execute(
-        '''
-        UPDATE tess_t SET registered = :registered
         WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
