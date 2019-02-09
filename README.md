@@ -174,6 +174,8 @@ This dimension holds the current list of TESS instruments.
 * `fov` contains the Field of View, in degrees.
 * `cover_offset` is an additional offset in mag/arcserc^2 to account for an additional optical window attenuation attached tothe TESS itself. Defaults to 0.0.
 * `channel` is the current channel identifier. Default value is 0. Currently, the TESS photometer has only one channel.
+* `authorised` to allow the TESS instrument to store readings on the database. Authorization is a manual process done by the *tess utility*.
+* `registered` shos if the TESS instrument registered itself on the database ("Automatic") or it was done by a manual process ("Manual") using the *tess utility*. The default value is "Unknown" for the TESS instrument registered before adding this feature to the software. It is expected to identify these cases one by one and set them to 'Manual' or 'Automatic'.
 
 ##### Version-controlled Attributes
 These attubutes are version-controlled and a historic of these is maintained. A new change in any of them will generate a new row in the `tess_t` table
@@ -271,8 +273,8 @@ Each location has a latitude (degrees), longitude (degrees) and elevation (meter
 Activating this filter have the following conecuences:
 1. Once a day, at arount 00:00 UTC, all locations will have their sunrise and sunset time computed, according to the local horizon defined (configurable).
 2. Instruments assigned to locations found to be in daytime will have their readings rejected.
-2. ***Instruments not assigned to a known location will have their readings rejected***.
 3. Instruments assigned to Locations with `NULL` or `Unknown` longitude, latitude or elevation columns will have their readings rejected.
+4. ***New***: ***Instruments assigned to an Unknown location will have their readings accepted***. The only way to enable or disable writting to the database is by using the *tess utility*.
 
 ## SQLite Database Maintenance
 
@@ -372,6 +374,33 @@ The most important use of the tess utility is to assign an existing location to 
 If automatic registration fails, this command allows manual creation of a TESS instrument in the database
 
 `tess instrument create {name} {mac} {zero point} {filter}`
+
+### Enabling/Disabling a TESS instrument
+In order for a TESS to have its readings stored in the databae, it need to be enabled (authorised). In previous releases of tessdb this happened automatically when the TESS was assigned to a known location, when the daylingth filter was active. Now this is a separate but important procedure
+
+`tess instrument enable stars1`
+
+```
++--------+--------------------------+--------------+
+| TESS   | Site                     |   Authorised |
++========+==========================+==============+
+| stars1 | Laboratorio de Cristóbal |            1 |
++--------+--------------------------+--------------+
+```
+
+
+If, for soem reason, we must avoid a given TESS to store its readings, we proceed and disable it.
+
+`tess instrument disable stars1`
+
+```
++--------+--------------------------+--------------+
+| TESS   | Site                     |   Authorised |
++========+==========================+==============+
+| stars1 | Laboratorio de Cristóbal |            0 |
++--------+--------------------------+--------------+
+```
+
 
 ### Renaming a TESS instrument
 If for some reason, an instrument needs to change the friendly user name, this command allows you to do so.
