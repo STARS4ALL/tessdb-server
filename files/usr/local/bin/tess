@@ -35,10 +35,7 @@ from tessdb.sqlite3.utils import CURRENT, UNKNOWN, NEVER_UP, ALWAYS_UP
 # ----------------
 
 
-if os.name == "nt":
-    DEFAULT_DBASE = r"C:\tesdb\dbase\tess.db"
-else:
-    DEFAULT_DBASE = "/var/dbase/tess.db"
+DEFAULT_DBASE = "/var/dbase/tess.db"
 
 
 INFINITE_TIME = "2999-12-31T23:59:59"
@@ -52,13 +49,8 @@ OUT_OF_SERVICE = "Out of Service"
 MANUAL = "Manual"
 
 # Default values for version-controlled attributes
-UNKNOWN_ZP     = -99
-DEFAULT_ZP     = 20.5   #  TESS magnitudes / arcsec^2
-UNKNOWN_FILTER = "Unknown"
-DEFAULT_FILTER = "UVIR"   # Dichroic Glass
-UNKNOWN_AZIMUTH = 999
+
 DEFAULT_AZIMUTH = 0.0   # Degrees, 0.0 = North
-UNKNOWN_ALTITUDE = 999
 DEFAULT_ALTITUDE = 90.0 # Degrees, 90.0 = Zenith
 
 
@@ -77,7 +69,7 @@ def createParser():
     # create the top-level parser
     parser = argparse.ArgumentParser(prog=sys.argv[0])
 
-    subparser = parser.add_subparsers()
+    subparser = parser.add_subparsers(dest='command')
 
     # --------------------------
     # Create first level parsers
@@ -93,7 +85,7 @@ def createParser():
     # Choices:
     #   tess location list
     #
-    subparser = parser_location.add_subparsers()
+    subparser = parser_location.add_subparsers(dest='subcommand')
     llp = subparser.add_parser('list', help='list locations')
     llp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     llp.add_argument('-x', '--extended', action='store_true',  help='extended listing')
@@ -121,17 +113,17 @@ def createParser():
 
     lup = subparser.add_parser('update', help='update location')
     lup.add_argument('site', metavar='<site>', type=utf8, help='Unique site name')
-    lup.add_argument('-o', '--longitude', type=float, default=-999.0,    help='geographical longitude (degrees)')
-    lup.add_argument('-a', '--latitude',  type=float, default=-999.0,    help='geographical latitude (degrees)')
-    lup.add_argument('-e', '--elevation', type=float, default=-999.0,    help='elevation above sea level(meters)')
-    lup.add_argument('-z', '--zipcode',   type=utf8,  default='Unknown', help='Postal Code')
-    lup.add_argument('-l', '--location',  type=utf8,  default='Unknown', help='Location (village, town, city)')
-    lup.add_argument('-p', '--province',  type=utf8,  default='Unknown', help='Province')
-    lup.add_argument('-c', '--country',   type=utf8,  default='Unknown', help='Country')
-    lup.add_argument('-w', '--owner',     type=utf8,  default='Unknown', help='Contact person')
-    lup.add_argument('-m', '--email',     type=str,   default='Unknown', help='Contact email')
-    lup.add_argument('-g', '--org',       type=utf8,  default='Unknown', help='Organization')
-    lup.add_argument('-t', '--tzone',     type=str,   default='Etc/UTC', help='Olson Timezone')
+    lup.add_argument('-o', '--longitude', type=float, help='geographical longitude (degrees)')
+    lup.add_argument('-a', '--latitude',  type=float, help='geographical latitude (degrees)')
+    lup.add_argument('-e', '--elevation', type=float, help='elevation above sea level(meters)')
+    lup.add_argument('-z', '--zipcode',   type=utf8,  help='Postal Code')
+    lup.add_argument('-l', '--location',  type=utf8,  help='Location (village, town, city)')
+    lup.add_argument('-p', '--province',  type=utf8,  help='Province')
+    lup.add_argument('-c', '--country',   type=utf8,  help='Country')
+    lup.add_argument('-w', '--owner',     type=utf8,  help='Contact person')
+    lup.add_argument('-m', '--email',     type=str,   help='Contact email')
+    lup.add_argument('-g', '--org',       type=utf8,  help='Organization')
+    lup.add_argument('-t', '--tzone',     type=str,   help='Olson Timezone')
     lup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     lre = subparser.add_parser('rename', help='rename location')
@@ -145,7 +137,7 @@ def createParser():
     # Choices:
     #   tess location list
     #
-    subparser = parser_readings.add_subparsers()
+    subparser = parser_readings.add_subparsers(dest='subcommand')
     rp = subparser.add_parser('list', help='list readings')
     rp.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
     rp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
@@ -163,7 +155,7 @@ def createParser():
     #   tess instrument enable <instrument name> 
     #   tess instrument disable <instrument name> 
     #
-    subparser = parser_instrument.add_subparsers()
+    subparser = parser_instrument.add_subparsers(dest='subcommand')
     parser_instrument_assign = subparser.add_parser('assign', help='assign instrument to location')
     parser_instrument_assign.add_argument('instrument', metavar='<instrument>', type=str, help='TESS instrument name')
     parser_instrument_assign.add_argument('location',   metavar='<location>',   type=utf8,  help='Location name')
@@ -211,12 +203,13 @@ def createParser():
     ide.add_argument('name',  type=str, help='instrument friendly name')
     ide.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    iup = subparser.add_parser('update',   help='update instrument zero point, filter, azimuth or altitude')
+    iup = subparser.add_parser('update',   help='update instrument attributes')
     iup.add_argument('name',   type=str,   help='instrument friendly name')
-    iup.add_argument('-z', '--zero-point', default=UNKNOWN_ZP,  type=float, help='new zero point')
-    iup.add_argument('-f', '--filter',     default=UNKNOWN_FILTER,  type=str,  help='new filter glass')
-    iup.add_argument('-a', '--azimuth',    type=float, default=UNKNOWN_AZIMUTH, help='Azimuth (degrees). 0.0 = North')
-    iup.add_argument('-t', '--altitude',   type=float, default=UNKNOWN_ALTITUDE, help='Altitude (degrees). 90.0 = Zenith')
+    iup.add_argument('-z', '--zero-point', type=float, help='new zero point')
+    iup.add_argument('-f', '--filter',     type=str,  help='new filter glass')
+    iup.add_argument('-a', '--azimuth',    type=float, help='Azimuth (degrees). 0.0 = North')
+    iup.add_argument('-t', '--altitude',   type=float, help='Altitude (degrees). 90.0 = Zenith')
+    iup.add_argument('-r', '--registered', type=str, choices=["Manual","Automatic","Unknown"], help='Registration Method: [Unknown,Manual,Automatic]')
     iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     iupex = iup.add_mutually_exclusive_group()
     now = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
@@ -229,7 +222,7 @@ def createParser():
     # Choices:
     #   tess system window
     #
-    subparser = parser_system.add_subparsers()
+    subparser = parser_system.add_subparsers(dest='subcommand')
     syw = subparser.add_parser('window', help='show current system maintenance window')
     syw.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     syw.add_argument('-r', '--restart', action='store_true', default=False, help='Schedule "at job" to restart tessdb')
@@ -244,48 +237,51 @@ def main():
         invalid_cache = False
         options = createParser().parse_args(sys.argv[1:])
         connection = open_database(options)
-        if   sys.argv[1] == 'instrument' and sys.argv[2] == 'list':
+        command = options.command
+        subcommand = options.subcommand
+        
+        if   command == 'instrument' and subcommand == 'list':
             instrument_list(connection, options)
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'assign':
+        elif command == 'instrument' and subcommand == 'assign':
             instrument_assign(connection, options)
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'create':
+        elif command == 'instrument' and subcommand == 'create':
             instrument_create(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'rename':
+        elif command == 'instrument' and subcommand == 'rename':
             instrument_rename(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'delete':
+        elif command == 'instrument' and subcommand == 'delete':
             instrument_delete(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'update':
+        elif command == 'instrument' and subcommand == 'update':
             instrument_update(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'history':
+        elif command == 'instrument' and subcommand == 'history':
             instrument_single_history(connection, options)
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'unassigned':
+        elif command == 'instrument' and subcommand == 'unassigned':
             instrument_unassigned(connection, options)
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'enable':
+        elif command == 'instrument' and subcommand == 'enable':
             instrument_enable(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'instrument' and sys.argv[2] == 'disable':
+        elif command == 'instrument' and subcommand == 'disable':
             instrument_disable(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'location' and sys.argv[2] == 'list':
+        elif command == 'location' and subcommand == 'list':
             location_list(connection, options)
-        elif sys.argv[1] == 'location' and sys.argv[2] == 'create':
+        elif command == 'location' and subcommand == 'create':
             location_create(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'location' and sys.argv[2] == 'update':
+        elif command == 'location' and subcommand == 'update':
             location_update(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'location' and sys.argv[2] == 'rename':
+        elif command == 'location' and subcommand == 'rename':
             location_rename(connection, options)
             invalid_cache = True
-        elif sys.argv[1] == 'location' and sys.argv[2] == 'unassigned':
+        elif command == 'location' and subcommand == 'unassigned':
             location_unassigned(connection, options)
-        elif sys.argv[1] == 'readings' and sys.argv[2] == 'list':
+        elif command == 'readings' and subcommand == 'list':
             readings_list(connection, options)
-        elif sys.argv[1] == 'system' and sys.argv[2] == 'window':
+        elif command == 'system' and subcommand == 'window':
             system_window(connection, options)
     except KeyboardInterrupt:
         print('')
@@ -623,12 +619,6 @@ def instrument_delete(connection, options):
 
 
 def instrument_update(connection, options):
-    if (options.zero_point == UNKNOWN_ZP and 
-        options.filter ==  UNKNOWN_FILTER and
-        options.azimuth == UNKNOWN_AZIMUTH and
-        options.altitude == UNKNOWN_ALTITUDE) :
-        raise ValueError("No Zero Point, Filter, Azimuth or Altitude was specified.")
-    
     if options.latest:
         instrument_raw_update(connection, options)
     else:
@@ -660,35 +650,43 @@ def instrument_raw_update(connection, options):
     row['mac']           = result[1]
 
     # Change only if passed in the command line
-    if options.zero_point != UNKNOWN_ZP:
-        row['zp']            = options.zero_point
+    if options.zero_point is not None:
+        row['zp'] = options.zero_point
         cursor.execute(
         '''
         UPDATE tess_t SET zero_point = :zp
         WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
-    if options.filter != UNKNOWN_FILTER:
-        row['filter']            = options.filter
+    if options.filter is not None:
+        row['filter'] = options.filter
         cursor.execute(
         '''
         UPDATE tess_t SET filter = :filter
         WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
-    if options.azimuth != UNKNOWN_AZIMUTH:
-        row['azimuth']            = options.azimuth
+    if options.azimuth is not None:
+        row['azimuth'] = options.azimuth
         cursor.execute(
         '''
         UPDATE tess_t SET azimuth = :azimuth
         WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
-    if options.altitude != UNKNOWN_ALTITUDE:
-        row['altitude']            = options.altitude
+    if options.altitude is not None:
+        row['altitude'] = options.altitude
         cursor.execute(
         '''
         UPDATE tess_t SET altitude = :altitude
+        WHERE mac_address == :mac AND valid_state == :valid_flag
+        ''', row)
+
+    if options.registered is not None:
+        row['registered'] = options.registered
+        cursor.execute(
+        '''
+        UPDATE tess_t SET registered = :registered
         WHERE mac_address == :mac AND valid_state == :valid_flag
         ''', row)
 
@@ -696,11 +694,11 @@ def instrument_raw_update(connection, options):
     print("Operation complete.")
     cursor.execute(
         '''
-        SELECT name, zero_point, filter, azimuth, altitude, valid_state, valid_since, valid_until, site
+        SELECT name, zero_point, filter, azimuth, altitude, valid_state, valid_since, valid_until, registered, site
         FROM   tess_v
         WHERE  name == :name AND valid_state == :valid_flag 
         ''', row)
-    paging(cursor,["TESS","Zero Point","Filter","Azimuth","Altitude","State","Since","Until", "Site"])
+    paging(cursor,["TESS","Zero Point","Filter","Azimuth","Altitude","State","Since","Until", "Registered", "Site"])
 
 
 
@@ -732,12 +730,12 @@ def instrument_controlled_update(connection, options):
     row['eff_date']      = options.start_time
     row['exp_date']      = INFINITE_TIME
     row['valid_expired'] = EXPIRED
-    row['zp']            = result[4] if options.zero_point == UNKNOWN_ZP else options.zero_point
-    row['filter']        = result[5] if options.filter == UNKNOWN_FILTER else options.filter
-    row['azimuth']       = result[6] if options.azimuth == UNKNOWN_AZIMUTH else options.azimuth
-    row['altitude']      = result[7] if options.altitude == UNKNOWN_ALTITUDE else options.altitude
+    row['zp']            = result[4] if options.zero_point is None else options.zero_point
+    row['filter']        = result[5] if options.filter is None else options.filter
+    row['azimuth']       = result[6] if options.azimuth is None else options.azimuth
+    row['altitude']      = result[7] if options.altitude is None else options.altitude
     row['authorised']    = result[8]
-    row['registered']    = result[9]
+    row['registered']    = result[9] if options.registered is None else options.registered
     cursor.execute(
         '''
         UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
@@ -900,49 +898,12 @@ def location_create(connection, options):
     paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","Organization","ZIP Code","Location","Province","Country","Timezone"], size=5)
 
 
-def location_dynamic_update(options):
-    row = {} 
-    fmt = []
-    row['site'] = options.site
-    if options.longitude != -999.0:
-        row['longitude'] = options.longitude
-        fmt.append("longitude = :longitude")
-    if options.latitude != -999.0:
-        row['latitude']  = options.latitude
-        fmt.append("latitude = :latitude")
-    if options.elevation != -999.0 :
-        row['elevation'] = options.elevation
-        fmt.append("elevation = :elevation")
-    if options.zipcode != 'Unknown':
-        row['zipcode']   = options.zipcode
-        fmt.append("zipcode = :zipcode")
-    if options.location != 'Unknown':
-        row['location']  = options.location
-        fmt.append("location = :location")
-    if options.province != 'Unknown':
-        row['province']  = options.province
-        fmt.append("province = :province")
-    if options.country != 'Unknown':
-        row['country']  = options.country
-        fmt.append("country = :country")
-    if options.email != 'Unknown':
-        row['email']   = options.email
-        fmt.append("contact_email = :email")
-    if options.owner != 'Unknown':
-        row['owner']   = options.owner
-        fmt.append("contact_name = :owner")
-    if options.org != 'Unknown':
-        row['org']   = options.org
-        fmt.append("organization = :org")
-    if options.tzone != 'Etc/UTC':
-        row['tzone']   = options.tzone
-        fmt.append("timezone = :tzone")
-    return row, fmt
-
 
 def location_update(connection, options):
     cursor = connection.cursor()
-    row, fmt = location_dynamic_update(options)
+    row = {} 
+    row['site'] = options.site
+   
     # Fetch existing site
     cursor.execute(
         '''
@@ -953,14 +914,84 @@ def location_update(connection, options):
     result = cursor.fetchone()
     if not result:
         raise IndexError("Cannot update. Site with name %s does not exists." % (options.site,) )
-    cursor.execute(
+    
+    if options.longitude is not None:
+        row['longitude'] = options.longitude
+        cursor.execute(
         '''
-        UPDATE location_t 
-        SET
-        ''' + ','.join(fmt) +
+        UPDATE location_t SET longitude = :longitude WHERE site == :site
+        ''', row)
+
+    if options.latitude is not None:
+        row['latitude']  = options.latitude
+        cursor.execute(
         '''
-        WHERE site == :site
-        ''',  row)
+        UPDATE location_t SET latitude = :latitude WHERE site == :site
+        ''', row)
+        
+    if options.elevation is not None:
+        row['elevation'] = options.elevation
+        cursor.execute(
+        '''
+        UPDATE location_t SET elevation = :elevation WHERE site == :site
+        ''', row)
+
+    if options.zipcode is not None:
+        row['zipcode']   = options.zipcode
+        cursor.execute(
+        '''
+        UPDATE location_t SET zipcode = :zipcode WHERE site == :site
+        ''', row)
+
+    if options.location is not None:
+        row['location']  = options.location
+        cursor.execute(
+        '''
+        UPDATE location_t SET location = :location WHERE site == :site
+        ''', row)
+
+    if options.province is not None:
+        row['province']  = options.province
+        cursor.execute(
+        '''
+        UPDATE location_t SET province = :province WHERE site == :site
+        ''', row)
+
+    if options.country is not None:
+        row['country']  = options.country
+        cursor.execute(
+        '''
+        UPDATE location_t SET country = :country WHERE site == :site
+        ''', row)
+
+    if options.email is not None:
+        row['email']   = options.email
+        cursor.execute(
+        '''
+        UPDATE location_t SET email = :email WHERE site == :site
+        ''', row)
+
+    if options.owner is not None:
+        row['owner']   = options.owner
+        cursor.execute(
+        '''
+        UPDATE location_t SET owner = :owner WHERE site == :site
+        ''', row)
+
+    if options.org is not None:
+        row['org']   = options.org
+        cursor.execute(
+        '''
+        UPDATE location_t SET org = :org WHERE site == :site
+        ''', row)
+
+    if options.tzone is not None:
+        row['tzone']   = options.tzone
+        cursor.execute(
+        '''
+        UPDATE location_t SET org = :org WHERE site == :site
+        ''', row)
+
     connection.commit()
     # Read just written data
     cursor.execute(
