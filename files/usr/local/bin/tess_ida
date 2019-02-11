@@ -78,16 +78,14 @@ def result_iterator(cursor, arraysize=500):
             yield result
 
 
-def get_metadata(connection, options):
+def get_metadata(connection, options, location_id):
     cursor = connection.cursor()
-    row = {'name': options.name}
+    row = {'name': options.name, 'location_id': location_id}
     cursor.execute(
             '''
             SELECT name, channel, model, firmware, mac_address,
-                    zero_point, cover_offset, filter, fov, azimuth, altitude,
-                    contact_name, organization,
-                    site, longitude, latitude, elevation, location, province, country, timezone
-            FROM tess_v
+                    zero_point, cover_offset, filter, fov, azimuth, altitude
+            FROM tess_t
             WHERE valid_state == "Current"
             AND   name == :name
             ''', row)
@@ -106,62 +104,74 @@ def get_metadata(connection, options):
         'azimuth':      result[9],
         'altitude':     result[10],
     }
+    cursor.execute(
+            '''
+            SELECT contact_name, organization,
+                   site, longitude, latitude, elevation, location, province, country, timezone
+            FROM location_t
+            WHERE location_id == :location_id
+            ''', row)
+    result = cursor.fetchone()
     location = {
-        'contact_name'   : result[11],
-        'organization'   : result[12],
-        'site'           : result[13],
-        'longitude'      : result[14],
-        'latitude'       : result[15],
-        'elevation'      : result[16],
-        'location'       : result[17],
-        'province'       : result[18],
-        'country'        : result[19],
-        'timezone'       : result[20],
+        'contact_name'   : result[0],
+        'organization'   : result[1],
+        'site'           : result[2],
+        'longitude'      : result[3],
+        'latitude'       : result[4],
+        'elevation'      : result[5],
+        'location'       : result[6],
+        'province'       : result[7],
+        'country'        : result[8],
+        'timezone'       : result[9],
         
     }
     return instrument, location
 
-
-
-def count_latest_dbreadings(connection, options):
-    '''From start of month at midday UTC'''
+def analyze_latest_dbreadings(connection, options):
+    '''From start of month at midday UTC
+    Return a list of tuples (count, location_id, date_id)'''
     row = {'name': options.name}
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT COUNT (r.frequency)
+        SELECT COUNT (*), r.location_id, MIN(r.date_id)
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
-        AND datetime(d.sql_date || 'T' || t.time || '.000') BETWEEN datetime('now', 'start of month', '+12 hours' ) 
-                                AND datetime('now')
+        AND datetime(d.sql_date || 'T' || t.time || '.000') 
+        BETWEEN datetime('now', 'start of month', '+12 hours' ) AND datetime('now')
+        GROUP BY r.location_id
+        ORDER BY MIN(r.date_id) ASC;
         ''', row)
-    return cursor.fetchone()[0]
+    return cursor.fetchall()
 
-
-def count_dbreadings_for_month(connection, options):
-    '''From start of month at midday UTC'''
+def analyze_dbreadings_for_month(connection, options):
+    '''From start of month at midday UTC
+        Return a list of tuples (count, location_id, date_id)'''
     row = {'name': options.name, 'from_date': options.for_month.strftime(TSTAMP_FORMAT)}
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT COUNT(r.frequency)
+        SELECT COUNT (*), r.location_id, MIN(r.date_id)
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
-        AND datetime(d.sql_date || 'T' || t.time || '.000') BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
+        AND datetime(d.sql_date || 'T' || t.time || '.000') 
+        BETWEEN datetime(:from_date) AND datetime(':from_date', '+1 month', '-1 day')
+        GROUP BY r.location_id
+        ORDER BY MIN(r.date_id) ASC;
         ''', row)
-    return cursor.fetchone()[0]
+    return cursor.fetchall()
 
 
 
-def fetch_latest_dbreadings(connection, options):
+def fetch_latest_dbreadings(connection, options, location_id):
     '''From start of month at midday UTC'''
-    row = {'name': options.name}
+    row = {'name': options.name, 'location_id': location_id}
     cursor = connection.cursor()
     cursor.execute(
         '''
@@ -171,6 +181,7 @@ def fetch_latest_dbreadings(connection, options):
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
+        AND r.location_id == :location_id
         AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '+12 hours' ) 
                                 AND datetime('now')
         ORDER BY r.date_id ASC, r.time_id ASC
@@ -178,9 +189,9 @@ def fetch_latest_dbreadings(connection, options):
     return cursor
 
 
-def fetch_dbreadings_for_month(connection, options):
+def fetch_dbreadings_for_month(connection, options, location_id):
     '''From start of month at midday UTC'''
-    row = {'name': options.name, 'from_date': options.for_month.strftime(TSTAMP_FORMAT)}
+    row = {'name': options.name, 'location_id': location_id, 'from_date': options.for_month.strftime(TSTAMP_FORMAT)}
     cursor = connection.cursor()
     cursor.execute(
         '''
@@ -190,6 +201,7 @@ def fetch_dbreadings_for_month(connection, options):
         JOIN time_t     as t USING (time_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
+        AND r.location_id == :location_id
         AND datetime(timestamp) BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
         ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
@@ -239,15 +251,15 @@ def create_directories(instrument_name, out_dir, year=None):
 # IDA FILE Generation
 # -------------------
 
-def write_IDA_header_file(result, instrument_name, out_dir, timestamp):
+def write_IDA_header_file(result, instrument_name, out_dir, timestamp, suffix):
     '''Writes the IDA header file after contained in result'''
-    file_name = instrument_name + timestamp.strftime("_%Y-%m.dat")
+    file_name = instrument_name + timestamp.strftime("_%Y-%m") + suffix + ".dat"
     full_name = os.path.join(out_dir, instrument_name, file_name)
     with open(full_name, 'w') as outfile:
         outfile.write(result)
 
-def write_IDA_body_file(result, instrument_name, out_dir, timestamp):
-    file_name = instrument_name + timestamp.strftime("_%Y-%m.dat")
+def write_IDA_body_file(result, instrument_name, out_dir, timestamp, suffix):
+    file_name = instrument_name + timestamp.strftime("_%Y-%m") + suffix + ".dat"
     full_name = os.path.join(out_dir, instrument_name, file_name)
     with open(full_name, 'a') as outfile:
         outfile.write(result)
@@ -265,31 +277,39 @@ def main():
         options = createParser().parse_args(sys.argv[1:])
         connection = open_database(options.dbase)
         if options.latest_month:
-            count = count_latest_dbreadings(connection, options)
+            resultset = analyze_latest_dbreadings(connection, options)
         else:
-            count = count_dbreadings_for_month(connection, options)
-        empty = count == 0
+            resultset = analyze_dbreadings_for_month(connection, options)
+        empty = len(resultset) == 0
+
         if empty:
             print("No data: skipping subdirs creation and IDA file generation")
         else:
-            print("Generating monthly IDA file with {0} samples".format(count))
-            create_directories(options.name, options.out_dir)
-            if options.latest_month:
-                timestamp  = datetime.datetime.utcnow()
-                cursor = fetch_latest_dbreadings(connection, options)
-            else:
-                timestamp  = options.for_month
-                cursor = fetch_dbreadings_for_month(connection, options)
-            # render IDA header file from Jinja2 template
-            context = {}
-            context['instrument'], context['location'] = get_metadata(connection, options)
-            timezone = context['location']['timezone']
-            header = render(options.template, context).encode('utf-8')
-            write_IDA_header_file(header, options.name, options.out_dir, timestamp)
-            # render IDA body file by doing direct I/O
-            for reading in result_iterator(cursor):
-                body_line = render_readings(reading, timezone)
-                write_IDA_body_file(body_line, options.name, options.out_dir, timestamp)
+            # Render one IDA file per diferent location in case the TESS nstrument
+            # has changed location during the given month
+            for idx, result in enumerate(resultset):
+                count = result[0]
+                location_id = result[1]
+                start_date_id = result[2]
+                print("Generating monthly IDA file with {0} samples starting from {1} for location id {2}".format(count, start_date_id, location_id))
+                create_directories(options.name, options.out_dir)
+                if options.latest_month:
+                    timestamp  = datetime.datetime.utcnow()
+                    cursor = fetch_latest_dbreadings(connection, options, location_id)
+                else:
+                    timestamp  = options.for_month
+                    cursor = fetch_dbreadings_for_month(connection, options, location_id)
+                # render IDA header file from Jinja2 template
+                context = {}
+                context['instrument'], context['location'] = get_metadata(connection, options, location_id)
+                timezone = context['location']['timezone']
+                header = render(options.template, context).encode('utf-8')
+                suffix = '' if idx == 0 else '_x' + str(idx)
+                write_IDA_header_file(header, options.name, options.out_dir, timestamp, suffix)
+                # render IDA body file by doing direct I/O
+                for reading in result_iterator(cursor):
+                    body_line = render_readings(reading, timezone)
+                    write_IDA_body_file(body_line, options.name, options.out_dir, timestamp, suffix)
     except KeyboardInterrupt:
         print('Interrupted by user ^C')
     except Exception as e:
