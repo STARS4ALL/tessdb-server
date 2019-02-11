@@ -239,54 +239,16 @@ def main():
         connection = open_database(options)
         command = options.command
         subcommand = options.subcommand
-        
-        if   command == 'instrument' and subcommand == 'list':
-            instrument_list(connection, options)
-        elif command == 'instrument' and subcommand == 'assign':
-            instrument_assign(connection, options)
-        elif command == 'instrument' and subcommand == 'create':
-            instrument_create(connection, options)
+        if subcommand in ["rename","enable","disable","update","delete"]:
             invalid_cache = True
-        elif command == 'instrument' and subcommand == 'rename':
-            instrument_rename(connection, options)
-            invalid_cache = True
-        elif command == 'instrument' and subcommand == 'delete':
-            instrument_delete(connection, options)
-            invalid_cache = True
-        elif command == 'instrument' and subcommand == 'update':
-            instrument_update(connection, options)
-            invalid_cache = True
-        elif command == 'instrument' and subcommand == 'history':
-            instrument_single_history(connection, options)
-        elif command == 'instrument' and subcommand == 'unassigned':
-            instrument_unassigned(connection, options)
-        elif command == 'instrument' and subcommand == 'enable':
-            instrument_enable(connection, options)
-            invalid_cache = True
-        elif command == 'instrument' and subcommand == 'disable':
-            instrument_disable(connection, options)
-            invalid_cache = True
-        elif command == 'location' and subcommand == 'list':
-            location_list(connection, options)
-        elif command == 'location' and subcommand == 'create':
-            location_create(connection, options)
-            invalid_cache = True
-        elif command == 'location' and subcommand == 'update':
-            location_update(connection, options)
-            invalid_cache = True
-        elif command == 'location' and subcommand == 'rename':
-            location_rename(connection, options)
-            invalid_cache = True
-        elif command == 'location' and subcommand == 'unassigned':
-            location_unassigned(connection, options)
-        elif command == 'readings' and subcommand == 'list':
-            readings_list(connection, options)
-        elif command == 'system' and subcommand == 'window':
-            system_window(connection, options)
+        # Call the function dynamically
+        func = command + '_' + subcommand
+        globals()[func](connection, options)
+
     except KeyboardInterrupt:
         print('')
-    #except Exception as e:
-        #print("Error => {0}".format(e))
+    except Exception as e:
+        print("Error => {0}".format(e))
     finally:
         if invalid_cache:
             print("WARNING: Do not forget to issue 'service tessdb reload' afterwards to invalidate tessdb caches")
