@@ -944,14 +944,14 @@ def location_update(connection, options):
         row['org']   = options.org
         cursor.execute(
         '''
-        UPDATE location_t SET org = :org WHERE site == :site
+        UPDATE location_t SET organization = :org WHERE site == :site
         ''', row)
 
     if options.tzone is not None:
         row['tzone']   = options.tzone
         cursor.execute(
         '''
-        UPDATE location_t SET org = :org WHERE site == :site
+        UPDATE location_t SET timezone = :tzone WHERE site == :site
         ''', row)
 
     connection.commit()
