@@ -965,14 +965,14 @@ def location_update(connection, options):
         row['email']   = options.email
         cursor.execute(
         '''
-        UPDATE location_t SET email = :email WHERE site == :site
+        UPDATE location_t SET contact_email = :email WHERE site == :site
         ''', row)
 
     if options.owner is not None:
         row['owner']   = options.owner
         cursor.execute(
         '''
-        UPDATE location_t SET owner = :owner WHERE site == :site
+        UPDATE location_t SET contact_name = :owner WHERE site == :site
         ''', row)
 
     if options.org is not None:
