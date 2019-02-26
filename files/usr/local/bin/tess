@@ -87,6 +87,7 @@ def createParser():
     #
     subparser = parser_location.add_subparsers(dest='subcommand')
     llp = subparser.add_parser('list', help='list locations')
+    llp.add_argument('-n', '--name',      type=str,  help='specific location name')
     llp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     llp.add_argument('-x', '--extended', action='store_true',  help='extended listing')
     llp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
@@ -162,7 +163,7 @@ def createParser():
     parser_instrument_assign.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ip = subparser.add_parser('list', help='list instruments')
-    ip.add_argument('-n', '--name', type=str, default='', help='specific instrument name')
+    ip.add_argument('-n', '--name', type=str, help='specific instrument name')
     ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
@@ -322,7 +323,7 @@ def instrument_single_history(connection, options):
 
 
 def instrument_list(connection, options):
-    if options.name == '':
+    if options.name is not None:
         if options.log:
             instrument_historic_list(connection, options)
         else:
@@ -772,11 +773,45 @@ def location_list_long(connection, options):
         ''')
     paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","Organization","ZIP Code","Location","Province","Country","Timezone"], size=100)
 
+
+def location_single_list_short(connection, options):
+    row = {}
+    row['name']  = options.name
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email 
+        FROM location_t 
+        WHERE site = :name
+        ''', row)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email"], size=100)
+
+
+def location_single_list_long(connection, options):
+    row = {}
+    row['name']  = options.name
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT site,longitude,latitude,elevation,contact_name,contact_email,organization,zipcode,location,province,country,timezone
+        FROM location_t 
+        WHERE site = :name
+        ''', row)
+    paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email","Organization","ZIP Code","Location","Province","Country","Timezone"], size=100)
+
+
 def location_list(connection, options):
-    if options.extended:
-        location_list_long(connection,options)
+    if options.name is not None:
+        if options.extended:
+            location_single_list_long(connection, options)
+        else:
+            location_single_list_short(connection, options)
     else:
-        location_list_short(connection,options)
+        if options.extended:
+            location_list_long(connection,options)
+        else:
+            location_list_short(connection,options)
+
 
 def location_unassigned(connection, options):
     cursor = connection.cursor()
