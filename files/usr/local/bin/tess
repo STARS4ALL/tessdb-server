@@ -87,7 +87,7 @@ def createParser():
     #
     subparser = parser_location.add_subparsers(dest='subcommand')
     llp = subparser.add_parser('list', help='list locations')
-    llp.add_argument('-n', '--name',      type=str,  help='specific location name')
+    llp.add_argument('-n', '--name',      type=utf8,  help='specific location name')
     llp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     llp.add_argument('-x', '--extended', action='store_true',  help='extended listing')
     llp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
