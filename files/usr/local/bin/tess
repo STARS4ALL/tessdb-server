@@ -249,7 +249,7 @@ def main():
     except KeyboardInterrupt:
         print('')
     except Exception as e:
-        print("Error => {0}".format( utf8(e) ))
+        print("Error => {0}".format( utf8(str(e)) ))
     finally:
         if invalid_cache:
             print("WARNING: Do not forget to issue 'service tessdb reload' afterwards to invalidate tessdb caches")
