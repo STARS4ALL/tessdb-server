@@ -323,7 +323,7 @@ def instrument_single_history(connection, options):
 
 
 def instrument_list(connection, options):
-    if options.name is not None:
+    if options.name is None:
         if options.log:
             instrument_historic_list(connection, options)
         else:
