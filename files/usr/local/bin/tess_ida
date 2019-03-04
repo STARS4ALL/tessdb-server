@@ -54,9 +54,29 @@ def createParser():
     parser.add_argument('-t', '--template', default=DEFAULT_TMPLT, help='Jinja2 template file path')
     parser.add_argument('-o', '--out_dir', default=DEFAULT_DIR, help='Output directory to dump record')
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-m', '--for-month', type=mkmonth, default=DEFAULT_MONTH, metavar='<YYYY-MM>', help='Starting year & month. Defaults to current.')
+    group.add_argument('-m', '--for-month', type=mkmonth, metavar='<YYYY-MM>', help='Given year & month. Defaults to current.')
+    group.add_argument('-f', '--from-month', type=mkmonth, metavar='<YYYY-MM>', help='Starting year & month')
     group.add_argument('-l', '--latest-month', action='store_true', help='Latest month only.')
     return parser
+
+
+# ------------------
+# Auxiliar functions
+# -------------------
+
+def month_generator(start_month):
+    '''start_month is a datetime object represeting the start of month'''
+    end_month = datetime.datetime.utcnow().replace(day=1, hour=12, minute=0, second=0,microsecond=0)
+    one_month = datetime.timedelta(days=28)
+    one_day   = datetime.timedelta(days=1)
+    month     = start_month
+    if start_month <= end_month:
+        while month <= end_month:
+            yield month
+            next_month = month + one_month
+            while next_month.month == month.month:
+                next_month += one_day
+            month = next_month
 
 # ------------------
 # DATABASE FUNCTIONS
@@ -68,7 +88,7 @@ def open_database(dbase_path):
     return sqlite3.connect(dbase_path)
 
 
-def result_iterator(cursor, arraysize=500):
+def result_generator(cursor, arraysize=500):
     'An iterator that uses fetchmany to keep memory usage down'
     while True:
         results = cursor.fetchmany(arraysize)
@@ -76,6 +96,7 @@ def result_iterator(cursor, arraysize=500):
             break
         for result in results:
             yield result
+
 
 
 def get_metadata(connection, options, location_id):
@@ -269,6 +290,38 @@ def write_IDA_body_file(result, instrument_name, out_dir, timestamp, suffix):
 # MAIN FUNCTION
 # -------------
 
+def do_one_pass(connection, resultset, options):
+    empty = len(resultset) == 0
+    if not empty:
+            # Render one IDA file per diferent location in case the TESS nstrument
+            # has changed location during the given month
+        for idx, result in enumerate(resultset):
+            count = result[0]
+            location_id = result[1]
+            start_date_id = result[2]
+            print("Generating monthly IDA file with {0} samples starting from {1} for location id {2}".format(count, start_date_id, location_id))
+            create_directories(options.name, options.out_dir)
+            if options.latest_month:
+                timestamp  = datetime.datetime.utcnow()
+                cursor = fetch_latest_dbreadings(connection, options, location_id)
+            else:
+                timestamp  = options.for_month
+                cursor = fetch_dbreadings_for_month(connection, options, location_id)
+            # render IDA header file from Jinja2 template
+            context = {}
+            context['instrument'], context['location'] = get_metadata(connection, options, location_id)
+            timezone = context['location']['timezone']
+            header = render(options.template, context).encode('utf-8')
+            suffix = '' if idx == 0 else '_x' + str(idx)
+            write_IDA_header_file(header, options.name, options.out_dir, timestamp, suffix)
+            # render IDA body file by doing direct I/O
+            for reading in result_generator(cursor):
+                body_line = render_readings(reading, timezone)
+                write_IDA_body_file(body_line, options.name, options.out_dir, timestamp, suffix)
+    else:
+        print("No data: skipping subdirs creation and IDA file generation")
+  
+
 def main():
     '''
     Utility entry point
@@ -278,41 +331,18 @@ def main():
         connection = open_database(options.dbase)
         if options.latest_month:
             resultset = analyze_latest_dbreadings(connection, options)
-        else:
+            do_one_pass(connection, resultset, options)
+        elif options.for_month:
             resultset = analyze_dbreadings_for_month(connection, options)
-        empty = len(resultset) == 0
-
-        if empty:
-            print("No data: skipping subdirs creation and IDA file generation")
+            do_one_pass(connection, resultset, options)
         else:
-            # Render one IDA file per diferent location in case the TESS nstrument
-            # has changed location during the given month
-            for idx, result in enumerate(resultset):
-                count = result[0]
-                location_id = result[1]
-                start_date_id = result[2]
-                print("Generating monthly IDA file with {0} samples starting from {1} for location id {2}".format(count, start_date_id, location_id))
-                create_directories(options.name, options.out_dir)
-                if options.latest_month:
-                    timestamp  = datetime.datetime.utcnow()
-                    cursor = fetch_latest_dbreadings(connection, options, location_id)
-                else:
-                    timestamp  = options.for_month
-                    cursor = fetch_dbreadings_for_month(connection, options, location_id)
-                # render IDA header file from Jinja2 template
-                context = {}
-                context['instrument'], context['location'] = get_metadata(connection, options, location_id)
-                timezone = context['location']['timezone']
-                header = render(options.template, context).encode('utf-8')
-                suffix = '' if idx == 0 else '_x' + str(idx)
-                write_IDA_header_file(header, options.name, options.out_dir, timestamp, suffix)
-                # render IDA body file by doing direct I/O
-                for reading in result_iterator(cursor):
-                    body_line = render_readings(reading, timezone)
-                    write_IDA_body_file(body_line, options.name, options.out_dir, timestamp, suffix)
+            for month in month_generator(options.from_month):
+                options.for_month = month   # This is a hack
+                resultset = analyze_dbreadings_for_month(connection, options)
+                do_one_pass(connection, resultset, options)
     except KeyboardInterrupt:
         print('Interrupted by user ^C')
-    except Exception as e:
+    #except Exception as e:
         print("Error => {0}".format(e))
 
 main()
