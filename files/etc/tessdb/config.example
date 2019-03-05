@@ -135,7 +135,7 @@ secs_resolution = 1
 # a given location. 
 # Readings received when at daytime in that location will be discarded.
 # A TESS associated with the UNKNOWN location (id=-1) will have all its readings
-# discarded regardless being day/night.
+# ACCEPTED regardless being day/night.
 # Reloadable property.
 location_filter = yes
 
