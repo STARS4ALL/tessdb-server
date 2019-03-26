@@ -85,6 +85,7 @@ def month_generator(start_month):
 def open_database(dbase_path):
     if not os.path.exists(dbase_path):
        raise IOError("No SQLite3 Database file found at {0}. Exiting ...".format(dbase_path))
+    print("Opening database {0}".format(dbase_path))
     return sqlite3.connect(dbase_path)
 
 
@@ -299,7 +300,7 @@ def do_one_pass(connection, resultset, options):
             count = result[0]
             location_id = result[1]
             start_date_id = result[2]
-            print("Generating monthly IDA file with {0} samples starting from {1} for location id {2}".format(count, start_date_id, location_id))
+            print("Generating monthly IDA file for {0} with {1} samples starting from {2} for location id {3}".format(options.name, count, start_date_id, location_id))
             create_directories(options.name, options.out_dir)
             if options.latest_month:
                 timestamp  = datetime.datetime.utcnow()
