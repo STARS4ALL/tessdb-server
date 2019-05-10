@@ -246,7 +246,7 @@ def render_readings(dbreading, timezone):
             'mag':  dbreading[4],
             'zp':   dbreading[5],
         }
-    return "%(utc)s;%(local)s;%(tamb)s;%(tsky)s%(freq)s;%(mag)s;%(zp)s" % record
+    return "%(utc)s;%(local)s;%(tamb)s;%(tsky)s;%(freq)s;%(mag)s;%(zp)s" % record
 
 
 def mkmonth(datestr):
