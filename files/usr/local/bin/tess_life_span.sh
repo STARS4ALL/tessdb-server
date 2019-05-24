@@ -9,9 +9,8 @@
 report_by_tess() {
 dbase=$1
 sqlite3 -csv -header ${dbase} <<EOF 
-.mode column
-.headers on
-SELECT i.name, min(d.sql_date) AS start, max(d.sql_date) AS end, count(*) AS readings
+.separator ;
+SELECT i.name AS tess, min(d.sql_date) AS start, max(d.sql_date) AS end, count(*) AS readings
 FROM tess_readings_t AS r
 JOIN tess_t AS i USING (tess_id)
 JOIN date_t AS d USING (date_id)
