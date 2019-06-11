@@ -51,8 +51,7 @@ from tessdb.sqlite3.utils import Table, fromJSON, START_TIME, INFINITE_TIME, CUR
 # ----------------
 
 # Default Units data if no JSON file is present
-DEFAULT_UNITS = 
-[
+DEFAULT_UNITS = [
     {  
         "units_id"                  : 0, 
         "frequency_units"           : "Hz",
@@ -68,7 +67,8 @@ DEFAULT_UNITS =
         "valid_since"               : START_TIME,
         "valid_until"               : INFINITE_TIME,
         "valid_state"               : CURRENT,
-        "timestamp_source"          : "Subscriber"
+        "timestamp_source"          : "Subscriber",
+        "reading_source"            : "Direct"
     },
     {
         "units_id"                  : 1, 
@@ -85,7 +85,44 @@ DEFAULT_UNITS =
         "valid_since"               : START_TIME,
         "valid_until"               : INFINITE_TIME,
         "valid_state"               : CURRENT,
-        "timestamp_source"          : "Publisher"
+        "timestamp_source"          : "Publisher",
+        "reading_source"            : "Direct"
+    },
+    {  
+        "units_id"                  : 2, 
+        "frequency_units"           : "Hz",
+        "magnitude_units"           : "Mv/arcsec^2",
+        "ambient_temperature_units" : "deg. C",
+        "sky_temperature_units"     : "deg. C",
+        "azimuth_units"             : "degrees",
+        "altitude_units"            : "degrees",
+        "longitude_units"           : "degrees",
+        "latitude_units"            : "degrees",
+        "height_units"              : "m",
+        "signal_strength_units"     : "dBm",
+        "valid_since"               : START_TIME,
+        "valid_until"               : INFINITE_TIME,
+        "valid_state"               : CURRENT,
+        "timestamp_source"          : "Subscriber",
+        "reading_source"            : "Imported"
+    },
+    {
+        "units_id"                  : 3, 
+        "frequency_units"           : "Hz",
+        "magnitude_units"           : "Mv/arcsec^2",
+        "ambient_temperature_units" : "deg. C",
+        "sky_temperature_units"     : "deg. C",
+        "azimuth_units"             : "degrees",
+        "altitude_units"            : "degrees",
+        "longitude_units"           : "degrees",
+        "latitude_units"            : "degrees",
+        "height_units"              : "m",
+        "signal_strength_units"     : "dBm",
+        "valid_since"               : START_TIME,
+        "valid_until"               : INFINITE_TIME,
+        "valid_state"               : CURRENT,
+        "timestamp_source"          : "Publisher",
+        "reading_source"            : "Imported"
     }
 ]
 
@@ -137,8 +174,9 @@ class TESSUnits(Table):
             longitude_units           TEXT,
             latitude_units            TEXT,
             height_units              TEXT,
-            timestamp_source          TEXT,
             signal_strength_units     TEXT,
+            timestamp_source          TEXT,
+            reading_source            TEXT,
             valid_since               TEXT,
             valid_until               TEXT,
             valid_state               TEXT
@@ -167,10 +205,11 @@ class TESSUnits(Table):
                 latitude_units,
                 height_units,
                 signal_strength_units,
+                timestamp_source,
+                reading_source,
                 valid_since,
                 valid_until,
                 valid_state,
-                timestamp_source
             ) VALUES (
                 :units_id,
                 :frequency_units,
@@ -183,10 +222,11 @@ class TESSUnits(Table):
                 :latitude_units,
                 :height_units,
                 :signal_strength_units,
+                :timestamp_source,
+                :reading_source,
                 :valid_since,
                 :valid_until,
                 :valid_state,
-                :timestamp_source
             )'''
             , read_rows 
         )
@@ -199,7 +239,7 @@ class TESSUnits(Table):
 
     def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = fromJSON(os.path.join(json_dir, TESSUnits.FILE), [DEFAULT_UNITS])
+        read_rows = fromJSON(os.path.join(json_dir, TESSUnits.FILE), DEFAULT_UNITS)
         return read_rows
 
    # ================
@@ -208,15 +248,20 @@ class TESSUnits(Table):
 
 
     @inlineCallbacks
-    def latest(self, timestamp_source="Subscriber"):
+    def latest(self, timestamp_source="Subscriber", reading_source="Direct"):
 
         def queryLatest(dbpool, timestamp_source):
-            row = {'valid_state': CURRENT, 'timestamp_source': timestamp_source }
+            row = {
+                'valid_state'     : CURRENT, 
+                'timestamp_source': timestamp_source,  
+                'reading_source'  : reading_source
+            }
             return dbpool.runQuery(
             '''
             SELECT units_id FROM tess_units_t 
             WHERE valid_state == :valid_state 
             AND timestamp_source == :timestamp_source
+            AND reading_source == :reading_source
             ''', row)
 
         if self._id.get(timestamp_source) is None:
