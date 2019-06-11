@@ -51,23 +51,43 @@ from tessdb.sqlite3.utils import Table, fromJSON, START_TIME, INFINITE_TIME, CUR
 # ----------------
 
 # Default Units data if no JSON file is present
-DEFAULT_UNITS = {  
-    "units_id"                  : 0, 
-    "frequency_units"           : "Hz",
-    "magnitude_units"           : "Mv/arcsec^2",
-    "ambient_temperature_units" : "deg. C",
-    "sky_temperature_units"     : "deg. C",
-    "azimuth_units"             : "degrees",
-    "altitude_units"            : "degrees",
-    "longitude_units"           : "degrees",
-    "latitude_units"            : "degrees",
-    "height_units"              : "m",
-    "signal_strength_units"     : "dBm",
-    "valid_since"               : START_TIME,
-    "valid_until"               : INFINITE_TIME,
-    "valid_state"               : CURRENT,
-    "timestamp_source"          : "Subscriber"
-}
+DEFAULT_UNITS = 
+[
+    {  
+        "units_id"                  : 0, 
+        "frequency_units"           : "Hz",
+        "magnitude_units"           : "Mv/arcsec^2",
+        "ambient_temperature_units" : "deg. C",
+        "sky_temperature_units"     : "deg. C",
+        "azimuth_units"             : "degrees",
+        "altitude_units"            : "degrees",
+        "longitude_units"           : "degrees",
+        "latitude_units"            : "degrees",
+        "height_units"              : "m",
+        "signal_strength_units"     : "dBm",
+        "valid_since"               : START_TIME,
+        "valid_until"               : INFINITE_TIME,
+        "valid_state"               : CURRENT,
+        "timestamp_source"          : "Subscriber"
+    },
+    {
+        "units_id"                  : 1, 
+        "frequency_units"           : "Hz",
+        "magnitude_units"           : "Mv/arcsec^2",
+        "ambient_temperature_units" : "deg. C",
+        "sky_temperature_units"     : "deg. C",
+        "azimuth_units"             : "degrees",
+        "altitude_units"            : "degrees",
+        "longitude_units"           : "degrees",
+        "latitude_units"            : "degrees",
+        "height_units"              : "m",
+        "signal_strength_units"     : "dBm",
+        "valid_since"               : START_TIME,
+        "valid_until"               : INFINITE_TIME,
+        "valid_state"               : CURRENT,
+        "timestamp_source"          : "Publisher"
+    }
+]
 
 
 # -----------------------
@@ -108,15 +128,15 @@ class TESSUnits(Table):
             CREATE TABLE IF NOT EXISTS tess_units_t
             (
             units_id                  INTEGER PRIMARY KEY AUTOINCREMENT, 
-            frequency_units           REAL,
-            magnitude_units           REAL,
-            ambient_temperature_units REAL,
-            sky_temperature_units     REAL,
-            azimuth_units             REAL,
-            altitude_units            REAL,
-            longitude_units           REAL,
-            latitude_units            REAL,
-            height_units              REAL,
+            frequency_units           TEXT,
+            magnitude_units           TEXT,
+            ambient_temperature_units TEXT,
+            sky_temperature_units     TEXT,
+            azimuth_units             TEXT,
+            altitude_units            TEXT,
+            longitude_units           TEXT,
+            latitude_units            TEXT,
+            height_units              TEXT,
             timestamp_source          TEXT,
             signal_strength_units     TEXT,
             valid_since               TEXT,
