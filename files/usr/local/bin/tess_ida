@@ -352,7 +352,7 @@ def do_one_pass(connection, resultset, options):
             elif options.previous_month:
                 # back to last day of previous month
                 timestamp = datetime.datetime.utcnow().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
-                timestamp -= timestamp - datetime.timedelta(days=1)
+                timestamp -= datetime.timedelta(days=1)
                 cursor = fetch_previous_dbreadings(connection, options, location_id)
             else:
                 timestamp  = options.for_month
