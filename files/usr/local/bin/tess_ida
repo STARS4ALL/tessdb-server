@@ -236,6 +236,7 @@ def fetch_latest_dbreadings(connection, options, location_id):
         ''', row)
     return cursor
 
+
 def fetch_previous_dbreadings(connection, options, location_id):
     '''From start of previous month at midnight UTC'''
     row = {'name': options.name, 'location_id': location_id}
