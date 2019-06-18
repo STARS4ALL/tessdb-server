@@ -187,7 +187,7 @@ def analyze_previous_dbreadings(connection, options):
         WHERE i.name == :name
         AND datetime(d.sql_date || 'T' || t.time || '.000') 
         BETWEEN datetime('now', 'start of month', '-1 month' ) 
-        AND     datetime('now', 'start of month', '-1 day')
+        AND     datetime('now', 'start of month')
         GROUP BY r.location_id
         ORDER BY MIN(r.date_id) ASC;
         ''', row)
@@ -249,7 +249,7 @@ def fetch_previous_dbreadings(connection, options, location_id):
         WHERE i.name == :name
         AND r.location_id == :location_id
         AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '-1 month') 
-                                AND     datetime('now', 'start of month', '-1 day')
+                                AND     datetime('now', 'start of month')
         ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
     return cursor
