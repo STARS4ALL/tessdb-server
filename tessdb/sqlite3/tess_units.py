@@ -51,8 +51,7 @@ from tessdb.sqlite3.utils import Table, fromJSON, START_TIME, INFINITE_TIME, CUR
 # ----------------
 
 # Default Units data if no JSON file is present
-DEFAULT_UNITS = 
-[
+DEFAULT_UNITS = [
     {  
         "units_id"                  : 0, 
         "frequency_units"           : "Hz",
