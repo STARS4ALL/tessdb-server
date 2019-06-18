@@ -34,7 +34,7 @@ dbase="$(ls -1 $dbase)"
 # Output directory is created if not exists inside the inner script
 out_dir="${2:-$DEFAULT_REPORTS_DIR}"
 
-# Month: either "latest" or "YYYY-MM"
+# Month: either "latest", "previous" or "YYYY-MM"
 month="${3:-$DEFAULT_MONTH}"
 
 # Jinja2 template to render IDA format file
@@ -78,6 +78,10 @@ for instrument in $photometers; do
     then
         echo "Generating latest month IDA file for TESS $instrument under ${out_dir}/${instrument}"
         /usr/local/bin/tess_ida ${instrument} -l -d ${dbase} -t ${template} -o ${out_dir}
+    elif [[ "$month" = "previous" ]];
+    then
+        echo "Generating previous month IDA file for TESS $instrument under ${out_dir}/${instrument}"
+        /usr/local/bin/tess_ida ${instrument} -p -d ${dbase} -t ${template} -o ${out_dir}
     else
         echo "Generating IDA file for TESS $instrument for month $month under ${out_dir}/${instrument}"
         /usr/local/bin/tess_ida ${instrument} -m $month -d ${dbase} -t ${template} -o ${out_dir}
