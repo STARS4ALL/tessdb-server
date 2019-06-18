@@ -268,7 +268,8 @@ def fetch_dbreadings_for_month(connection, options, location_id):
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
         AND r.location_id == :location_id
-        AND datetime(timestamp) BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
+        AND datetime(timestamp) BETWEEN datetime(:from_date) 
+                                AND     datetime(:from_date, '+1 month', '-1 day')
         ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
     return cursor
@@ -294,7 +295,7 @@ def render_readings(dbreading, timezone):
 
 
 def mkmonth(datestr):
-    return datetime.datetime.strptime(datestr, '%Y-%m').replace(hour=12)
+    return datetime.datetime.strptime(datestr, '%Y-%m')
 
 
 def render(template_path, context):
