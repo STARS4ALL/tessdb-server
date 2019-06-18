@@ -57,6 +57,7 @@ def createParser():
     group.add_argument('-m', '--for-month', type=mkmonth, metavar='<YYYY-MM>', help='Given year & month. Defaults to current.')
     group.add_argument('-f', '--from-month', type=mkmonth, metavar='<YYYY-MM>', help='Starting year & month')
     group.add_argument('-l', '--latest-month', action='store_true', help='Latest month only.')
+    group.add_argument('-p', '--previous-month', action='store_true', help='previous month only.')
     return parser
 
 
@@ -66,7 +67,7 @@ def createParser():
 
 def month_generator(start_month):
     '''start_month is a datetime object represeting the start of month'''
-    end_month = datetime.datetime.utcnow().replace(day=1, hour=12, minute=0, second=0,microsecond=0)
+    end_month = datetime.datetime.utcnow().replace(day=1, hour=0, minute=0, second=0,microsecond=0)
     one_month = datetime.timedelta(days=28)
     one_day   = datetime.timedelta(days=1)
     month     = start_month
@@ -150,7 +151,7 @@ def get_metadata(connection, options, location_id):
     return instrument, location
 
 def analyze_latest_dbreadings(connection, options):
-    '''From start of month at midday UTC
+    '''From start of month at midnight UTC
     Return a list of tuples (count, location_id, date_id)'''
     row = {'name': options.name}
     cursor = connection.cursor()
@@ -163,11 +164,35 @@ def analyze_latest_dbreadings(connection, options):
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
         AND datetime(d.sql_date || 'T' || t.time || '.000') 
-        BETWEEN datetime('now', 'start of month', '+12 hours' ) AND datetime('now')
+        BETWEEN datetime('now', 'start of month' ) AND datetime('now')
         GROUP BY r.location_id
         ORDER BY MIN(r.date_id) ASC;
         ''', row)
     return cursor.fetchall()
+
+
+def analyze_previous_dbreadings(connection, options):
+    '''From start of previous month at midnight UTC
+    Return a list of tuples (count, location_id, date_id)
+    '''
+    row = {'name': options.name}
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT COUNT (*), r.location_id, MIN(r.date_id)
+        FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.name == :name
+        AND datetime(d.sql_date || 'T' || t.time || '.000') 
+        BETWEEN datetime('now', 'start of month', '-1 month' ) 
+        AND     datetime('now', 'start of month')
+        GROUP BY r.location_id
+        ORDER BY MIN(r.date_id) ASC;
+        ''', row)
+    return cursor.fetchall()
+
 
 def analyze_dbreadings_for_month(connection, options):
     '''From start of month at midday UTC
@@ -183,7 +208,8 @@ def analyze_dbreadings_for_month(connection, options):
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
         AND datetime(d.sql_date || 'T' || t.time || '.000') 
-        BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
+        BETWEEN datetime(:from_date) 
+        AND     datetime(:from_date, '+1 month')
         GROUP BY r.location_id
         ORDER BY MIN(r.date_id) ASC;
         ''', row)
@@ -192,7 +218,7 @@ def analyze_dbreadings_for_month(connection, options):
 
 
 def fetch_latest_dbreadings(connection, options, location_id):
-    '''From start of month at midday UTC'''
+    '''From start of month at midnight UTC'''
     row = {'name': options.name, 'location_id': location_id}
     cursor = connection.cursor()
     cursor.execute(
@@ -204,8 +230,28 @@ def fetch_latest_dbreadings(connection, options, location_id):
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
         AND r.location_id == :location_id
-        AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '+12 hours' ) 
-                                AND datetime('now')
+        AND datetime(timestamp) BETWEEN datetime('now', 'start of month') 
+                                AND     datetime('now')
+        ORDER BY r.date_id ASC, r.time_id ASC
+        ''', row)
+    return cursor
+
+
+def fetch_previous_dbreadings(connection, options, location_id):
+    '''From start of previous month at midnight UTC'''
+    row = {'name': options.name, 'location_id': location_id}
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT (d.sql_date || 'T' || t.time || '.000') AS timestamp, r.ambient_temperature, r.sky_temperature, r.frequency, r.magnitude, i.zero_point
+        FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.name == :name
+        AND r.location_id == :location_id
+        AND datetime(timestamp) BETWEEN datetime('now', 'start of month', '-1 month') 
+                                AND     datetime('now', 'start of month')
         ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
     return cursor
@@ -224,7 +270,8 @@ def fetch_dbreadings_for_month(connection, options, location_id):
         JOIN tess_t     as i USING (tess_id)
         WHERE i.name == :name
         AND r.location_id == :location_id
-        AND datetime(timestamp) BETWEEN datetime(:from_date) AND datetime(:from_date, '+1 month', '-1 day')
+        AND datetime(timestamp) BETWEEN datetime(:from_date) 
+                                AND     datetime(:from_date, '+1 month')
         ORDER BY r.date_id ASC, r.time_id ASC
         ''', row)
     return cursor
@@ -250,7 +297,7 @@ def render_readings(dbreading, timezone):
 
 
 def mkmonth(datestr):
-    return datetime.datetime.strptime(datestr, '%Y-%m').replace(hour=12)
+    return datetime.datetime.strptime(datestr, '%Y-%m')
 
 
 def render(template_path, context):
@@ -305,6 +352,11 @@ def do_one_pass(connection, resultset, options):
             if options.latest_month:
                 timestamp  = datetime.datetime.utcnow()
                 cursor = fetch_latest_dbreadings(connection, options, location_id)
+            elif options.previous_month:
+                # back to last day of previous month
+                timestamp = datetime.datetime.utcnow().replace(day=1,hour=0,minute=0,second=0,microsecond=0)
+                timestamp -= datetime.timedelta(days=1)
+                cursor = fetch_previous_dbreadings(connection, options, location_id)
             else:
                 timestamp  = options.for_month
                 cursor = fetch_dbreadings_for_month(connection, options, location_id)
@@ -332,6 +384,9 @@ def main():
         connection = open_database(options.dbase)
         if options.latest_month:
             resultset = analyze_latest_dbreadings(connection, options)
+            do_one_pass(connection, resultset, options)
+        if options.previous_month:
+            resultset = analyze_previous_dbreadings(connection, options)
             do_one_pass(connection, resultset, options)
         elif options.for_month:
             resultset = analyze_dbreadings_for_month(connection, options)
