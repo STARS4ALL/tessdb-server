@@ -27,8 +27,6 @@ Instrument should send their readings at twice the time resolution specified in 
 
 # INSTALLATION
     
-## Linux installation
-
 ## Requirements
 
 The following components are needed and should be installed first:
@@ -54,9 +52,6 @@ Installation is done from GitHub:
     - twisted,
     - twisted-mqtt
     - pyephem
-    - tabulate
-    - pytz (for IDA reports generation)
-    - jinja2 (for IDA reports generation)
     
 ### Start up and Verification
 
@@ -82,11 +77,22 @@ This file is self explanatory.
 In special, the database file name and location is specified in this file.
 Some of the properities marked in this file are marked as *reloadable property*. This means that this value can be changed and the process reloads its new value on the fly.
 
+## Sunrise / Sunset filtering
+It is recommended to activate the sunrise/sunset filter to reject TESS readings coming in daytime and avoid unnecessary grouth in the database.
+Each location has a latitude (degrees), longitude (degrees) and elevation (meters) which can be neglected is this filter is not used. 
+
+Activating this filter have the following conecuences:
+1. Once a day, at arount 00:00 UTC, all locations will have their sunrise and sunset time computed, according to the local horizon defined (configurable).
+2. Instruments assigned to locations found to be in daytime will have their readings rejected.
+3. ***New***: ***Instruments assigned to locations with `NULL` or `Unknown` longitude, latitude or elvation will have their readings accepted anyway***. The only way to enable or disable writting to the database is by using the *tess utility*.
+
 ## Logging
 
 Log file is usually placed under `/var/log/tessdb.log` in Linux or under `C:\tessdb\log` folder on Windows. 
 Default log level is `info`. It generates very litte logging at this level.
 File is rotated by logrotate **only under Linux**. 
+
+# OPERATION
 
 ## Server Status/Start/Stop/Restart
 
@@ -121,12 +127,23 @@ To resume normal operation type `sudo tessdb_resume` and watch the same log file
 2018-11-23T13:10:37+0100 [dbase#info] Opened a DB Connection to /var/dbase/tess.db
 ```
 
-
 ##  Service reload
 
 During a reload the service is not stopped and re-reads the new values form the configuration file and apply the changes. In general, all aspects not related to maintaining the current connection to the MQTT broker or changing the database schema can be reloaded. The full list of reloadadble properties is described inside the configuration file.
 
 * Type `sudo systemctl reload tessdb` or `sudo service tessdb reload`. 
+
+## Mainrteinance
+
+Database mainteinance is made through the `tess` command line utility, installed by the tessdb-reports package.
+Mainteninance operations include:
+- create new locations
+- create new TESS instruments (manually)
+- assign locations to instruments
+- enable recording of data received from an instrument
+- listing current instruments
+- listing instruments not assigned to any known location
+- etc.
 
 
 # DATA MODEL
@@ -221,282 +238,8 @@ TESS devices with accelerometer will send `azimuth` and `altitude` values, other
 
 TESS devices with a GPS will send `longitude`, `latitude` and `height` values, otherwise they are `NULL`.
 
-# MQTT PAYLOAD INFORMATION
 
-Payloads are transmitted in JSON format, with the format described below.
-
-## Published on  topic 'STARS4ALL/{channel}/reading'
-
-| Field name |  Type  | Units | Optional | Description                       |
-|:----------:|:------:|:-----:|:--------:|:----------------------------------|
-| seq        | int    |   -   | mand  | Sequence number. If possible use 32 bits. The sequence number will start in 1 at each device reboot. |
-| name       | string |   -   | mand  | Instrument friendly name. Should be unique as it identifies the device. |
-| freq       | float  | Hz    | mand  | Raw reading as a frequency with 3 decimal digits precision (millihertz) NNNNN.NNN |
-| mag        | float  | mag/arcsec^2 | mandat. | Visual magnitude (formulae?) corresponding to the raw reading). Transmitted up to two decimal places NN.NN |
-| tamb       | float   | ºC    | mandat. | Ambient Temperature. Transmitted up to one decimal place. |
-| tsky       | float   | ºC    | mandat.  | Sky Temperature. Transmitted up to one decimal place. |
-| wdBm       | int     | dBm | opt | WiFi Received Signal Strength. |
-| az         | int     | deg | opt | Photometer optical axis Azimuth sent only on instruments with accelerometer. |
-| alt | int | deg | opt | Photometer optical axis Altitude (angle): sent only on instruments with accelerometer. |
-| lat | float | deg | opt | Instrument latitude. Only sent by instruments with GPS integration. |
-| long | float | deg | opt | Instrument longitude. Only sent by instruments with GPS integration. |
-| height | float | meters | opt | Instrument height above the sea level. Only sent by instruments with GPS integration. |
-| rev | int | - | mand | Payload data format revision number. Current version is 1. |
-| tstamp | string | UTC | opt | Timestamp,“YYYY-MM-DDTHH:MM:SS” format. Must be UTC. |
-
-## Published on  topic 'STARS4ALL/register'
-
-| Field name |  Type  | Units | Optional | Description                       |
-|:----------:|:------:|:-----:|:--------:|:----------------------------------|
-| name  | string | - | mand | Instrument friendly name. Should be unique as it identifies the device. |
-| mac   | string | - | mand. | Device MAC address, format “xx:yy:zz:rr:ss:tt” |
-| calib | float  | mag/arcsec^2 | mand | Per-device Zero Point. Transmitted as NN.NN floating point. |
-| rev   | int    | - | mand | Payload data format revision number. Current version is 1. |
-| chan  | string | - | opt | Channel where this instrument will publish its readings. |
-
-# OPERATION & MAINTENANCE
-
-## TESS instruments and locations
-There is no master file concerning TESS instruments since they register themselves on power-up.
-
-There is a master file of all locations relevant to the deployment of TESS instruments: `config/locations.json`).
-
-It is not possible to assign beforehand where a given TESS instruments will be deployed. Besides, a given TESS instruments could be temporally moved from one site to another. So, to maintain the current location where a given TESS is deployed, there is another file named `config/tess_location.json` where this relationship is established.
-
-## Instrument filtering
-*For personal use only*. In order to reject readings from other TESS instruments coming to your own personal database, you can specify an instrument name (or a list of instrument names). All readings whose instrument names do not match the one defined in the configuration file will be silently discarded.
-
-## Sunrise / Sunset filtering
-It is recommended to activate the sunrise/sunset filter to reject TESS readings coming in daytime and avoid unnecessary grouth in the database.
-Each location has a latitude (degrees), longitude (degrees) and elevation (meters) which can be neglected is this filter is not used. 
-
-Activating this filter have the following conecuences:
-1. Once a day, at arount 00:00 UTC, all locations will have their sunrise and sunset time computed, according to the local horizon defined (configurable).
-2. Instruments assigned to locations found to be in daytime will have their readings rejected.
-3. ***New***: ***Instruments assigned to locations with `NULL` or `Unknown` longitude, latitude or elvation will have their readings accepted anyway***. The only way to enable or disable writting to the database is by using the *tess utility*.
-
-## SQLite Database Maintenance
-
-The database and log file are rotated daily by a cron script file at 12:00 UTC. This is done to prevent a costly file copy at midnight, precisely when the database is busy writting samples. The program is first set in pause mode, perform the backup and then resumes operation.
-
-## The `tess` utility
-
-`tess` is a command line utility to perform some common operations on the database without having to write SQL statements. As this utility modifies the database, it is necessary to invoke it within using `sudo`. Also, you should ensure that the database is not being written by `tessdb` to avoid *database is locked* exceptions, either by using it at daytime or by pausing the `tessdb` service.
-
-It has several subcommands. You can find the all by typing `tess --help`
-```
-pi@rb-tess:~ $ tess --help
-usage: /usr/local/bin/tess [-h] {instrument,location,readings} ...
-
-positional arguments:
-  {instrument,location,readings}
-    instrument          instrument commands
-    location            location commands
-    readings            readings commands
-
-optional arguments:
-  -h, --help            show this help message and exit
-```
-
-Each subcommand has its own help that you may display by issuing `tess <subcommand> --help`
-
-Example:
-```
-pi@rb-tess:~ $ tess location list --help
-usage: /usr/local/bin/tess location list [-h] [-p PAGE_SIZE] [-d DBASE]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -p PAGE_SIZE, --page-size PAGE_SIZE
-                        list page size
-  -d DBASE, --dbase DBASE
-                        SQLite database full file path
-```
-
-
-
-### Listing locations
-`tess location list`
-```
-+-----------------------------------------+-------------+------------+-------------+
-| Name                                    |   Longitude |   Latitude |   Elevation |
-+=========================================+=============+============+=============+
-| Laboratorio de Cristobal                |    -nn.nnnn |    nn.nnnn |         nnn |
-+-----------------------------------------+-------------+------------+-------------+
-| Centro de Recursos Asociativos El Cerro |    -3.5515  |    40.4186 |         650 |
-+-----------------------------------------+-------------+------------+-------------+
-```
-
-### Renaming locations
-`tess location rename <old site name> <new site name>`
-
-### Listing TESS instruments
-`tess instrument list`
-
-```
-+---------+---------+-------------+------------+-------------+
-| TESS    | Site    | Longitude   | Latitude   | Elevation   |
-+=========+=========+=============+============+=============+
-| pruebas | Unknown | Unknown     | Unknown    | Unknown     |
-+---------+---------+-------------+------------+-------------+
-| stars1  | Unknown | Unknown     | Unknown    | Unknown     |
-+---------+---------+-------------+------------+-------------+
-```
-
-
-### Assign a location to an instrument
-The most important use of the tess utility is to assign an existing location to an instrument, since brand new registered instruments are assigned to a default *Unknown* location. This must be issued with `sudo`, since it requires a DB write.
-
-`sudo tess assign pruebas "Laboratorio de Cristobal"`
-
-```
-+---------+--------------------------+-------------+------------+-------------+
-| TESS    | Site                     |   Longitude |   Latitude |   Elevation |
-+=========+==========================+=============+============+=============+
-| pruebas | Laboratorio de Cristobal |    -n.nnnnn |    nn.nnnn |         nnn |
-+---------+--------------------------+-------------+------------+-------------+
-```
-
-`tess instrument list`
-
-```
-+---------+--------------------------+-------------+------------+-------------+
-| TESS    | Site                     | Longitude   | Latitude   | Elevation   |
-+=========+==========================+=============+============+=============+
-| pruebas | Laboratorio de Cristobal | -nn.nnnnnnn | nn.nnnnnnn | nnn.n       |
-+---------+--------------------------+-------------+------------+-------------+
-| stars1  | Unknown                  | Unknown     | Unknown    | Unknown     |
-+---------+--------------------------+-------------+------------+-------------+
-```
-
-### Create a brand new TESS instrument
-If automatic registration fails, this command allows manual creation of a TESS instrument in the database
-
-`tess instrument create {name} {mac} {zero point} {filter}`
-
-### Enabling/Disabling a TESS instrument
-In order for a TESS to have its readings stored in the databae, it need to be enabled (authorised). In previous releases of tessdb this happened automatically when the TESS was assigned to a known location, when the daylingth filter was active. Now this is a separate but important procedure
-
-`tess instrument enable stars1`
-
-```
-+--------+--------------------------+--------------+
-| TESS   | Site                     |   Authorised |
-+========+==========================+==============+
-| stars1 | Laboratorio de Cristóbal |            1 |
-+--------+--------------------------+--------------+
-```
-
-
-If, for soem reason, we must avoid a given TESS to store its readings, we proceed and disable it.
-
-`tess instrument disable stars1`
-
-```
-+--------+--------------------------+--------------+
-| TESS   | Site                     |   Authorised |
-+========+==========================+==============+
-| stars1 | Laboratorio de Cristóbal |            0 |
-+--------+--------------------------+--------------+
-```
-
-
-### Renaming a TESS instrument
-If for some reason, an instrument needs to change the friendly user name, this command allows you to do so.
-`tess instrument rename {old name} {new name}`
-
-```
-+---------+-------------------+---------------+----------+-------------+------------+-------------+
-| TESS    | MAC Addr.         |   Zero Point | Site     |   Longitude |   Latitude |   Elevation |
-+=========+===================+===============+==========+=============+============+=============+
-| pruebas | 18:FE:34:9C:AD:ED |          1.61 | Pamplona |    n.nnnnn |    nn.nnnn |         nnn |
-+---------+-------------------+---------------+----------+-------------+------------+-------------+
-```
-
-### Deleting a TESS instrument
-**Use this option with utmost care, as it will leave orphaned readings**
-
-This will also erase the instrument history of changes, as shown in the folowing example:
-
-`tess instrument delete pruebas`
-
-```
-About to delete
-+---------+-------------------+--------------+----------+--------------------------+-------------+------------+-------------+
-| TESS    | MAC Addr.         |   Zero Point | Filter   | Site                     |   Longitude |   Latitude |   Elevation |
-+=========+===================+==============+==========+==========================+=============+============+=============+
-| pruebas | 18:FE:34:9C:AD:ED |         1.65 | UVIR     | Laboratorio de Cristobal |    -3.55809 |    40.4246 |         626 |
-+---------+-------------------+--------------+----------+--------------------------+-------------+------------+-------------+
-| pruebas | 18:FE:34:9C:AD:ED |         1.6  | UVIR     | Laboratorio de Cristobal |    -3.55809 |    40.4246 |         626 |
-+---------+-------------------+--------------+----------+--------------------------+-------------+------------+-------------+
-+--------+-----------------------+
-| TESS   |   Acumulated Readings |
-+========+=======================+
-|        |                     0 |
-+--------+-----------------------+
-
-```
-
-### Updating the zero point / filter / azimuth / altitude
-If, for some reason, we need to change any of these, this command allows you to do so. Note that you must especify at least one magnitude.
-
-Since these attributes versioned columns in the database, a new instrument entry is made with updated `valid_since`, `valid_until` and `valid_state` columns. However, If the  `--latest` flag is passed, the update command only changes the **current** TESS zero point or filter. This is useful to fix errors in the current TESS instrument definition.
-
-`tess instrument update {name} --zero-point {new zp} --filter {new filter} --azimuth {new azimuth} --altitude {new altitude} [--latest]`
-
-Example 1:
-`tess instrument update stars3 --zero-point 23.45 --filter BG39`
-
-Example 2:
-`tess instrument update stars3 --zero-point 19.99 --filter UVIR --latest`
-
-
-```
-+--------+--------------+----------+---------+---------------------+---------------------+--------------------------+
-| TESS   |   Zero Point | Filter   | State   | Since               | Until               | Site                     |
-+========+==============+==========+=========+=====================+=====================+==========================+
-| stars3 |        19.99 | DG       | Current | 2016-09-08T13:59:12 | 2999-12-31T23:59:59 | Facultad de Fisicas, UCM |
-+--------+--------------+----------+---------+---------------------+---------------------+--------------------------+
-```
-
-
-### Listing the history changes of a single TESS instrument
-`tess instrument history stars2`
-
-```
-+--------+------+-------------------+--------------+----------+---------------------+---------------------+
-| TESS   |   Id | MAC Addr.         |   Zero Point | Filter   | Since               | Until               |
-+========+======+===================+==============+==========+=====================+=====================+
-| stars2 |    7 | 18:FE:34:D3:44:42 |        20    | UVIR     | 2016-05-14T18:23:03 | 2016-05-28T07:23:49 |
-+--------+------+-------------------+--------------+----------+---------------------+---------------------+
-| stars2 |    8 | 18:FE:34:D3:44:42 |        20.56 | UVIR     | 2016-05-28T07:23:49 | 2016-09-08T11:13:46 |
-+--------+------+-------------------+--------------+----------+---------------------+---------------------+
-| stars2 |   21 | 18:FE:34:D3:44:42 |        20.5  | UVIR     | 2016-09-08T11:13:46 | 2999-12-31T23:59:59 |
-+--------+------+-------------------+--------------+----------+---------------------+---------------------+
-```
-
-
-### Listing TESS readings
-`test readings list`
-```
-+--------------+--------+------------+-------------+-------------+
-| Timestamp    | TESS   | Location   | Frequency   | Magnitude   |
-+==============+========+============+=============+=============+
-+--------------+--------+------------+-------------+-------------+
-```
-
-### Show system maintenance window
-This command give the start time and duration for a safe system stop. At that time, it is guaranteed that all readings from the different photometers will be discarded due to daylight.
-
-```tess system window
-+---------------------+---------------------+----------+
-| Start Time (UTC)    | End Time (UTC)      | Window   |
-+=====================+=====================+==========+
-| 2017-11-04 13:45:03 | 2017-11-04 14:44:35 | 0:59:32  |
-+---------------------+---------------------+----------+
-```
-
-# Sample SQL Queries
+## Sample SQL Queries
 
 The following are samples queries illustraing how to use the data model. They are actually being used by the STARS4ALL project
 
@@ -561,7 +304,11 @@ EOF
 ```
 
 5. Show the time span of readings per TESS
-```sql
+```sh
+#!/bin/bash
+sqlite3 /var/dbase/tess.db <<EOF
+.mode column
+.headers on;
 SELECT i.name, MIN(d.sql_date || 'T' || t.time || 'Z') AS earliest, MAX(d.sql_date || 'T' || t.time || 'Z') AS latest
 FROM tess_readings_t AS r
 JOIN tess_t          AS i USING (tess_id)
@@ -569,13 +316,51 @@ JOIN location_t      AS l USING (location_id)
 JOIN date_t          AS d USING (date_id)
 JOIN time_t          AS t USING (time_id)
 GROUP BY i.name;
+EOF
 ```
 
 6. Show locations not assigned to any TESS
-```sql
+```sh
+#!/bin/bash
+sqlite3 /var/dbase/tess.db <<EOF
+.mode column
+.headers on;
 SELECT l.site
 FROM location_t        AS l 
 LEFT OUTER JOIN tess_t AS i USING (location_id)
 WHERE i.name IS NULL;
+EOF
 ```
 
+# MQTT PAYLOAD INFORMATION
+
+Payloads are transmitted in JSON format, with the format described below.
+
+## Published on  topic 'STARS4ALL/{channel}/reading'
+
+| Field name |  Type  | Units | Optional | Description                       |
+|:----------:|:------:|:-----:|:--------:|:----------------------------------|
+| seq        | int    |   -   | mand  | Sequence number. If possible use 32 bits. The sequence number will start in 1 at each device reboot. |
+| name       | string |   -   | mand  | Instrument friendly name. Should be unique as it identifies the device. |
+| freq       | float  | Hz    | mand  | Raw reading as a frequency with 3 decimal digits precision (millihertz) NNNNN.NNN |
+| mag        | float  | mag/arcsec^2 | mandat. | Visual magnitude (formulae?) corresponding to the raw reading). Transmitted up to two decimal places NN.NN |
+| tamb       | float   | ºC    | mandat. | Ambient Temperature. Transmitted up to one decimal place. |
+| tsky       | float   | ºC    | mandat.  | Sky Temperature. Transmitted up to one decimal place. |
+| wdBm       | int     | dBm | opt | WiFi Received Signal Strength. |
+| az         | int     | deg | opt | Photometer optical axis Azimuth sent only on instruments with accelerometer. |
+| alt | int | deg | opt | Photometer optical axis Altitude (angle): sent only on instruments with accelerometer. |
+| lat | float | deg | opt | Instrument latitude. Only sent by instruments with GPS integration. |
+| long | float | deg | opt | Instrument longitude. Only sent by instruments with GPS integration. |
+| height | float | meters | opt | Instrument height above the sea level. Only sent by instruments with GPS integration. |
+| rev | int | - | mand | Payload data format revision number. Current version is 1. |
+| tstamp | string | UTC | opt | Timestamp,“YYYY-MM-DDTHH:MM:SS” format. Must be UTC. |
+
+## Published on  topic 'STARS4ALL/register'
+
+| Field name |  Type  | Units | Optional | Description                       |
+|:----------:|:------:|:-----:|:--------:|:----------------------------------|
+| name  | string | - | mand | Instrument friendly name. Should be unique as it identifies the device. |
+| mac   | string | - | mand. | Device MAC address, format “xx:yy:zz:rr:ss:tt” |
+| calib | float  | mag/arcsec^2 | mand | Per-device Zero Point. Transmitted as NN.NN floating point. |
+| rev   | int    | - | mand | Payload data format revision number. Current version is 1. |
+| chan  | string | - | opt | Channel where this instrument will publish its readings. |
