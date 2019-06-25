@@ -1,4 +1,8 @@
 # Change Log
+# 2.0.0
+standalone systemd service along with dbase backup by logrotate and pause/resume scripts
+# 1.1.4
+* Latest release with all the report scripts and tess utility bundled with the tessdb service
 #| 1.0.5
 * Added `tess instrument history` command to tess utility
 

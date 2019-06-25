@@ -43,16 +43,13 @@ AUTHOR       = 'Rafael Gonzalez'
 AUTHOR_EMAIL = 'astrorafael@yahoo.es'
 DESCRIPTION  = 'A package to collect measurements published by TESS instruments into a SQlite database',
 LICENSE      = 'MIT'
-KEYWORDS     = 'Astronomy Python RaspberryPi'
-URL          = 'http://github.com/astrorafael/tessdb/'
+KEYWORDS     = 'Astronomy Python RaspberryPi LightPollution'
+URL          = 'http://github.com/stars4all/tessdb/'
 PACKAGES     = ["tessdb","tessdb.sqlite3","tessdb.service"]
 DEPENDENCIES = [
                   'twisted >= 16.3.0',
                   'twisted-mqtt',
                   'pyephem >= 3.7.6',
-                  'tabulate', 
-                  'pytz',
-                  'jinja2'
 ]
 
 CLASSIFIERS  = [
@@ -70,22 +67,10 @@ CLASSIFIERS  = [
 
 DATA_FILES  = [ 
   ('/lib/systemd/system',    ['files/lib/systemd/system/tessdb.service']),
-  ('/etc/tessdb',            ['files/etc/tessdb/config.example', 
-                              'files/etc/tessdb/tess_units.example.json', 
-                              'files/etc/tessdb/tess_location.example.json', 
-                              'files/etc/tessdb/locations.example.json',
-                              'files/etc/tessdb/IDA-template.j2']),
+  ('/etc/tessdb',            ['files/etc/tessdb/config.example']),
   ('/usr/local/bin',         ['files/usr/local/bin/tessdb',
                               'files/usr/local/bin/tessdb_pause',
                               'files/usr/local/bin/tessdb_resume',
-                              'files/usr/local/bin/tess', 
-                              'files/usr/local/bin/tess_bulk_dump.sh', 
-                              'files/usr/local/bin/tess_daily_summary.sh', 
-                              'files/usr/local/bin/tess_life_span.sh', 
-                              'files/usr/local/bin/tess_ida',
-                              'files/usr/local/bin/tess_ida_bulk_dump.sh',
-                              'files/usr/local/bin/tess_ida_bulk_dump_all.sh',
-                              'files/usr/local/bin/tess_sunrise_sunset.sh', 
                               'files/usr/local/bin/tessdb_index.sh',
                               ]),
   ('/etc/logrotate_astro.d', ['files/etc/logrotate.d/tessdb']),
@@ -121,36 +106,8 @@ if os.name == "posix":
   args = shlex.split( "chmod 644 /etc/logrotate_astro.d/tessdb")
   subprocess.call(args)
   args = shlex.split( "systemctl daemon-reload")
-  subprocess.call(args)
-
-elif os.name == "nt":
-
-  import sys
-  import shlex
-
-  setup(name             = PKG_NAME,
-        version          = versioneer.get_version(),
-        cmdclass         = versioneer.get_cmdclass(),
-        author           = AUTHOR,
-        author_email     = AUTHOR_EMAIL,
-        description      = DESCRIPTION,
-        long_description = long_description,
-        license          = LICENSE,
-        keywords         = KEYWORDS,
-        url              = URL,
-        classifiers      = CLASSIFIERS,
-        packages         = PACKAGES,
-        install_requires = DEPENDENCIES,
-        data_files       = [ 
-          (r'C:\tessdb',          [r'files\usr\local\bin\tessdb.bat',r'files\usr\local\bin\tess',r'files\usr\local\bin\winreload.py']),
-          (r'C:\tessdb\dbase',    [r'files\var\dbase\placeholder.txt']),
-          (r'C:\tessdb\log',      [r'files\var\log\placeholder.txt']),
-          (r'C:\tessdb\config',   [r'files/etc\tessdb\config.example.ini',r'files\etc\tessdb\tess_units.example.json', r'files\etc\tessdb\tess_location.example.json', r'files\etc\tessdb\locations.example.json']),
-          ]
-        )
-
-  args = shlex.split( "python -m tessdb --startup auto install")
-  subprocess.call(args)
+  subprocess.call(args)  
 
 else:
-  pass
+  
+  print("Not supported OS")
