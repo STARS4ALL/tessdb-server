@@ -209,7 +209,7 @@ class TESSUnits(Table):
                 reading_source,
                 valid_since,
                 valid_until,
-                valid_state,
+                valid_state
             ) VALUES (
                 :units_id,
                 :frequency_units,
@@ -226,7 +226,7 @@ class TESSUnits(Table):
                 :reading_source,
                 :valid_since,
                 :valid_until,
-                :valid_state,
+                :valid_state
             )'''
             , read_rows 
         )
