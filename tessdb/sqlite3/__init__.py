@@ -32,17 +32,17 @@ from tessdb.sqlite3.tess_readings import TESSReadings
 # ----------------
 
 def getPool(*args, **kargs):
-	'''Get connetion pool for sqlite3 driver'''
-   	kargs['check_same_thread']=False
-   	return adbapi.ConnectionPool("sqlite3", *args, **kargs)
+    '''Get connetion pool for sqlite3 driver'''
+    kargs['check_same_thread'] = False
+    return adbapi.ConnectionPool("sqlite3", *args, **kargs)
 
 
 __all__ = [
-	"getPool", 
-	"Date", 
-	"TimeOfDay", 
-	"TESSUnits", 
-	"Location", 
-	"TESS", 
-	"TESSReadings"
+    "getPool", 
+    "Date", 
+    "TimeOfDay", 
+    "TESSUnits", 
+    "Location", 
+    "TESS", 
+    "TESSReadings"
 ]

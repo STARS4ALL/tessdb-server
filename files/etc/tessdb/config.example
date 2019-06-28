@@ -76,11 +76,6 @@ tess_whitelist =
 # Reloadable property
 tess_blacklist = 
 
-# MQTT Stats reporting. Either 'condensed' or 'detailed'
-# Leave blank if not needed.
-# Reloadable property
-stats = condensed
-
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = info
@@ -116,7 +111,7 @@ json_dir = /etc/tessdb
 # Limit years (included) for the Date dimension (from Jan 1 to Dec 12)
 # Not reloadable property
 year_start = 2016
-year_end   = 2026
+year_end   = 2036
 
 # Date format for the Date dimension (date field)
 # Examples: (%Y/%m/%d => 2015/12/31) (%d/%m/%Y => 31/12/2015)
@@ -165,11 +160,6 @@ location_minimum_batch_size = 100
 # set of locations (i.e. 10000)
 # Reloadable property
 location_pause = 10
-
-# DBase Stats reporting. Either 'condensed' or 'detailed'
-# Leave blank if not needed.
-# Reloadable property
-stats = condensed
 
 # general namespace log level (debug, info, warn, error, critical)
 # Reloadable property

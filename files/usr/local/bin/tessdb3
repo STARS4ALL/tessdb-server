@@ -1,0 +1,8 @@
+#!/bin/bash
+# ----------------------------------------------------------------------
+# Copyright (c) 2014 Rafael Gonzalez.
+#
+# See the LICENSE file for details
+# ----------------------------------------------------------------------
+
+python3 -m tessdb -c /etc/tessdb/config "$@"

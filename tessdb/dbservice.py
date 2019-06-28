@@ -18,7 +18,6 @@ import json
 import math
 
 import ephem
-import tabulate
 
 # ---------------
 # Twisted imports
@@ -250,8 +249,6 @@ class DBaseService(Service):
     @inlineCallbacks
     def logCounters(self):
         '''log stat counters'''
-        if self.options['stats'] == "":
-            return
         
         # get readings stats
         resultRds = self.tess_readings.getCounters()
@@ -273,44 +270,17 @@ class DBaseService(Service):
         resultEff = yield deferToThread(self.getCounters)
 
         # Readings statistics
-        if self.options['stats'] == "detailed":
-            log.info("DB Readings Statistics during the last hour")
-            text = tabulate.tabulate([global_stats], headers=['DB Readings Total','OK','NOK'], tablefmt='grid')
-            log.info("\n{table}",table=text)   
-            
-            text = tabulate.tabulate([global_stats_nok], headers=['DB Readings Total NOK','Not Registered','Lack Sunrise','Daytime','Dupl','Other'], tablefmt='grid')
-            log.info("\n{table}",table=text)
-           
-            # Registration statistics
-            log.info("DB Registrations Statistics during the last hour")
-            text = tabulate.tabulate([global_stats_reg], headers=['DB Registration Total','OK','NOK'], tablefmt='grid')
-            log.info("\n{table}",table=text)
-
-            text = tabulate.tabulate([ok_stats_reg], headers=['DB Registration Total OK','Created','Upd Name','Upd Calib'], tablefmt='grid')
-            log.info("\n{table}",table=text)
-
-            text = tabulate.tabulate([nok_stats_reg], headers=['DB Registration NOK','No Upd Name','No Create Name'], tablefmt='grid')
-            log.info("\n{table}",table=text)
-           
-            # I/O efficiency stats
-            log.info("DB I/O EFFICIENCY = {efficiency}%",efficiency=resultEff[1])
-            text = tabulate.tabulate(resultEff[0], headers=['Stat. (N = {0})'.format(resultEff[2]),'Min','Aver','Max'], tablefmt='grid')
-            log.info("\n{table}",table=text)
-
-        elif self.options['stats'] == "condensed":
-
-            log.info("DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
-            log.info("DB Stats Register [Total, OK, NOK] = {global_stats_reg!s}", global_stats_reg=global_stats_reg)
-            log.info("DB Stats I/O Effic. [Nsec, %, Tmin, Taver, Tmax, Naver] = [{Nsec}, {eff:0.2g}%, {Tmin:0.2g}, {Taver:0.2g}, {Tmax:0.2g}, {Naver:0.2g}]",
-                Nsec=resultEff[2], 
-                eff=resultEff[1], 
-                Tmin=resultEff[0][0][1], 
-                Taver=resultEff[0][0][2],
-                Tmax=resultEff[0][0][3],
-                Naver=resultEff[0][1][2]
-            )
-        else:
-            pass
+        log.info("DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
+        log.info("DB Stats Register [Total, OK, NOK] = {global_stats_reg!s}", global_stats_reg=global_stats_reg)
+        log.info("DB Stats I/O Effic. [Nsec, %, Tmin, Taver, Tmax, Naver] = [{Nsec}, {eff:0.2g}%, {Tmin:0.2g}, {Taver:0.2g}, {Tmax:0.2g}, {Naver:0.2g}]",
+            Nsec=resultEff[2], 
+            eff=resultEff[1], 
+            Tmin=resultEff[0][0][1], 
+            Tavr=resultEff[0][0][2],
+            Tmax=resultEff[0][0][3],
+            Naver=resultEff[0][1][2]
+        )
+       
 
 
 

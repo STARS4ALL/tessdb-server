@@ -18,8 +18,6 @@ import json
 import math
 import platform
 
-import tabulate
-
 # ---------------
 # Twisted imports
 # ---------------
@@ -154,18 +152,10 @@ class MQTTService(ClientService):
 
     def logCounters(self):
         '''log stat counters'''
-        if self.options['stats'] == "":
-            return
         # get stats
         result = self.getCounters()
-        if self.options['stats'] == "detailed":
-            log.info("MQTT Statistics during the last hour")
-            text = tabulate.tabulate([result], headers=['MQTT Total','Readings','Registration','Discarded'], tablefmt='grid')
-            log.info("\n{table}",table=text)
-        elif self.options['stats'] == "condensed":
-            log.info("MQTT Stats [Total, Reads, Register, Discard] = {counters!s}", counters=result)
-        else:
-            pass
+        log.info("MQTT Stats [Total, Reads, Register, Discard] = {counters!s}", counters=result)
+        
 
     # --------------
     # Helper methods
@@ -366,7 +356,7 @@ class MQTTService(ClientService):
         self.npublish += 1
         log.debug("payload={payload}", payload=payload)
         try:
-            payload = str(payload)  # from bytearray to string
+            payload = payload.decode('utf-8')  # from bytearray to string
             row = json.loads(payload)
         except Exception as e:
             log.error('Invalid JSON in payload={payload}', payload=payload)
