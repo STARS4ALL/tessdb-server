@@ -276,13 +276,11 @@ class DBaseService(Service):
             Nsec=resultEff[2], 
             eff=resultEff[1], 
             Tmin=resultEff[0][0][1], 
-            Tavr=resultEff[0][0][2],
+            Taver=resultEff[0][0][2],
             Tmax=resultEff[0][0][3],
             Naver=resultEff[0][1][2]
         )
        
-
-
 
     # =============
     # Twisted Tasks

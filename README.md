@@ -31,7 +31,7 @@ Instrument should send their readings at twice the time resolution specified in 
 
 The following components are needed and should be installed first:
 
- * python 2.7.x (tested on Ubuntu Python 2.7.6)
+ * python 2.7.x (tested on Ubuntu Python 2.7.6) or python 3.6+
 
 **Note:** It is foreseen a Python 3 migration in the future, retaining Python 2.7.x compatibility.
 
