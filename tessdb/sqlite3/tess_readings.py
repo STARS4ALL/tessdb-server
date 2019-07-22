@@ -78,7 +78,7 @@ class TESSReadings(Table):
 
         Table.__init__(self, connection)
         self.parent = parent
-        self.setOptions(location_filter=True)
+        self.setOptions(auth_filter=True, location_filter=True)
         self.resetCounters()
 
 
@@ -179,7 +179,8 @@ class TESSReadings(Table):
         location_id = tess[3]
         authorised  = tess[5] == 1
 
-        if not authorised:
+        # Review authorisation if this filtering is enabled
+        if self.authFilter and not authorised:
             log.debug("TESSReadings.update({log_tag}): not authorised", log_tag=row['name'])
             self.rejNotAuthorised += 1
             returnValue(None)
@@ -236,10 +237,11 @@ class TESSReadings(Table):
     # Helper methods
     # ==============
 
-    def setOptions(self, location_filter=True, location_horizon='-0:34'):
+    def setOptions(self, auth_filter, location_filter, location_horizon='-0:34'):
         '''
-        Set option for sunrise/sunset filtering
+        Set filtering. Auth and sunrise/sunset
         '''
+        self.authFilter     = auth_filter
         self.locationFilter = location_filter
         self.horizon        = location_horizon
 

@@ -123,6 +123,7 @@ def loadCfgFile(path):
     options['dbase']['date_fmt']          = parser.get("dbase","date_fmt")
     options['dbase']['secs_resolution']   = parser.getint("dbase","secs_resolution")
 
+    options['dbase']['auth_filter']         = parser.getboolean("dbase","auth_filter")
     options['dbase']['location_filter']     = parser.getboolean("dbase","location_filter")
     options['dbase']['location_horizon']    = parser.get("dbase","location_horizon")
     options['dbase']['location_batch_size'] = parser.getfloat("dbase","location_batch_size")

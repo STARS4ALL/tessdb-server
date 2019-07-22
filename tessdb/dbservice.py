@@ -129,7 +129,9 @@ class DBaseService(Service):
 
     def schema(self):
         '''Create the schema and populate database'''
-        self.tess_readings.setOptions(location_filter=self.options['location_filter'], location_horizon=self.options['location_horizon'])
+        self.tess_readings.setOptions(auth_filter=self.options['auth_filter'],
+            location_filter=self.options['location_filter'], 
+            location_horizon=self.options['location_horizon'])
         self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'])
         self.time.schema(json_dir=self.options['json_dir'])
         self.tess_locations.schema(json_dir=self.options['json_dir'])
@@ -174,7 +176,8 @@ class DBaseService(Service):
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
         setLogLevel(namespace='register', levelStr=new_options['register_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.tess_readings.setOptions(location_filter=new_options['location_filter'], 
+        self.tess_readings.setOptions(auth_filter=new_options['auth_filter'],
+            location_filter=new_options['location_filter'], 
             location_horizon=new_options['location_horizon'])
         self.options = new_options
         self.onBoot = True  # Forces sunrise/sunset computation
@@ -272,6 +275,8 @@ class DBaseService(Service):
         # Readings statistics
         log.info("DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
         log.info("DB Stats Register [Total, OK, NOK] = {global_stats_reg!s}", global_stats_reg=global_stats_reg)
+        log.info("DB Stats NOK details [Not Reg, Not Auth, Daylight, Dup, Other] = [{Reg}, {Auth}, {Sun}, {Dup}, {Other}]", 
+            Reg=resultRds[1], Auth=resultRds[2], Sun=resultRds[3], Dup=resultRds[4], Other=resultRds[5])
         log.info("DB Stats I/O Effic. [Nsec, %, Tmin, Taver, Tmax, Naver] = [{Nsec}, {eff:0.2g}%, {Tmin:0.2g}, {Taver:0.2g}, {Tmax:0.2g}, {Naver:0.2g}]",
             Nsec=resultEff[2], 
             eff=resultEff[1], 
@@ -280,7 +285,6 @@ class DBaseService(Service):
             Tmax=resultEff[0][0][3],
             Naver=resultEff[0][1][2]
         )
-       
 
     # =============
     # Twisted Tasks

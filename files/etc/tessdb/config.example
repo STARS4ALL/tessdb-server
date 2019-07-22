@@ -125,6 +125,21 @@ date_fmt = %d/%m/%Y
 # Not reloadable property.
 secs_resolution = 1
 
+# --------------- BEGIN RECORDING FILTERS CONFIG ---------------------
+
+#
+#               +-------------+     +-----------------+   
+#  (sample) --> | Auth Filter | --> | Location Filter | --> Database
+#               +-------------+     +-----------------+
+#
+
+# Authorisation filter
+# Each TESS-W photometer must be authorised to write to the database
+# The recommended use is to manually authorise it after the TESS photomenter
+# is in place and measuring properly
+# However, this can be disabled.
+auth_filter = yes
+
 # Filter by location sunrise/sunset
 # if set, filtering of readings will be performed for each TESS associated with
 # a given location. 
@@ -138,6 +153,7 @@ location_filter = yes
 # Format DD:MM:SS or -DD:MM:SS
 # Reloadable property.
 location_horizon = -00:34
+
 
 # How many locations to process in a batch. Measured in %. 
 # It can be floating point
@@ -160,6 +176,8 @@ location_minimum_batch_size = 100
 # set of locations (i.e. 10000)
 # Reloadable property
 location_pause = 10
+
+# --------------- END RECORDING FILTERS CONFIG ---------------------
 
 # general namespace log level (debug, info, warn, error, critical)
 # Reloadable property
