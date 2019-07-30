@@ -4,27 +4,22 @@ How to upload a new package release into PyPi
 
 ## Prerequisites
 
+	- Install the latest versions of setuptools, wheel and twine
+
+	`python3 -m pip install --user --upgrade setuptools wheel twine`
+
 	- Needs an account in PyPi and Testing PyPy
 
-	- Have your  ~/.pypirc file ready
+	- File  ~/.pypirc file is not needed anymore, although it is useful to remember credentials :-)
+	A safer options is to use `keyring` in Linux
 
+	- it is helpful to know if youer package is an [Universal Wheels] package(https://packaging.python.org/guides/distributing-packages-using-setuptools/#universal-wheels). If so, set it up on your `setup.cfg` file.
+	
 	```
-	[distutils]
-	index-servers=
-    pypi
-    pypitest
-
-	[pypitest]
-	repository = https://testpypi.python.org/pypi
-	username = <my pypitest username>
-	password = <my pypitest password>
-
-	[pypi]
-	repository = https://pypi.python.org/pypi
-	username = <my pypi username>
-	password = <my pypi password>
-
+	[bdist_wheel]
+	universal=1
 	```
+
 
 ## Steps
 
@@ -47,29 +42,35 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 	1. MAJOR version when you make incompatible API changes,
 	2. MINOR version when you add functionality in a backwards-compatible manner, and
 	3. PATCH version when you make backwards-compatible bug fixes.
-
 	
 	`git tag -a MAJOR.MINOR.PATCH`
 
 	(to delete a tag type `git tag -d <tag>`)
 
-4. Register the new release in testing PyPi website
+4. Package as source distribution (`sdist`) and binary wheels (`bdist_wheel`). Generated packages are placed into `dists/`.
 
-	`sudo python setup.py register -r pypitest`
+	`python3 setup.py sdist bdist_wheel`
 	
-5. Package and Upload at the same time in testing PyPi website
+5. Run `twine` to upload all of the archives under `dist/`.
 
-	`sudo python setup.py sdist upload -r pypitest`
+	`python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
+
+	You will be prompted for the username and password you registered with Test PyPI.
+
 
 6. Test that you can install it from the Testing PyPi site
 
-	`sudo pip install -i https://testpypi.python.org/pypi <package name>`
+	`python3 -m pip install --index-url https://test.pypi.org/simple/ --no-deps <package-name>`
 
-7. Do 3 through 5 with the normal PyPi website
+	Since TestPyPI doesn’t have the same packages as the live PyPI, it’s possible that attempting to install dependencies may fail or install something unexpected. While our example package doesn’t have any dependencies, it’s a good practice to avoid installing dependencies when using TestPyPI.
 
-	`sudo python setup.py register -r pypi` 
-	`sudo python setup.py sdist upload -r pypi`
-	`sudo pip install <package name>`
+7. Do 5 and 6 with the official PyPi website
+
+	`python3 -m twine upload dist/*` 
+	
+	You can see if your package has successfully uploaded by navigating to the URL https://pypi.org/project/<package-name>
+
+	`python3 -m pip install --user <package-name>`
 
 # Updating GitHub repo
 
