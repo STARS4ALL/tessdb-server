@@ -3,6 +3,7 @@ import os.path
 
 from setuptools import setup, Extension
 import versioneer
+import subprocess
 
 # Default description in markdown
 LONG_DESCRIPTION = open('README.md').read()
