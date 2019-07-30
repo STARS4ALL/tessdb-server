@@ -199,7 +199,7 @@ class TESS(Table):
                 tess_t.valid_state,
                 tess_t.authorised,
                 tess_t.registered,
-                location_t.contact_person,
+                location_t.contact_name,
                 location_t.organization,
                 location_t.contact_email,
                 location_t.site,
