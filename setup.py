@@ -3,7 +3,6 @@ import os.path
 
 from setuptools import setup, Extension
 import versioneer
-import subprocess
 
 # Default description in markdown
 LONG_DESCRIPTION = open('README.md').read()
@@ -52,13 +51,13 @@ DATA_FILES  = [
 
 if os.name == "posix":
   
-  import shlex
+  # import shlex
 
   # Some fixes before setup
-  if not os.path.exists("/etc/logrotate_astro.d"):
-    print("creating directory /etc/logrotate_astro.d")
-    args = shlex.split( "mkdir /etc/logrotate_astro.d")
-    subprocess.call(args)
+  # if not os.path.exists("/etc/logrotate_astro.d"):
+  #   print("creating directory /etc/logrotate_astro.d")
+  #   args = shlex.split( "mkdir /etc/logrotate_astro.d")
+  #   subprocess.call(args)
 
   setup(name             = PKG_NAME,
         version          = versioneer.get_version(),
@@ -78,10 +77,10 @@ if os.name == "posix":
         )
  
   # Some fixes after setup
-  args = shlex.split( "chmod 644 /etc/logrotate_astro.d/tessdb")
-  subprocess.call(args)
-  args = shlex.split( "systemctl daemon-reload")
-  subprocess.call(args)  
+  # args = shlex.split( "chmod 644 /etc/logrotate_astro.d/tessdb")
+  # subprocess.call(args)
+  # args = shlex.split( "systemctl daemon-reload")
+  # subprocess.call(args)  
 
 else:
   
