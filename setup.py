@@ -5,37 +5,7 @@ from setuptools import setup, Extension
 import versioneer
 
 # Default description in markdown
-long_description = open('README.md').read()
- 
-# Converts from markdown to rst using pandoc
-# and its python binding.
-# Documetation is uploaded in PyPi when registering
-# by issuing `python setup.py register`
-
-try:
-    import subprocess
-    import pandoc
- 
-    process = subprocess.Popen(
-        ['which pandoc'],
-        shell=True,
-        stdout=subprocess.PIPE,
-        universal_newlines=True
-    )
- 
-    pandoc_path = process.communicate()[0]
-    pandoc_path = pandoc_path.strip('\n')
- 
-    pandoc.core.PANDOC_PATH = pandoc_path
- 
-    doc = pandoc.Document()
-    doc.markdown = long_description
- 
-    long_description = doc.rst
- 
-except:
-    pass
-   
+LONG_DESCRIPTION = open('README.md').read()
 
 
 PKG_NAME     = 'tessdb'
@@ -95,7 +65,8 @@ if os.name == "posix":
         author           = AUTHOR,
         author_email     = AUTHOR_EMAIL,
         description      = DESCRIPTION,
-        long_description = long_description,
+        long_description_content_type = "text/markdown",
+        long_description = LONG_DESCRIPTION,
         license          = LICENSE,
         keywords         = KEYWORDS,
         url              = URL,
@@ -104,6 +75,7 @@ if os.name == "posix":
         install_requires = DEPENDENCIES,
         data_files       = DATA_FILES
         )
+ 
   # Some fixes after setup
   args = shlex.split( "chmod 644 /etc/logrotate_astro.d/tessdb")
   subprocess.call(args)
