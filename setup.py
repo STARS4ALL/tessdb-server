@@ -44,7 +44,6 @@ DATA_FILES  = [
                               'files/usr/local/bin/tess',
                               'files/usr/local/bin/tessdb_pause',
                               'files/usr/local/bin/tessdb_resume',
-                              'files/usr/local/bin/tessdb_index.sh',
                               ]),
   ('/etc/logrotate_astro.d', ['files/etc/logrotate.d/tessdb']),
   ('/var/dbase',             ['files/var/dbase/placeholder.txt']),
