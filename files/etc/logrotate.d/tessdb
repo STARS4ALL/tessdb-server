@@ -13,7 +13,6 @@
 	endscript
 	postrotate
 		/usr/local/bin/tessdb_resume > /dev/null 2>/dev/null 
-		/usr/local/bin/tessdb_index.sh  > /dev/null 2>/dev/null
 	endscript
 }
 
