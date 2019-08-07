@@ -49,13 +49,6 @@ DATA_FILES  = [
   ('/var/dbase',             ['files/var/dbase/placeholder.txt']),
 ]
 
-SCRIPTS = [
-  'files/usr/local/bin/tessdb',
-  'files/usr/local/bin/tessdb3',
-  'files/usr/local/bin/tess',
-  'files/usr/local/bin/tessdb_pause',
-  'files/usr/local/bin/tessdb_resume',
-]
 
 if os.name == "posix":
   
@@ -81,8 +74,7 @@ if os.name == "posix":
         classifiers      = CLASSIFIERS,
         packages         = PACKAGES,
         install_requires = DEPENDENCIES,
-        data_files       = DATA_FILES,
-        scripts          = SCRIPTS
+        data_files       = DATA_FILES
         )
  
   # Some fixes after setup
