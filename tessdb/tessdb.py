@@ -20,7 +20,7 @@ from   collections import deque
 from twisted          import __version__ as __twisted_version__
 from twisted.logger   import Logger, LogLevel
 from twisted.internet import task
-from twisted.internet.defer  import inlineCallbacks, returnValue
+from twisted.internet.defer  import inlineCallbacks, returnValue, DeferredQueue
 from twisted.internet.threads import deferToThread
 
 #--------------
@@ -57,7 +57,11 @@ class TESSDBService(MultiService):
     def __init__(self, config_opts, cfgFilePath):
         MultiService.__init__(self)
         self.cfgFilePath = cfgFilePath
-        self.queue  = { 'tess_register':  deque() , 'tess_readings':   deque() }
+        self.queue  = { 
+            'tess_register'         : deque(), 
+            'tess_readings'         : DeferredQueue(), 
+            'tess_filtered_readings': deque(), 
+        }
         self.statsTask    = task.LoopingCall(self.logCounters)
         setLogLevel(namespace='tessdb', levelStr=config_opts['log_level'])
         setLogTags(logTags=config_opts['log_selected'])

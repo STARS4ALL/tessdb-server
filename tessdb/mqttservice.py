@@ -335,7 +335,7 @@ class MQTTService(ClientService):
             else:
                 log.debug('Enqueue reading from {log_tag} for DB Writter', log_tag=row['name'])
                 row['name'] = row['name'].lower() # Get rid of upper case TESS names
-                self.parent.queue['tess_readings'].append(row)
+                self.parent.queue['tess_readings'].put(row)
 
 
     def onDisconnection(self, reason):

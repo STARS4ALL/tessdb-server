@@ -130,6 +130,10 @@ def loadCfgFile(path):
     options['dbase']['location_pause']      = parser.getint("dbase","location_pause")
     options['dbase']['location_minimum_batch_size']  = parser.getint("dbase","location_minimum_batch_size")
 
+    options['filter'] = {}
+    options['filter']['depth']     = parser.getint("filter","depth")
+    options['filter']['log_level'] = parser.get("filter","log_level")
+
 
     return options
 

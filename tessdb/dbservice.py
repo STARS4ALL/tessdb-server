@@ -301,13 +301,13 @@ class DBaseService(Service):
         and update them to database
         '''
         t0 = datetime.datetime.utcnow()
-        l0 = len(self.parent.queue['tess_readings']) + len(self.parent.queue['tess_register'])
+        l0 = len(self.parent.queue['tess_filtered_readings']) + len(self.parent.queue['tess_register'])
         if not self.paused:
             while len(self.parent.queue['tess_register']):
                 row = self.parent.queue['tess_register'].popleft()
                 yield self.register(row)
-            while len(self.parent.queue['tess_readings']):
-                row = self.parent.queue['tess_readings'].popleft()
+            while len(self.parent.queue['tess_filtered_readings']):
+                row = self.parent.queue['tess_filtered_readings'].popleft()
                 yield self.update(row)
         self.timeStatList.append( (datetime.datetime.utcnow() - t0).total_seconds())
         self.nrowsStatList.append(l0)

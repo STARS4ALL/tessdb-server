@@ -85,6 +85,16 @@ log_level = info
 # Reloadable property
 protocol_log_level = info
 
+#------------------------------------------------------------------------#
+[filter]
+
+# Filter depth
+# How many consecutive samples must be analyzed to discard invalid data
+depth = 5
+
+# namespace log level (debug, info, warn, error, critical)
+# Reloadable property
+log_level = info
 
 #------------------------------------------------------------------------#
 
