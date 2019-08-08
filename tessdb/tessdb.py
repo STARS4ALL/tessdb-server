@@ -29,10 +29,11 @@ from twisted.internet.threads import deferToThread
 
 from tessdb.service.relopausable import MultiService
 
-from tessdb.config      import VERSION_STRING, loadCfgFile
-from tessdb.mqttservice import MQTTService
-from tessdb.dbservice   import DBaseService
-from tessdb.logger      import setLogLevel, setLogTags
+from tessdb.config        import VERSION_STRING, loadCfgFile
+from tessdb.mqttservice   import MQTTService
+from tessdb.filterservice import FilterService
+from tessdb.dbservice     import DBaseService
+from tessdb.logger        import setLogLevel, setLogTags
 
 # ----------------
 # Module constants
@@ -74,8 +75,10 @@ class TESSDBService(MultiService):
         log.info('starting {tessdb} using Twisted {tw_version}', 
             tessdb=VERSION_STRING, tw_version=__twisted_version__)
         self.dbaseService   = self.getServiceNamed(DBaseService.NAME)
+        self.filterService  = self.getServiceNamed(FilterService.NAME)
         self.mqttService    = self.getServiceNamed(MQTTService.NAME)
         self.dbaseService.startService()
+        self.filterService.startService()
         self.mqttService.startService()
         self.statsTask.start(self.T_STAT, now=False) # call every T seconds
 

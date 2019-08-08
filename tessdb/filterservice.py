@@ -116,15 +116,15 @@ class FilterService(Service):
         log.debug("starting Filtering infinite loop")
         while True:
             new_sample = yield self.parent.queue['tess_readings'].get()
-            log.debug("Filter({log_tag}): got a new sample from {sample.name} with seq = {sample.seq}, freq = {sample.freq}", sample=new_sample, log_tag=new_sample['name'])
-            fifo   = self.fifos.get(sample['name'], deque(self.depth))
-            fifo.append(sample)
-            if len(fifo == self.depth):
+            log.debug("Filter({log_tag}): got a new sample from {sample}", sample=new_sample, log_tag='stars1')
+            fifo   = self.fifos.get(new_sample['name'], deque(maxlen=self.depth))
+            fifo.append(new_sample)
+            if len(fifo) == self.depth:
               seqList   = [ item['seq']  for item in fifo ]
               freqList  = [ item['freq'] for item in fifo ]
               old_sample = fifo.popleft()
               if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(freqList): 
-                log.debug("Filter({log_tag}): discarding {sample.name} with seq = {sample.seq}, freq = {sample.freq}", sample=old_sample, log_tag=old_sample['name'])
+                log.debug("Filter({log_tag}): discarding {sample.name} with seq = {sample.seq}, freq = {sample.freq}", sample=old_sample, log_tag='stars1')
               else:
-                log.debug("Filter({log_tag}): giving {sample.name} with seq = {sample.seq} , freq = {sample.freq} to database queue", sample=old_sample, log_tag=old_sample['name'])
+                log.debug("Filter({log_tag}): giving {sample.name} with seq = {sample.seq} , freq = {sample.freq} to database queue", sample=old_sample, log_tag='stars1')
                 self.parent.queue['tess_filtered_readings'].append(old_sample)
