@@ -20,6 +20,12 @@ import platform
 
 from   collections import deque
 
+# No xrange in Python3
+try:
+    xrange
+except NameError:
+    xrange = range
+
 # ---------------
 # Twisted imports
 # ---------------
