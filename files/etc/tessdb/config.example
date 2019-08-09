@@ -90,7 +90,13 @@ protocol_log_level = info
 
 # Filter depth
 # How many consecutive samples must be analyzed to discard invalid data
-depth = 5
+# Not reloadable property
+depth = 3
+
+# Enable flag
+# If not enabled, the new reading is passed directly to the database input queue
+# Reloadable property
+enabled = yes
 
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property

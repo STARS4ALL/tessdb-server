@@ -25,7 +25,7 @@ from   collections import deque
 # ---------------
 
 from twisted.logger import Logger, LogLevel
-from twisted.internet import reactor, task
+from twisted.internet import reactor, task, defer
 from twisted.application.internet import ClientService, backoffPolicy
 from twisted.internet.endpoints import clientFromString
 from twisted.internet.defer import inlineCallbacks
@@ -43,7 +43,7 @@ from tessdb.logger import setLogLevel
 # ----------------
 
 # Service Logging namespace
-NAMESPACE = 'filt'
+NAMESPACE = 'filtr'
 
 # -----------------------
 # Module global variables
@@ -58,9 +58,10 @@ class FilterService(Service):
 
     def __init__(self, options, **kargs):
         Service.__init__(self)
-        self.options    = options
-        self.depth = options['depth']
-        self.fifos = dict()
+        self.options  = options
+        self.depth    = options['depth']
+        self.enabled  = options['enabled']
+        self.fifos    = dict()
         setLogLevel(namespace=NAMESPACE, levelStr=options['log_level'])
         
     
@@ -70,6 +71,8 @@ class FilterService(Service):
     
     def startService(self):
         log.info("starting Filtering Service with depth = {depth}",depth=self.depth)
+        if not self.enabled:
+            log.warn("actual filtering is disabled, passing all samples to the database qeeue")
         reactor.callLater(0, self.filter)
 
 
@@ -82,12 +85,15 @@ class FilterService(Service):
             reactor.stop()
 
 
-    @inlineCallbacks
     def reloadService(self, new_options):
-       
         setLogLevel(namespace=NAMESPACE, levelStr=new_options['log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.options = new_options
+        log.info("new filtering status is {flag}", flag=new_options['enabled'])
+        if self.enabled == True and new_options['enabled'] == False:
+            self.flush()
+        self.options  = new_options
+        self.enabled  = self.options['enabled']
+        return defer.succeed(None)
         
 
     # --------------
@@ -102,11 +108,43 @@ class FilterService(Service):
         second_diff = [abs(first_diff[i+1] - first_diff[i])   for i in xrange(len(first_diff)-1)]
         return sum(second_diff) == 0
 
+
     def isSequenceInvalid(self, aList):
         '''
         Invalide frequencies have a value of zero
         '''
         return sum(aList) == 0
+
+
+    def flush(self):
+        '''
+        Fluses FIFOs into output queue
+        '''
+        for name in self.fifos:
+            log.debug("flushing {log_tag} fifo", log_tag=name)
+            while len(self.fifos[name]) != 0:
+                self.parent.queue['tess_filtered_readings'].append(self.fifos[name].popleft())
+        self.fifos = dict()
+
+
+    def doFilter(self, new_sample):
+        fifo   = self.fifos.get(new_sample['name'], deque(maxlen=self.depth))
+        self.fifos[new_sample['name']] = fifo  # Create new fifo if not already
+        fifo.append(new_sample)
+        if len(fifo) == self.depth:
+            seqList   = [ item['seq']  for item in fifo ]
+            freqList  = [ item['freq'] for item in fifo ]
+            log.debug("{log_tag}: seqList = {s}. freqList = {f}", s=seqList, f=freqList, log_tag=new_sample['name'])
+            old_sample = fifo.popleft()
+            if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(freqList): 
+                log.debug("discarding {log_tag} sample with seq = {seq}, freq = {freq}",  seq=old_sample['seq'], freq=old_sample['freq'], log_tag=old_sample['name'])
+            else:
+                log.debug("accepting {log_tag} sample with seq = {seq}, freq = {freq}",  seq=old_sample['seq'], freq=old_sample['freq'], log_tag=old_sample['name'])
+                self.parent.queue['tess_filtered_readings'].append(old_sample)
+
+    # --------------
+    # Main task
+    # ---------------
 
     @inlineCallbacks
     def filter(self):
@@ -116,15 +154,10 @@ class FilterService(Service):
         log.debug("starting Filtering infinite loop")
         while True:
             new_sample = yield self.parent.queue['tess_readings'].get()
-            log.debug("Filter({log_tag}): got a new sample from {sample}", sample=new_sample, log_tag='stars1')
-            fifo   = self.fifos.get(new_sample['name'], deque(maxlen=self.depth))
-            fifo.append(new_sample)
-            if len(fifo) == self.depth:
-              seqList   = [ item['seq']  for item in fifo ]
-              freqList  = [ item['freq'] for item in fifo ]
-              old_sample = fifo.popleft()
-              if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(freqList): 
-                log.debug("Filter({log_tag}): discarding {sample.name} with seq = {sample.seq}, freq = {sample.freq}", sample=old_sample, log_tag='stars1')
-              else:
-                log.debug("Filter({log_tag}): giving {sample.name} with seq = {sample.seq} , freq = {sample.freq} to database queue", sample=old_sample, log_tag='stars1')
-                self.parent.queue['tess_filtered_readings'].append(old_sample)
+            log.debug("got a new sample from {log_tag}", log_tag=new_sample['name'])
+            if self.enabled:
+                self.doFilter(new_sample)
+            else:
+                self.parent.queue['tess_filtered_readings'].append(new_sample)
+
+            

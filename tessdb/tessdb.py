@@ -113,6 +113,7 @@ class TESSDBService(MultiService):
             log.info("new log level is {lvl}", lvl=level)
             setLogTags(logTags=config_opts['tessdb']['log_selected'])
             yield self.mqttService.reloadService(config_opts['mqtt'])
+            yield self.filterService.reloadService(config_opts['filter'])
             yield self.dbaseService.reloadService(config_opts['dbase'])
     
     # -------------
