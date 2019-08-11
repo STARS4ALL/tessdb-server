@@ -128,6 +128,8 @@ class FilterService(Service):
         '''
         for name in self.fifos:
             log.debug("flushing {log_tag} fifo", log_tag=name)
+            while len(self.fifos[name]) > self.depth//2:
+                self.fifos[name].popleft()
             while len(self.fifos[name]) != 0:
                 self.parent.queue['tess_filtered_readings'].append(self.fifos[name].popleft())
         self.fifos = dict()
@@ -137,17 +139,21 @@ class FilterService(Service):
         fifo   = self.fifos.get(new_sample['name'], deque(maxlen=self.depth))
         self.fifos[new_sample['name']] = fifo  # Create new fifo if not already
         fifo.append(new_sample)
-        if len(fifo) == self.depth:
-            seqList   = [ item['seq']  for item in fifo ]
-            freqList  = [ item['freq'] for item in fifo ]
-            log.debug("{log_tag}: seqList = {s}. freqList = {f}", s=seqList, f=freqList, log_tag=new_sample['name'])
-            old_sample = fifo.popleft()
-            if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(freqList): 
-                log.debug("discarding {log_tag} sample with seq = {seq}, freq = {freq}",  seq=old_sample['seq'], freq=old_sample['freq'], log_tag=old_sample['name'])
-            else:
-                log.debug("accepting {log_tag} sample with seq = {seq}, freq = {freq}",  seq=old_sample['seq'], freq=old_sample['freq'], log_tag=old_sample['name'])
-                self.parent.queue['tess_filtered_readings'].append(old_sample)
+        if len(gFIFO) <= self.depth//2:
+            log.debug("{log_tag}: Refilling the fifo", log_tag=new_sample['name'])
+            return
+        chosen_sample = fifo[FIFO_DEPTH//2]
+        seqList   = [ item['seq']  for item in fifo ]
+        freqList  = [ item['freq'] for item in fifo ]
+        log.debug("{log_tag}: seqList = {s}. freqList = {f}", s=seqList, f=freqList, log_tag=new_sample['name'])
+        if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(freqList): 
+            log.debug("discarding {log_tag} sample with seq = {seq}, freq = {freq}",  seq=chosen_sample['seq'], freq=chosen_sample['freq'], log_tag=chosen_sample['name'])
+        else:
+            log.debug("accepting {log_tag} sample with seq = {seq}, freq = {freq}",  seq=chosen_sample['seq'], freq=chosen_sample['freq'], log_tag=chosen_sample['name'])
+            self.parent.queue['tess_filtered_readings'].append(chosen_sample)
 
+
+              
     # --------------
     # Main task
     # ---------------

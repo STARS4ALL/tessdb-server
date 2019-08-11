@@ -89,9 +89,10 @@ protocol_log_level = info
 [filter]
 
 # Filter depth
-# How many consecutive samples must be analyzed to discard invalid data
+# How many consecutive samples must be analyzed to discard invalid data.
+# Sould be an odd, number, minimun 3, recommended 7.
 # Not reloadable property
-depth = 3
+depth = 7
 
 # Enable flag
 # If not enabled, the new reading is passed directly to the database input queue
