@@ -86,14 +86,17 @@ log_level = info
 protocol_log_level = info
 
 #------------------------------------------------------------------------#
-[filter]
 
-# Filter depth
-# How many consecutive samples must be analyzed to discard invalid data.
+[filter]
+# Invalid samples filter
+# This module filters out invalid incoming data by analyzing a window
+# of samples before and after a given one.
+
+# Filter depth (window size)
 # Should be an odd, number, minimun 3, recommended 7.
-# 3 -> keep 1 invalid sample after the valid ones
-# 5 -> keep 2 invalid samples after the valid ones
-# 7 -> keep 3 invalid samples after the valid ones
+# depth = 3 -> keep 1 invalid sample  after the valid ones
+# depth = 5 -> keep 2 invalid samples after the valid ones
+# depth = 7 -> keep 3 invalid samples after the valid ones
 # Not reloadable property
 depth = 7
 
