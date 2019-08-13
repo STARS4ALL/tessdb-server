@@ -117,7 +117,7 @@ class FilterService(Service):
 
     def isSequenceInvalid(self, aList):
         '''
-        Invalide frequencies have a value of zero
+        Invalid magnitudes have a value of zero
         '''
         return sum(aList) == 0
 
@@ -143,13 +143,21 @@ class FilterService(Service):
             log.debug("{log_tag}: Refilling the fifo", log_tag=new_sample['name'])
             return
         chosen_sample = fifo[FIFO_DEPTH//2]
-        seqList   = [ item['seq']  for item in fifo ]
-        freqList  = [ item['freq'] for item in fifo ]
-        log.debug("{log_tag}: seqList = {s}. freqList = {f}", s=seqList, f=freqList, log_tag=new_sample['name'])
-        if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(freqList): 
-            log.debug("discarding {log_tag} sample with seq = {seq}, freq = {freq}",  seq=chosen_sample['seq'], freq=chosen_sample['freq'], log_tag=chosen_sample['name'])
+        seqList  = [ item['seq'] for item in fifo ]
+        magList  = [ item['mag'] for item in fifo ]
+        log.debug("{log_tag}: seqList = {s}. magList = {f}", s=seqList, m=magList, log_tag=new_sample['name'])
+        if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(magList): 
+            log.debug("discarding {log_tag} sample with seq = {seq}, mag ={mag}, freq = {freq}",  
+                mag=chosen_sample['mag'], 
+                seq=chosen_sample['seq'], 
+                freq=chosen_sample['freq'], 
+                log_tag=chosen_sample['name'])
         else:
-            log.debug("accepting {log_tag} sample with seq = {seq}, freq = {freq}",  seq=chosen_sample['seq'], freq=chosen_sample['freq'], log_tag=chosen_sample['name'])
+            log.debug("accepting {log_tag} sample with seq = {seq}, mag ={mag}, freq = {freq}",  
+                seq=chosen_sample['seq'], 
+                mag=chosen_sample['mag'], 
+                freq=chosen_sample['freq'], 
+                log_tag=chosen_sample['name'])
             self.parent.queue['tess_filtered_readings'].append(chosen_sample)
 
 
