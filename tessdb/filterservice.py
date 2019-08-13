@@ -124,7 +124,7 @@ class FilterService(Service):
 
     def flush(self):
         '''
-        Fluses FIFOs into output queue
+        Flushes FIFOs into output queue
         '''
         for name in self.fifos:
             log.debug("flushing {log_tag} fifo", log_tag=name)
