@@ -139,7 +139,7 @@ class FilterService(Service):
         fifo   = self.fifos.get(new_sample['name'], deque(maxlen=self.depth))
         self.fifos[new_sample['name']] = fifo  # Create new fifo if not already
         fifo.append(new_sample)
-        if len(gFIFO) <= self.depth//2:
+        if len(fifo) <= self.depth//2:
             log.debug("{log_tag}: Refilling the fifo", log_tag=new_sample['name'])
             return
         chosen_sample = fifo[FIFO_DEPTH//2]
