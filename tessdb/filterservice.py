@@ -142,7 +142,7 @@ class FilterService(Service):
         if len(fifo) <= self.depth//2:
             log.debug("{log_tag}: Refilling the fifo", log_tag=new_sample['name'])
             return
-        chosen_sample = fifo[FIFO_DEPTH//2]
+        chosen_sample = fifo[self.depth//2]
         seqList  = [ item['seq'] for item in fifo ]
         magList  = [ item['mag'] for item in fifo ]
         log.debug("{log_tag}: seqList = {s}. magList = {f}", s=seqList, m=magList, log_tag=new_sample['name'])
