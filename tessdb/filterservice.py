@@ -145,7 +145,7 @@ class FilterService(Service):
         chosen_sample = fifo[self.depth//2]
         seqList  = [ item['seq'] for item in fifo ]
         magList  = [ item['mag'] for item in fifo ]
-        log.debug("{log_tag}: seqList = {s}. magList = {f}", s=seqList, m=magList, log_tag=new_sample['name'])
+        log.debug("{log_tag}: seqList = {s}. magList = {m}", s=seqList, m=magList, log_tag=new_sample['name'])
         if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(magList): 
             log.debug("discarding {log_tag} sample with seq = {seq}, mag ={mag}, freq = {freq}",  
                 mag=chosen_sample['mag'], 
