@@ -50,10 +50,12 @@ OUT_OF_SERVICE = "Out of Service"
 MANUAL = "Manual"
 
 # Default values for version-controlled attributes
-
-DEFAULT_AZIMUTH = 0.0   # Degrees, 0.0 = North
+DEFAULT_AZIMUTH  =  0.0 # Degrees, 0.0 = North
 DEFAULT_ALTITUDE = 90.0 # Degrees, 90.0 = Zenith
 
+# Default dates whend adjusting in a rwnge of dates
+DEFAULT_START_DATE = datetime.datetime(year=2000,month=1,day=1)
+DEFAULT_END_DATE   = datetime.datetime(year=2999,month=12,day=31)
 
 # -----------------------
 # Module global variables
@@ -63,8 +65,15 @@ DEFAULT_ALTITUDE = 90.0 # Degrees, 90.0 = Zenith
 # Module global functions
 # -----------------------
 
-def utf8(s):
-    return unicode(s, 'utf8')
+if sys.version_info[0] < 3:
+    def utf8(s):
+        return unicode(s, 'utf8')
+else:
+    def utf8(s):
+        return (s)
+
+def mkdate(datestr):
+    return datetime.datetime.strptime(datestr, '%Y-%m-%d')
 
 def createParser():
     # create the top-level parser
@@ -76,9 +85,9 @@ def createParser():
     # Create first level parsers
     # --------------------------
     parser_instrument = subparser.add_parser('instrument', help='instrument commands')
-    parser_location   = subparser.add_parser('location', help='location commands')
-    parser_readings   = subparser.add_parser('readings', help='readings commands')
-    parser_system     = subparser.add_parser('system', help='system related commands')
+    parser_location   = subparser.add_parser('location',   help='location commands')
+    parser_readings   = subparser.add_parser('readings',   help='readings commands')
+    parser_system     = subparser.add_parser('system',     help='system related commands')
 
     # ------------------------------------------
     # Create second level parsers for 'location'
@@ -137,12 +146,22 @@ def createParser():
     # Create second level parsers for 'readings'
     # ------------------------------------------
     # Choices:
-    #   tess location list
+    #   tess readings list
+    #   tess readings adjloc <instrument name> -o <old site name> -n <new site name> -s <start date> -e <end date>
     #
     subparser = parser_readings.add_subparsers(dest='subcommand')
-    rp = subparser.add_parser('list', help='list readings')
-    rp.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
-    rp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    rli = subparser.add_parser('list', help='list readings')
+    rli.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
+    rli.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ral = subparser.add_parser('adjloc', help='adjust readings location for a given TESS')
+    ral.add_argument('instrument', metavar='<instrument>', type=str, help='TESS instrument name')
+    ral.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    ral.add_argument('-o', '--old-site',   type=utf8, required=True, help='old site name')
+    ral.add_argument('-n', '--new-site',   type=utf8, required=True, help='new site name')
+    ral.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD>', default=DEFAULT_START_DATE, help='start date')
+    ral.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD>', default=DEFAULT_END_DATE, help='end date')
+
 
     # --------------------------------------------
     # Create second level parsers for 'instrument'
@@ -272,7 +291,7 @@ def paging(cursor, headers, size=10):
     ONE_PAGE = 10
     while True:
         result = cursor.fetchmany(ONE_PAGE)
-        print tabulate.tabulate(result, headers=headers, tablefmt='grid')
+        print(tabulate.tabulate(result, headers=headers, tablefmt='grid'))
         if len(result) < ONE_PAGE:
             break
         size -= ONE_PAGE
@@ -1036,7 +1055,7 @@ def readings_list(connection, options):
     cursor = connection.cursor()
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude, r.signal_strength
+        UPDATE (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude, r.signal_strength
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
@@ -1048,6 +1067,53 @@ def readings_list(connection, options):
     paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude","RSS"], size=options.count)
    
  
+def readings_adjloc(connection, options):
+    row = {}
+    row['new_site']   = options.new_site
+    row['old_site']   = options.old_site
+    row['start_date'] = options.start_date.strftime("%Y%m%d")
+    row['end_date']   = options.end_date.strftime("%Y%m%d")
+    row['tess_name']  = options.instrument
+    
+    cursor = connection.cursor()
+    # Test if old and new locations exists and return its Id
+    cursor.execute("SELECT location_id FROM location_t WHERE site == :old_site", row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot adjust location readings. Old name site '%s' does not exist." 
+            % (options.old_site,) )
+    row['old_site_id'] = result[0]
+  
+
+    cursor.execute("SELECT location_id FROM location_t WHERE site == :new_site", row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot adjust location readings. New name site '%s' does not exist." 
+            % (options.old_site,) )
+    row['new_site_id'] = result[0]
+
+    # Find out how many rows to change fro infromative purposes
+    cursor.execute(
+        '''
+        SELECT :tess_name, :old_site_id, :new_site_id, COUNT(*) FROM tess_readings_t
+        WHERE location_id == :old_site_id
+        AND   date_id BETWEEN :start_date AND :end_date
+        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+        ''', row)
+    paging(cursor,["Name", "Old Location Id", "New Location Id", "Records to change"], size=5)
+
+    # And perform the change
+    cursor.execute(
+        '''
+        UPDATE tess_readings_t SET location_id = :new_site_id 
+        WHERE location_id == :old_site_id
+        AND   date_id BETWEEN :start_date AND :end_date
+        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+        ''', row)
+    connection.commit()
+
+   
+
 # --------------------
 # SYSTEM SUBCOMMANDS
 # --------------------
