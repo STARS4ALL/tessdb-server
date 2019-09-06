@@ -65,15 +65,18 @@ DEFAULT_END_DATE   = datetime.datetime(year=2999,month=12,day=31)
 # Module global functions
 # -----------------------
 
-if sys.version_info[0] < 3:
-    def utf8(s):
+def utf8(s):
+    if sys.version_info[0] < 3:
         return unicode(s, 'utf8')
-else:
-    def utf8(s):
+    else:
         return (s)
 
 def mkdate(datestr):
-    return datetime.datetime.strptime(datestr, '%Y-%m-%d')
+    try:
+        date = datetime.datetime.strptime(datestr, '%Y-%m-%d')
+    except ValueError:
+        date = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M:%S')
+    return date
 
 def createParser():
     # create the top-level parser
@@ -159,9 +162,9 @@ def createParser():
     ral.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     ral.add_argument('-o', '--old-site',   type=utf8, required=True, help='old site name')
     ral.add_argument('-n', '--new-site',   type=utf8, required=True, help='new site name')
-    ral.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD>', default=DEFAULT_START_DATE, help='start date')
-    ral.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD>', default=DEFAULT_END_DATE, help='end date')
-
+    ral.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='start date')
+    ral.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_END_DATE, help='end date')
+    ral.add_argument('-t', '--test', action='store_true',  help='test only, do not change readings')
 
     # --------------------------------------------
     # Create second level parsers for 'instrument'
@@ -1089,28 +1092,29 @@ def readings_adjloc(connection, options):
     result = cursor.fetchone()
     if not result:
         raise IndexError("Cannot adjust location readings. New name site '%s' does not exist." 
-            % (options.old_site,) )
+            % (options.new_site,) )
     row['new_site_id'] = result[0]
 
     # Find out how many rows to change fro infromative purposes
     cursor.execute(
         '''
-        SELECT :tess_name, :old_site_id, :new_site_id, COUNT(*) FROM tess_readings_t
+        SELECT :tess_name, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) FROM tess_readings_t
         WHERE location_id == :old_site_id
         AND   date_id BETWEEN :start_date AND :end_date
         AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
         ''', row)
-    paging(cursor,["Name", "Old Location Id", "New Location Id", "Records to change"], size=5)
+    paging(cursor,["Name", "From Loc. Id", "To Loc. Id", "Start Date", "End Date", "Records to change"], size=5)
 
-    # And perform the change
-    cursor.execute(
-        '''
-        UPDATE tess_readings_t SET location_id = :new_site_id 
-        WHERE location_id == :old_site_id
-        AND   date_id BETWEEN :start_date AND :end_date
-        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
-        ''', row)
-    connection.commit()
+    if not options.test:
+        # And perform the change
+        cursor.execute(
+            '''
+            UPDATE tess_readings_t SET location_id = :new_site_id 
+            WHERE location_id == :old_site_id
+            AND   date_id BETWEEN :start_date AND :end_date
+            AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+            ''', row)
+        connection.commit()
 
    
 
