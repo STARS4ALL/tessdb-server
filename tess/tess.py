@@ -1074,8 +1074,8 @@ def readings_adjloc(connection, options):
     row = {}
     row['new_site']   = options.new_site
     row['old_site']   = options.old_site
-    row['start_date'] = options.start_date.strftime("%Y%m%d")
-    row['end_date']   = options.end_date.strftime("%Y%m%d")
+    row['start_date'] = int(options.start_date.strftime("%Y%m%d%H%M%S"))
+    row['end_date']   = int(options.end_date.strftime("%Y%m%d%H%M%S"))
     row['tess_name']  = options.instrument
     
     cursor = connection.cursor()
@@ -1098,9 +1098,10 @@ def readings_adjloc(connection, options):
     # Find out how many rows to change fro infromative purposes
     cursor.execute(
         '''
-        SELECT :tess_name, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) FROM tess_readings_t
+        SELECT :tess_name, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) 
+        FROM tess_readings_t
         WHERE location_id == :old_site_id
-        AND   date_id BETWEEN :start_date AND :end_date
+        AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
         AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
         ''', row)
     paging(cursor,["Name", "From Loc. Id", "To Loc. Id", "Start Date", "End Date", "Records to change"], size=5)
@@ -1111,7 +1112,7 @@ def readings_adjloc(connection, options):
             '''
             UPDATE tess_readings_t SET location_id = :new_site_id 
             WHERE location_id == :old_site_id
-            AND   date_id BETWEEN :start_date AND :end_date
+            AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
             AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
             ''', row)
         connection.commit()
