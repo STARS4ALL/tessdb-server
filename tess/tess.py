@@ -166,6 +166,14 @@ def createParser():
     ral.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_END_DATE, help='end date')
     ral.add_argument('-t', '--test', action='store_true',  help='test only, do not change readings')
 
+    ral = subparser.add_parser('purge', help='purge readings for a given TESS')
+    ral.add_argument('instrument', metavar='<instrument>', type=str, help='TESS instrument name')
+    ral.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    ral.add_argument('-i', '--site',   type=utf8, required=True, help='site name')
+    ral.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='start date')
+    ral.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_END_DATE, help='end date')
+    ral.add_argument('-t', '--test', action='store_true',  help='test only, do not change readings')
+
     # --------------------------------------------
     # Create second level parsers for 'instrument'
     # --------------------------------------------
@@ -1112,6 +1120,45 @@ def readings_adjloc(connection, options):
             '''
             UPDATE tess_readings_t SET location_id = :new_site_id 
             WHERE location_id == :old_site_id
+            AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+            AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+            ''', row)
+        connection.commit()
+
+def readings_purge(connection, options):
+    row = {}
+    row['site']   = options.site
+    row['start_date'] = int(options.start_date.strftime("%Y%m%d%H%M%S"))
+    row['end_date']   = int(options.end_date.strftime("%Y%m%d%H%M%S"))
+    row['tess_name']  = options.instrument
+    
+    cursor = connection.cursor()
+    # Test if old and new locations exists and return its Id
+    cursor.execute("SELECT location_id FROM location_t WHERE site == :site", row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot adjust location readings. Site '%s' does not exist." 
+            % (options.site,) )
+    row['site_id'] = result[0]
+  
+
+    # Find out how many rows to change fro infromative purposes
+    cursor.execute(
+        '''
+        SELECT :tess_name, :site_id, :start_date, :end_date, COUNT(*) 
+        FROM tess_readings_t
+        WHERE location_id == :site_id
+        AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+        ''', row)
+    paging(cursor,["Name", "Location Id", "Start Date", "End Date", "Records to delete"], size=5)
+
+    if not options.test:
+        # And perform the change
+        cursor.execute(
+            '''
+            DELETE FROM tess_readings_t
+            WHERE location_id == :site_id
             AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
             AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
             ''', row)
