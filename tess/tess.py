@@ -31,6 +31,13 @@ from . import __version__
 import tabulate
 from tessdb.sqlite3.utils import CURRENT, UNKNOWN, NEVER_UP, ALWAYS_UP
 
+
+# Python3 catch
+try:
+    raw_input
+except:
+    raw_input = input 
+
 # ----------------
 # Module constants
 # ----------------
