@@ -69,6 +69,14 @@ PROTOCOL_NAMESPACE = 'mqtt'
 # Module global variables
 # -----------------------
 
+# Dirty fix for Python3 not having an specific unicode type
+
+if sys.version_info[0] > 2:
+    class unicode: 
+        pass
+
+
+
 log  = Logger(namespace=NAMESPACE)
 
 class MQTTService(ClientService):
