@@ -227,7 +227,8 @@ class TESSReadings(Table):
         except sqlite3.IntegrityError as e:
             log.error("TESSReadings.update({log_tag}): TESS id={id} is sending readings too fast", 
                 id=tess_id, log_tag=row['name'])
-            log.error("=> {excp}",excp=str(e))
+            log.error("=> row  {row}", row=row
+            log.error("=> excp {excp}",excp=str(e))
             self.rejDuplicate += 1
         except Exception as e:
             log.error("TESSReadings.update({log_tag}): exception {excp!s} for row {row!r}", 
