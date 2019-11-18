@@ -225,10 +225,12 @@ class TESSReadings(Table):
         try:
             yield myupdater(row)
         except sqlite3.IntegrityError as e:
-            log.error("TESSReadings.update({log_tag}): TESS id={id} is sending readings too fast", 
+            # We are experiencing this error lately.
+            # With the INSERT OR IGNORE this error could never happen
+            # but we keep it like this to trace the number of duplicates
+            # Raise the log level so as not to overwhelm the logfile
+            log.debug("TESSReadings.update({log_tag}): TESS id={id} is sending a duplicated reading", 
                 id=tess_id, log_tag=row['name'])
-            log.error("=> row  {row}", row=row)
-            log.error("=> excp {excp}",excp=str(e))
             self.rejDuplicate += 1
         except Exception as e:
             log.error("TESSReadings.update({log_tag}): exception {excp!s} for row {row!r}", 
