@@ -161,6 +161,7 @@ def createParser():
     #
     subparser = parser_readings.add_subparsers(dest='subcommand')
     rli = subparser.add_parser('list', help='list readings')
+    rli.add_argument('-n', '--name',  type=str, help='specific instrument name')
     rli.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
     rli.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
@@ -286,7 +287,7 @@ def main():
 
     except KeyboardInterrupt:
         print('')
-    except Exception as e:
+    #except Exception as e:
         print("Error => {0}".format( utf8(str(e)) ))
     finally:
         if invalid_cache:
@@ -1069,22 +1070,50 @@ def location_rename(connection, options):
 # READINGS SUBCOMMANDS
 # --------------------
 
-def readings_list(connection, options):
+def readings_list_single(connection, options):
     cursor = connection.cursor()
+    row = {}
+    row['name']  = options.name
+    row['count'] = options.count
     cursor.execute(
         '''
-        UPDATE (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude, r.signal_strength
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude, r.signal_strength
+        FROM tess_readings_t as r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN location_t as l USING (location_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.name == :name
+        ORDER BY r.date_id DESC, r.time_id DESC
+        LIMIT :count
+        ''' , row)
+    paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude","RSS"], size=options.count)
+   
+
+def readings_list_all(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['count'] = options.count
+    cursor.execute(
+        '''
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude, r.signal_strength
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN location_t as l USING (location_id)
         JOIN tess_t     as i USING (tess_id)
         ORDER BY r.date_id DESC, r.time_id DESC
-        LIMIT %s
-        ''' % options.count)
+        LIMIT :count
+        ''', row)
     paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude","RSS"], size=options.count)
-   
- 
+
+
+def readings_list(connection, options):
+    if options.name is not None:
+        readings_list_single(connection, options)
+    else:
+        readings_list_all(connection, options)
+
 def readings_adjloc(connection, options):
     row = {}
     row['new_site']   = options.new_site
