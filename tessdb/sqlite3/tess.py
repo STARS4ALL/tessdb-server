@@ -314,23 +314,24 @@ class TESS(Table):
         Registers an instrument given its MAC address, friendly name and calibration constant
         Returns a Deferred.
         '''
-        log2.debug("New registration request for {row}", row=row)
+        log2.debug("New registration request (maybe not accepted) for {row}", row=row)
         self.nregister += 1
         instrument = yield self.findMAC(row)
         # if  instrument with that MAC already exists, may be update it ...
         if len(instrument):
             instrument = instrument[0]  # Keep only the first row
             # If the new name is not equal to the old one, change it
-            if row['name']  != instrument[0]:
             # unless the new name is already being used by another instrument
+            if row['name']  != instrument[0]:
                 instrument2 = yield self.findName(row)
                 if not len(instrument2):
                     self.nUpdNameChange += 1
                     yield self.updateName(row)
-                    log2.info("Changed instrument name to {name}", name=row['name'])
+                    log2.info("Changed instrument name to {name} (MAC = {mac})", name=row['name'], mac=row['mac'])
                 else:
+                    existing_mac = instrument2[0][1]
                     self.rejUpdDupName += 1
-                    log2.info("Rejected: existing instrument name {name} modification due to other instrument using the same name",name=row['name'])
+                    log2.info("Rejected modification for ({name}, {mac}): existing instrument name {name} with this MAC = {prev_mac}", name=row['name'], mac=row['mac'], prev_mac=existing_mac)
 
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
@@ -339,7 +340,7 @@ class TESS(Table):
                 row['registered'] = instrument[6] # carries over the registration method
                 yield self.updateCalibration(row)
                 self.nUpdCalibChange += 1
-                log2.info("{name} Changed instrument calibration data to {calib}", name=row['name'], calib=row['calib'])
+                log2.info("{name} changed instrument calibration data to {calib} (MAC = {mac})", name=row['name'], calib=row['calib'], mac=row['mac'])
         else:
             # Find other posible existing instruments with the same name
             # We require the names to be unique.
