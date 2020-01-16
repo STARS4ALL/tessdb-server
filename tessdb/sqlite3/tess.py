@@ -331,8 +331,8 @@ class TESS(Table):
                 else:
                     existing_mac = instrument2[0][1]
                     self.rejUpdDupName += 1
-                    log2.info("Rejected modification for ({name}, {mac}): existing instrument name {name} with this MAC = {prev_mac}", name=row['name'], mac=row['mac'], prev_mac=existing_mac)
-
+                    log2.warn("Rejected modification for ({name}, {mac}): existing instrument name {name} with this MAC = {prev_mac}", name=row['name'], mac=row['mac'], prev_mac=existing_mac)
+                    returnValue(None)
             # If the new calibration constant is not equal to the old one, change it
             if row['calib'] != instrument[2]:
                 row['location']   = instrument[3] # carries over the location id
@@ -348,9 +348,10 @@ class TESS(Table):
             instrument = yield self.findName(row) 
             if len(instrument):
                 existing_mac = instrument[0][1]
-                log2.info("Registration rejected for new MAC {mac}: another instrument already registered with the same name: {name} and MAC: {existing_mac}", 
+                log2.warn("Registration rejected for new MAC {mac}: another instrument already registered with the same name: {name} and MAC: {existing_mac}", 
                     name=row['name'], mac=row['mac'], existing_mac=existing_mac) 
                 self.rejCreaDupName += 1
+                returnValue(None)
             else:
                 yield self.addNew(row)
                 self.nCreation += 1
