@@ -11,6 +11,7 @@
 from __future__ import division, absolute_import
 
 import os
+import signal
 import errno
 import sys
 import datetime
@@ -57,9 +58,20 @@ NAMESPACE = 'filtr'
 
 log  = Logger(namespace=NAMESPACE)
 
+
+
 class FilterService(Service):
 
     NAME = 'FilterService'
+
+    sigflushing = False
+
+    @staticmethod
+    def sigflush(signum, frame):
+        '''
+        Signal handler (SIGWINCH)
+        '''
+        FilterService.sigflushing = True
 
 
     def __init__(self, options, **kargs):
@@ -173,11 +185,18 @@ class FilterService(Service):
         '''
         log.debug("starting Filtering infinite loop")
         while True:
+            if FilterService.sigflushing:
+                FilterService.sigflushing = False
+                log.warn("flushing filtering queues")
+                self.flush()    # Flush filters
             new_sample = yield self.parent.queue['tess_readings'].get()
             log.debug("got a new sample from {log_tag}", log_tag=new_sample['name'])
             if self.enabled:
                 self.doFilter(new_sample)
             else:
                 self.parent.queue['tess_filtered_readings'].append(new_sample)
+        
+        
 
-            
+# Install a custom signal handler
+signal.signal(signal.SIGWINCH, FilterService.sigflush)
