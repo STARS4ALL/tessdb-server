@@ -285,13 +285,13 @@ class MQTTService(ClientService):
         if self.validate:
             try:
                 self.validateRegister(row)
-                row['mac'] = row['mac'].upper()
             except ValidationError as e:
                 log.error('Validation error in registration payload={payload!s}', payload=row)
                 log.error('{excp!s}', excp=e)
             else:
                 log.debug('Enque registration from {log_tag} for DB Writter', log_tag=row['name'])
                 row['name'] = row['name'].lower()  # Get rid of upper case TESS names
+                row['mac']  = row['mac'].upper()   # Ensures MAC address in uppercase
                 self.parent.queue['tess_register'].append(row)
 
 

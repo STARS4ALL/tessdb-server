@@ -140,7 +140,7 @@ class TESS(Table):
             CREATE TABLE IF NOT EXISTS tess_t
             (
             tess_id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            name          TEXT,
+            name          TEXT, -- this column will dissappear some day
             mac_address   TEXT, 
             zero_point    REAL,
             filter        TEXT DEFAULT 'UVIR',
@@ -160,6 +160,24 @@ class TESS(Table):
             );
             '''
         )
+
+        # It seems that it is no longer true that a given tess name identifies
+        # a given TESS-W device. The MAC address is the only vaild identifier 
+        # for the device.
+        # If a TESS-W is broken, the customer wants to maintain its name.
+        # We must build and maintain an associative table from name to MAC Addresses.
+        self.connection.execute(
+            '''
+            CREATE TABLE IF NOT EXISTS name_to_mac_t
+            (
+            name          TEXT,
+            mac_address   TEXT, 
+            valid_since   TEXT,
+            valid_until   TEXT,
+            valid_state   TEXT
+            );
+            '''
+        )
         self.connection.commit()
 
     def indices(self):
@@ -168,8 +186,12 @@ class TESS(Table):
         '''
         log.info("Creating tess_t Indexes if not exists")
         cursor = self.connection.cursor()
+        # This index will be droped some day
         cursor.execute("CREATE INDEX IF NOT EXISTS tess_name_i ON tess_t(name);")
         cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
+        # For the associative table
+        cursor.execute("CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);")
+
         self.connection.commit()
 
 
@@ -183,7 +205,7 @@ class TESS(Table):
             CREATE VIEW IF NOT EXISTS tess_v 
             AS SELECT
                 tess_t.tess_id,
-                tess_t.name,
+                tess_t.name, -- This will dissapear some day
                 tess_t.channel,
                 tess_t.model,
                 tess_t.firmware,
