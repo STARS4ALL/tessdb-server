@@ -285,6 +285,7 @@ class MQTTService(ClientService):
         if self.validate:
             try:
                 self.validateRegister(row)
+                row['mac'] = row['mac'].upper()
             except ValidationError as e:
                 log.error('Validation error in registration payload={payload!s}', payload=row)
                 log.error('{excp!s}', excp=e)
