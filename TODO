@@ -1,5 +1,30 @@
 Prioridad Alta
 ==============
+
+Estrategia de migracion de BD por la no identidad TESS-W <=> nombre de tess.
+Ahora los TESS-W se pueden renombrar a cualqueir nombe incluso a otros existentes y hay que hacerlo manteniendo el histórico
+
+Tres fases
+
+1) FASE 1
+   Añadir tabla de asociacion (MAC, nombre)
+   Modificar el proceso de registro
+   Seguri actualizando la columnan name de los TESS-W para no romper los informes
+   Modificar la command line tess para tener esto en cuenta en las altas manuales
+
+2) FASE 2
+   Modificar TODOS los informes para no usar ya la columna name de TESS
+   Validar informes
+
+3) Rescatar las asociaciones perdidas de los log
+   Regenerarb informes
+
+4) Drop column name de la tabla tess_t
+
+
+Prioridad media
+===============
+
 *) INDICE MULTICOLUMNA
 
 Probarlo en el código
@@ -10,11 +35,6 @@ Probarlo en el código
  - tocar la funcion isDaytime() para ver primero estos 2 valores antes de continuar adelante.
  - definir las constantes NEVER_UP y NEVER_DOWN en utils.py
  - probar con una localización ficticia a 70 grados norte
-
-Prioridad media
-===============
-
-- eliminar la carga de ficheros JSON por inutil
 
 Prioridad baja
 ==============
