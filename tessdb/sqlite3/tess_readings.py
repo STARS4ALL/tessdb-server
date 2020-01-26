@@ -167,7 +167,7 @@ class TESSReadings(Table):
         now = row['tstamp'] 
         self.nreadings += 1
         ret = 0
-        tess = yield self.parent.tess.findName(row)
+        tess = yield self.parent.tess.findPhotometerByName(row)
         log.debug("TESSReadings.update({log_tag}): Found TESS => {tess!s}", tess=tess, log_tag=row['name'])
         if not len(tess):
             log.warn("TESSReadings.update(): No TESS {log_tag} registered !", log_tag=row['name'])

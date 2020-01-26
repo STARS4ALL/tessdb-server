@@ -262,19 +262,14 @@ class DBaseService(Service):
         global_stats_nok  = (global_nok_sum, resultRds[1], resultRds[2], resultRds[3], resultRds[4], resultRds[5])
         
         # get registration stats
-        resultReg = self.tess.getCounters()
-        global_ok_sum_reg  = sum(resultReg[1:4])
-        global_nok_sum_reg = sum(resultReg[4:])
-        global_stats_reg   = (resultReg[0], global_ok_sum_reg, global_nok_sum_reg)
-        ok_stats_reg       = (global_ok_sum_reg, resultReg[1], resultReg[2], resultReg[3])
-        nok_stats_reg      = (global_nok_sum_reg, resultReg[4], resultReg[5])
+        labelReg, resultReg = self.tess.getCounters()
 
         # Efficiency stats
         resultEff = yield deferToThread(self.getCounters)
 
         # Readings statistics
         log.info("DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
-        log.info("DB Stats Register [Total, OK, NOK] = {global_stats_reg!s}", global_stats_reg=global_stats_reg)
+        log.info("DB Stats Register {labelReg!s} = {resultReg!s}", labelReg=labelReg, resultReg=resultReg)
         log.info("DB Stats NOK details [Not Reg, Not Auth, Daylight, Dup, Other] = [{Reg}, {Auth}, {Sun}, {Dup}, {Other}]", 
             Reg=resultRds[1], Auth=resultRds[2], Sun=resultRds[3], Dup=resultRds[4], Other=resultRds[5])
         log.info("DB Stats I/O Effic. [Nsec, %, Tmin, Taver, Tmax, Naver] = [{Nsec}, {eff:0.2g}%, {Tmin:0.2g}, {Taver:0.2g}, {Tmax:0.2g}, {Naver:0.2g}]",

@@ -272,24 +272,28 @@ class TESS(Table):
 
     def resetCounters(self):
         '''Resets stat counters'''
-        self.nregister = 0
+        self.nRegister = 0
         self.nCreation = 0
-        self.nUpdNameChange  = 0
-        self.nUpdCalibChange = 0 
-        self.rejUpdDupName   = 0
-        self.rejCreaDupName  = 0 
-    
+        self.nRename   = 0
+        self.nReplace  = 0
+        self.nSwap     = 0
+        self.nZPChange = 0
+        self.nReboot   = 0
 
     def getCounters(self):
         '''get stat counters'''
-        return [ 
-                self.nregister, 
-                self.nCreation,
-                self.nUpdNameChange, 
-                self.nUpdCalibChange, 
-                self.rejUpdDupName,
-                self.rejCreaDupName, 
-                ]
+        return (    
+                    "[Total, New, Rebooted, Renamed, ZP Changed, Replaced, Swapped]",
+                    [
+                        self.nRegister, 
+                        self.nCreation,
+                        self.nReboot,
+                        self.nRename, 
+                        self.nZPChange, 
+                        self.nReplace, 
+                        self.nSwap,
+                    ]
+                )
 
     # =======
     # OPERATIONAL API
@@ -314,7 +318,7 @@ class TESS(Table):
             # If the new name is not equal to the old one, change it
             # unless the new name is already being used by another instrument
             if row['name']  != instrument[0]:
-                instrument2 = yield self.findName(row)
+                instrument2 = yield self.findPhotometerByName(row)
                 if not len(instrument2):
                     self.nUpdNameChange += 1
                     yield self.updateName(row)
@@ -336,7 +340,7 @@ class TESS(Table):
             # Find other posible existing instruments with the same name
             # We require the names to be unique.
             # If that condition is met, we add a new instrument
-            instrument = yield self.findName(row) 
+            instrument = yield self.findPhotometerByName(row) 
             if len(instrument):
                 existing_mac = instrument[0][1]
                 log2.warn("Registration rejected for new MAC {mac}: another instrument already registered with the same name: {name} and MAC: {existing_mac}", 
@@ -359,7 +363,7 @@ class TESS(Table):
         Returns a Deferred.
         '''
         log2.debug("New registration request (maybe not accepted) for {row}", row=row)
-        self.nregister += 1
+        self.nRegister += 1
 
         # Adding extra metadadta for all create/update operations
         row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
@@ -373,99 +377,43 @@ class TESS(Table):
 
         # Brand new TESS-W
         if not len(mac) and not len(name):
+            log2.debug("Registering Brand new photometer: {name}  (MAC = {mac})", name=row['name'], mac=row['mac'])
             yield self.addBrandNewTess(row)
             self.nCreation += 1
             log2.info("Brand new photometer registered: {name}  (MAC = {mac})", name=row['name'], mac=row['mac'])
         # A clean rename with no collision
         elif len(mac) and not len(name):
             oldname = mac[0][1]
-            log2.info("Renaming photometer {oldname} (MAC = {mac}) with brand new name {name}", oldname=oldname, name=row['name'], mac=row['mac'])
+            log2.debug("Renaming photometer {oldname} (MAC = {mac}) with brand new name {name}", oldname=oldname, name=row['name'], mac=row['mac'])
+            yield self.renamingAssociation(row)
+            self.nRename += 1
+            log2.info("Renamed photometer {oldname} (MAC = {mac}) with brand new name {name}", oldname=oldname, name=row['name'], mac=row['mac'])
         # Probably a new replacement for a broken photometer
         elif not len(mac) and len(name):
             oldmac = name[0][1]
+            log2.debug("Replacing photometer tagged {name} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, name=row['name'], mac=row['mac']) 
             yield self.newTessReplacingBroken(row)
-            log2.info("Replacing photometer tagged {name} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, name=row['name'], mac=row['mac']) 
+            self.nReplace += 1
+            log2.info("Replaced photometer tagged {name} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, name=row['name'], mac=row['mac']) 
         else:
             mac  = mac[0]
             name = name[0]
             # If the same MAC and same name remain, we must examine if there
             # is a change in the photometer managed attributes (zero_point)
             if row['name'] = name[0] and row['mac'] = mac[0]:
-                yield self.updateManagedAttributes(row)
+                yield self.maybeUpdateManagedAttributes(row)
             else:
                 row['prev_mac']  = name[1]  # MAC not from the register message, but associtated to existing name
                 row['prev_name'] = mac[1]   # name not from from the register message, but assoctiated to to existing MAC
                 # Renaming with side effects.
-                log2.info("Rearranging associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{n}) data",
+                log2.debug("Rearranging associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{n}) data",
+                    m=row['mac'], n=row['name'], m1=mac[0], n1=mac[1], m2=name[1], n2==name[0])
+                yield self.rearrangeAssociations(row)
+                self.nSwap += 1
+                log2.info("Rearranged associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{n}) data",
                     m=row['mac'], n=row['name'], m1=mac[0], n1=mac[1], m2=name[1], n2==name[0])
                 log2.warn("Label {label} has no associated photometer now!", label=mac[1])
-                yield self.rearrangeAssociations(row)
             
-        
-
-# THIS WILL BE SUBSTITUTED BY THE ONE BELOW
-    def findMAC(self, row):
-        '''
-        Look up instrument parameters given its MAC address
-        row is a dictionary with at least the following keys: 'mac'
-        Returns a Deferred.
-        '''
-        row['valid_flag'] = CURRENT
-        return self.pool.runQuery(
-            '''
-            SELECT mac_address, zero_point, location_id, filter, authorised, registered 
-            FROM tess_t 
-            WHERE mac_address == :mac
-            AND valid_state == :valid_flag
-            ''', row)
-
-
-# THIS WILL BE SUBSTITUTED BY THE ONE BELOW
-    def findName(self, row):
-        '''
-        Look up association table looking by name
-        row is a dictionary with at least the following keys: 'name'
-        Returns a Deferred.
-        '''
-        if row['name'] in self._cache.keys():
-            return defer.succeed(self._cache.get(row['name']))
-
-        row['valid_flag'] = CURRENT
-        d = self.pool.runQuery(
-            '''
-            SELECT tess_id, mac_address, zero_point, location_id, filter, authorised, registered 
-            FROM tess_t 
-            WHERE name == :name
-            AND valid_state == :valid_flag 
-            ''', row)
-        d.addCallback(self.updateCache, row['name'])
-        return d
-
-# THIS WILL BE DELETED AS IT IS NO LONGER NEEDED
-    def updateName(self, row):
-        '''
-        Changes all instrument name records with the same MAC
-        row is a dictionary with at least the following keys: 'mac' , 'name'
-        Returns a Deferred.
-        '''
-        return self.pool.runOperation( 
-            '''
-            UPDATE tess_t SET name=:name
-            WHERE mac_address == :mac 
-            ''', row)
-
-# THIS WILL BE DELETED AS IT IS NO LONGER NEEDED
-    def updateLocation(self, row):
-        '''
-        Changes all instrument location records with the same MAC
-        row is a dictionary with at least the following keys: 'mac' , 'loc_id'
-        Returns a Deferred.
-        '''
-        return self.pool.runOperation( 
-            '''
-            UPDATE tess_t SET location_id=:loc_id
-            WHERE mac_address == :mac 
-            ''', row )
 
 
     def updateCalibration(self, row):
@@ -513,17 +461,18 @@ class TESS(Table):
 # -------------------------------
 
     @inlineCallbacks
-    def updateManagedAttributes(self, row):
-        photometer = yield self.findName(row)
+    def maybeUpdateManagedAttributes(self, row):
+        photometer = yield self.findPhotometerByName(row)
         photometer = photometer[0]
         if row['calib'] != photometer[1]:
             row['location']   = photometer[2] # carries over the location id
             row['authorised'] = photometer[4] # carries over the authorised flag
             row['registered'] = photometer[5] # carries over the registration method
             yield self.updateCalibration(row)
-            self.nUpdCalibChange += 1
+            self.nZPChange += 1
             log2.info("{name} changed instrument calibration data to {calib} (MAC = {mac})", name=row['name'], calib=row['calib'], mac=row['mac'])
         else:
+            self.nReboot += 1
             log2.info("Detected reboot for photometer {name} (MAC = {mac})", name=row['name'], mac=row['mac'])
 
     def lookupMAC(self, row):
@@ -554,7 +503,7 @@ class TESS(Table):
             AND valid_state == :valid_flag 
             ''', row)
 
-    def findName(self, row):
+    def findPhotometerByName(self, row):
         '''
         Give the current TESS photometer data associated to a name.
         Caches result if possible
@@ -563,7 +512,7 @@ class TESS(Table):
         if row['name'] in self._cache.keys():
             return defer.succeed(self._cache.get(row['name']))
 
-        row['valid_flag'] = CURRENT
+        row['valid_flag'] = CURRENT # needed when called by tess_readings.
         d = self.pool.runQuery(
             '''
             SELECT i.tess_id, i.mac_address, i.zero_point, i.location_id, i.filter, i.authorised, i.registered 
@@ -703,20 +652,10 @@ class TESS(Table):
     def rearrangeAssociation(self, row):
         def _rearrangeAssociation(cursor, row):
             '''
-            Updates Instrument calibration constant keeping its history
-            row is a dictionary with at least the following keys: 'name', 'mac', 'calib'
+            Renaming (name, MAC) association with a side effect thet there is one name
+            without a photometer.
             Returns a Deferred.
             '''
-            cursor.execute(
-                '''
-                UPDATE name_to_mac_t SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE mac_address == :prev_mac AND valid_state == :valid_flag
-                ''', row)
-            cursor.execute(
-                '''
-                UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE name == :prev_name AND valid_state == :valid_flag
-                ''', row)
             cursor.execute(
                 '''
                 INSERT INTO name_to_mac_t (
@@ -733,6 +672,17 @@ class TESS(Table):
                     :valid_flag
                 );
                 ''',  row)
+            cursor.execute(
+                '''
+                UPDATE name_to_mac_t SET valid_until = :eff_date, valid_state = :valid_expired
+                WHERE mac_address == :prev_mac AND valid_state == :valid_flag
+                ''', row)
+            # This association row leaves a name without a photometer.
+            cursor.execute(
+                '''
+                UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
+                WHERE name == :prev_name AND valid_state == :valid_flag
+                ''', row)
 
         return self.pool.runInteraction( _rearrangeAssociation, row)
 
