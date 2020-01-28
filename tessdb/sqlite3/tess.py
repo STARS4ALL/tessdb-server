@@ -547,6 +547,30 @@ class TESS(Table):
         Returns a Deferred.
         '''
         def _newTessReplacingBroken(cursor, row):
+            # Expire current association with an existing name with new MAC
+            cursor.execute(
+                '''
+                UPDATE name_to_mac_t 
+                SET valid_until = :eff_date, valid_state = :valid_expired
+                WHERE name == :name AND valid_state == :valid_current
+            ''', row)
+            # Create a new entry the name to MAC association table
+            cursor.execute(
+                '''
+                INSERT INTO name_to_mac_t (
+                    name,
+                    mac_address,
+                    valid_since,
+                    valid_until,
+                    valid_state
+                ) VALUES (
+                    :name,
+                    :mac,
+                    :eff_date,
+                    :exp_date,
+                    :valid_current
+                )
+            ''', row)
             # Create a new entry the photometer table
             cursor.execute(
                 '''
@@ -568,13 +592,6 @@ class TESS(Table):
                     :valid_current
                 )
              ''', row)
-            # Expire current association with an existing name with new MAC
-            cursor.execute(
-                '''
-                UPDATE name_to_mac_t 
-                SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE name == :name AND valid_state == :valid_current
-            ''', row)
         return self.pool.runInteraction( _newTessReplacingBroken, row)
 
 
