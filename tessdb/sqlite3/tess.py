@@ -257,7 +257,7 @@ class TESS(Table):
             log.info("tess_t cache invalidated with size = {size}", size=len(self._cache))
             self._cache = dict()
         elif name in self._cache:
-            log.info("tess_t cache selective invalidataion for name {name}", name=name)
+            log.info("tess_t cache selective invalidataion for name {log_tag}", name=name)
             del self._cache[name]
 
     def updateCache(self, resultset, name):
@@ -300,59 +300,6 @@ class TESS(Table):
     # =======
 
     # ----------------------------
-    # Instrument registration (OLD)
-    # ----------------------------
-
-    @inlineCallbacks
-    def register(self, row):
-        '''
-        Registers an instrument given its MAC address, friendly name and calibration constant
-        Returns a Deferred.
-        '''
-        log2.debug("New registration request (maybe not accepted) for {row}", row=row)
-        self.nregister += 1
-        instrument = yield self.findMAC(row)
-        # if  instrument with that MAC already exists, may be update it ...
-        if len(instrument):
-            instrument = instrument[0]  # Keep only the first row
-            # If the new name is not equal to the old one, change it
-            # unless the new name is already being used by another instrument
-            if row['name']  != instrument[0]:
-                instrument2 = yield self.findPhotometerByName(row)
-                if not len(instrument2):
-                    self.nUpdNameChange += 1
-                    yield self.updateName(row)
-                    log2.info("Changed instrument name to {name} (MAC = {mac})", name=row['name'], mac=row['mac'])
-                else:
-                    existing_mac = instrument2[0][1]
-                    self.rejUpdDupName += 1
-                    log2.warn("Rejected modification for ({name}, {mac}): existing instrument name {name} with this MAC = {prev_mac}", name=row['name'], mac=row['mac'], prev_mac=existing_mac)
-                    returnValue(None)
-            # If the new calibration constant is not equal to the old one, change it
-            if row['calib'] != instrument[2]:
-                row['location']   = instrument[3] # carries over the location id
-                row['authorised'] = instrument[5] # carries over the authorised flag
-                row['registered'] = instrument[6] # carries over the registration method
-                yield self.updateCalibration(row)
-                self.nUpdCalibChange += 1
-                log2.info("{name} changed instrument calibration data to {calib} (MAC = {mac})", name=row['name'], calib=row['calib'], mac=row['mac'])
-        else:
-            # Find other posible existing instruments with the same name
-            # We require the names to be unique.
-            # If that condition is met, we add a new instrument
-            instrument = yield self.findPhotometerByName(row) 
-            if len(instrument):
-                existing_mac = instrument[0][1]
-                log2.warn("Registration rejected for new MAC {mac}: another instrument already registered with the same name: {name} and MAC: {existing_mac}", 
-                    name=row['name'], mac=row['mac'], existing_mac=existing_mac) 
-                self.rejCreaDupName += 1
-                returnValue(None)
-            else:
-                yield self.addNew(row)
-                self.nCreation += 1
-                log.info("Brand new instrument registered: {name}", name=row['name'])
-
-    # ----------------------------
     # Instrument registration (NEW)
     # ----------------------------
 
@@ -362,7 +309,7 @@ class TESS(Table):
         Registers an instrument given its MAC address, friendly name and calibration constant
         Returns a Deferred.
         '''
-        log2.debug("New registration request (maybe not accepted) for {row}", row=row)
+        log2.debug("New registration request for {log_tag} (maybe not accepted) with data {row}", row=row, log_tag=row['name'])
         self.nRegister += 1
 
         # Adding extra metadadta for all create/update operations
@@ -372,47 +319,61 @@ class TESS(Table):
         row['valid_flag']    = CURRENT
         row['registered']    = AUTOMATIC
 
-        mac  = yield self.lookupMAC(row)
-        name = yield self.lookupName(row)
+        mac  = yield self.lookupMAC(row)    # Returns list of pairs (MAC, name)
+        name = yield self.lookupName(row)   # Returns list of pairs (name, MAC)
 
-        # Brand new TESS-W
         if not len(mac) and not len(name):
-            log2.debug("Registering Brand new photometer: {name}  (MAC = {mac})", name=row['name'], mac=row['mac'])
+            # Brand new TESS-W case:
+            # No existitng (MAC, name) pairs in the name_to_mac_t table
+            log2.debug("Registering Brand new photometer: {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
             yield self.addBrandNewTess(row)
             self.nCreation += 1
-            log2.info("Brand new photometer registered: {name}  (MAC = {mac})", name=row['name'], mac=row['mac'])
-        # A clean rename with no collision
+            log2.info("Brand new photometer registered: {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
         elif len(mac) and not len(name):
+            # A clean rename with no collision
+            # A (MAC, name) exists in the name_to_mac_t table with the MAC given by the regisitry message
+            # but the name in the regisitry message does not.
             oldname = mac[0][1]
-            log2.debug("Renaming photometer {oldname} (MAC = {mac}) with brand new name {name}", oldname=oldname, name=row['name'], mac=row['mac'])
+            log2.debug("Renaming photometer {oldname} (MAC = {mac}) with brand new name {log_tag}", oldname=oldname, log_tag=row['name'], mac=row['mac'])
             yield self.renamingAssociation(row)
+            self.invalidCache(oldname)
             self.nRename += 1
-            log2.info("Renamed photometer {oldname} (MAC = {mac}) with brand new name {name}", oldname=oldname, name=row['name'], mac=row['mac'])
-        # Probably a new replacement for a broken photometer
+            log2.info("Renamed photometer {oldname} (MAC = {mac}) with brand new name {log_tag}", oldname=oldname, log_tag=row['name'], mac=row['mac'])
         elif not len(mac) and len(name):
+            # A (NAC, name) pair exisst in the name_to_mac_t table with the same name as the registre message
+            # but the MAC in the registry message is new.
+            # This means that we are probably replacing a new photometer but keeping the same name.
             oldmac = name[0][1]
-            log2.debug("Replacing photometer tagged {name} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, name=row['name'], mac=row['mac']) 
+            log2.debug("Replacing photometer tagged {log_tag} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, log_tag=row['name'], mac=row['mac']) 
             yield self.newTessReplacingBroken(row)
+            self.invalidCache(row['name'])
             self.nReplace += 1
-            log2.info("Replaced photometer tagged {name} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, name=row['name'], mac=row['mac']) 
+            log2.info("Replaced photometer tagged {log_tag} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, log_tag=row['name'], mac=row['mac']) 
         else:
             mac  = mac[0]
             name = name[0]
             # If the same MAC and same name remain, we must examine if there
             # is a change in the photometer managed attributes (zero_point)
-            if row['name'] = name[0] and row['mac'] = mac[0]:
+            if row['name'] == name[0] and row['mac'] == mac[0]:
                 yield self.maybeUpdateManagedAttributes(row)
             else:
+                # The complex scenario is that two (MAC, name) pairs exists in the name_to_mac_t table
+                # In one pair, the MAC is the same as the registry message
+                # The other pair has the same name as the registry message
+                # So we must invalidate both existing pairs and create a new one
+                # The name not coming in the message will get unassigned to a photometer.
                 row['prev_mac']  = name[1]  # MAC not from the register message, but associtated to existing name
                 row['prev_name'] = mac[1]   # name not from from the register message, but assoctiated to to existing MAC
                 # Renaming with side effects.
-                log2.debug("Rearranging associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{n}) data",
-                    m=row['mac'], n=row['name'], m1=mac[0], n1=mac[1], m2=name[1], n2==name[0])
+                log2.debug("Rearranging associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
+                    m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 yield self.rearrangeAssociations(row)
+                self.invalidCache(row['name'])
+                self.invalidCache(row['prev_name'])
                 self.nSwap += 1
-                log2.info("Rearranged associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{n}) data",
-                    m=row['mac'], n=row['name'], m1=mac[0], n1=mac[1], m2=name[1], n2==name[0])
-                log2.warn("Label {label} has no associated photometer now!", label=mac[1])
+                log2.info("Rearranged associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
+                    m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
+                log2.warn("Label {label} has no associated photometer now!", label=row['prev_name'])
             
 
 
@@ -464,16 +425,17 @@ class TESS(Table):
     def maybeUpdateManagedAttributes(self, row):
         photometer = yield self.findPhotometerByName(row)
         photometer = photometer[0]
-        if row['calib'] != photometer[1]:
-            row['location']   = photometer[2] # carries over the location id
-            row['authorised'] = photometer[4] # carries over the authorised flag
-            row['registered'] = photometer[5] # carries over the registration method
+        log2.debug("{log_tag}: previous stored info is {photometer}",log_tag=row['name'], photometer=photometer)
+        if row['calib'] != photometer[2]:
+            row['location']   = photometer[3] # carries over the location id
+            row['authorised'] = photometer[5] # carries over the authorised flag
+            row['registered'] = photometer[6] # carries over the registration method
             yield self.updateCalibration(row)
             self.nZPChange += 1
-            log2.info("{name} changed instrument calibration data to {calib} (MAC = {mac})", name=row['name'], calib=row['calib'], mac=row['mac'])
+            log2.info("{log_tag} changed instrument calibration data to {calib} (MAC = {mac})", log_tag=row['name'], calib=row['calib'], mac=row['mac'])
         else:
             self.nReboot += 1
-            log2.info("Detected reboot for photometer {name} (MAC = {mac})", name=row['name'], mac=row['mac'])
+            log2.info("Detected reboot for photometer {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
 
     def lookupMAC(self, row):
         '''
@@ -532,7 +494,7 @@ class TESS(Table):
         row is a dictionary with the following keys: 'name', 'mac', 'calib'
         Returns a Deferred.
         '''
-         def _addBrandNewTess(cursor, row):
+        def _addBrandNewTess(cursor, row):
             # Create a new entry the photometer table
             cursor.execute(
                 '''
