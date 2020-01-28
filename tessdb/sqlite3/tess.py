@@ -316,11 +316,14 @@ class TESS(Table):
         row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
         row['exp_date']      = INFINITE_TIME
         row['valid_expired'] = EXPIRED
-        row['valid_flag']    = CURRENT
+        row['valid_current']    = CURRENT
         row['registered']    = AUTOMATIC
 
         mac  = yield self.lookupMAC(row)    # Returns list of pairs (MAC, name)
         name = yield self.lookupName(row)   # Returns list of pairs (name, MAC)
+
+        log2.debug("self.lookupMAC(row) yields {mac}", mac=mac)
+        log2.debug("self.lookupName(row) yields {name}",name=name)
 
         if not len(mac) and not len(name):
             # Brand new TESS-W case:
@@ -388,7 +391,7 @@ class TESS(Table):
             cursor.execute(
                 '''
                 UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE mac_address == :mac AND valid_state == :valid_flag
+                WHERE mac_address == :mac AND valid_state == :valid_current
                 ''', row)
             cursor.execute(
                 '''
@@ -408,7 +411,7 @@ class TESS(Table):
                     :calib,
                     :eff_date,
                     :exp_date,
-                    :valid_flag,
+                    :valid_current,
                     :authorised,
                     :registered,
                     :location
@@ -448,7 +451,7 @@ class TESS(Table):
             SELECT mac_address, name
             FROM name_to_mac_t 
             WHERE mac_address == :mac
-            AND  valid_state == :valid_flag 
+            AND  valid_state == :valid_current 
             ''', row)
 
     def lookupName(self, row):
@@ -462,7 +465,7 @@ class TESS(Table):
             SELECT name, mac_address
             FROM name_to_mac_t 
             WHERE name == :name
-            AND valid_state == :valid_flag 
+            AND valid_state == :valid_current 
             ''', row)
 
     def findPhotometerByName(self, row):
@@ -474,15 +477,15 @@ class TESS(Table):
         if row['name'] in self._cache.keys():
             return defer.succeed(self._cache.get(row['name']))
 
-        row['valid_flag'] = CURRENT # needed when called by tess_readings.
+        row['valid_current'] = CURRENT # needed when called by tess_readings.
         d = self.pool.runQuery(
             '''
             SELECT i.tess_id, i.mac_address, i.zero_point, i.location_id, i.filter, i.authorised, i.registered 
             FROM tess_t        AS i
             JOIN name_to_mac_t AS m USING (mac_address)
             WHERE m.name        == :name
-            AND   m.valid_state == :valid_flag
-            AND   i.valid_state == :valid_flag
+            AND   m.valid_state == :valid_current
+            AND   i.valid_state == :valid_current
             ''', row)
 
         d.addCallback(self.updateCache, row['name'])
@@ -513,7 +516,7 @@ class TESS(Table):
                     :calib,
                     :eff_date,
                     :exp_date,
-                    :valid_flag
+                    :valid_current
                 )
              ''', row)
             # Create a new entry the name to MAC association table
@@ -530,7 +533,7 @@ class TESS(Table):
                     :mac,
                     :eff_date,
                     :exp_date,
-                    :valid_flag
+                    :valid_current
                 )
             ''', row)
         return self.pool.runInteraction( _addBrandNewTess, row)
@@ -562,7 +565,7 @@ class TESS(Table):
                     :calib,
                     :eff_date,
                     :exp_date,
-                    :valid_flag
+                    :valid_current
                 )
              ''', row)
             # Expire current association with an existing name with new MAC
@@ -570,7 +573,7 @@ class TESS(Table):
                 '''
                 UPDATE name_to_mac_t 
                 SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE name == :name AND valid_state == :valid_flag
+                WHERE name == :name AND valid_state == :valid_current
             ''', row)
         return self.pool.runInteraction( _newTessReplacingBroken, row)
 
@@ -583,6 +586,14 @@ class TESS(Table):
         Returns a Deferred.
         '''
         def _renamingAssociation(cursor, row):
+             # Expire current association with an existing name with new MAC
+            cursor.execute(
+                '''
+                UPDATE name_to_mac_t 
+                SET valid_until = :eff_date, valid_state = :valid_expired
+                WHERE mac_address == :mac AND valid_state == :valid_current
+                ''', row)
+            # Insert a new association
             cursor.execute(
                 '''
                 INSERT INTO name_to_mac_t (
@@ -596,16 +607,9 @@ class TESS(Table):
                     :mac,
                     :eff_date,
                     :exp_date,
-                    :valid_flag
+                    :valid_current
                 )
             ''', row)
-            # Expire current association with an existing name with new MAC
-            cursor.execute(
-                '''
-                UPDATE name_to_mac_t 
-                SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE mac_address == :mac AND valid_state == :valid_flag
-                ''', row)
         return self.pool.runInteraction( _renamingAssociation, row)
 
 
@@ -620,6 +624,11 @@ class TESS(Table):
             '''
             cursor.execute(
                 '''
+                UPDATE name_to_mac_t SET valid_until = :eff_date, valid_state = :valid_expired
+                WHERE mac_address == :prev_mac AND valid_state == :valid_current
+                ''', row)
+            cursor.execute(
+                '''
                 INSERT INTO name_to_mac_t (
                     name,
                     mac_address,
@@ -631,19 +640,14 @@ class TESS(Table):
                     :mac,
                     :eff_date,
                     :exp_date,
-                    :valid_flag
+                    :valid_current
                 );
                 ''',  row)
-            cursor.execute(
-                '''
-                UPDATE name_to_mac_t SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE mac_address == :prev_mac AND valid_state == :valid_flag
-                ''', row)
             # This association row leaves a name without a photometer.
             cursor.execute(
                 '''
                 UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE name == :prev_name AND valid_state == :valid_flag
+                WHERE name == :prev_name AND valid_state == :valid_current
                 ''', row)
 
         return self.pool.runInteraction( _rearrangeAssociation, row)
