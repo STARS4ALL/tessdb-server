@@ -355,9 +355,11 @@ class TESS(Table):
         else:
             mac  = mac[0]
             name = name[0]
+            row['prev_mac']  = name[1]  # MAC not from the register message, but associtated to existing name
+            row['prev_name'] = mac[1]   # name not from from the register message, but assoctiated to to existing MAC
             # If the same MAC and same name remain, we must examine if there
             # is a change in the photometer managed attributes (zero_point)
-            if row['name'] == name[0] and row['mac'] == mac[0]:
+            if row['name'] == row['prev_name'] and row['mac'] == row['prev_mac']:
                 yield self.maybeUpdateManagedAttributes(row)
             else:
                 # The complex scenario is that two (MAC, name) pairs exists in the name_to_mac_t table
@@ -365,16 +367,14 @@ class TESS(Table):
                 # The other pair has the same name as the registry message
                 # So we must invalidate both existing pairs and create a new one
                 # The name not coming in the message will get unassigned to a photometer.
-                row['prev_mac']  = name[1]  # MAC not from the register message, but associtated to existing name
-                row['prev_name'] = mac[1]   # name not from from the register message, but assoctiated to to existing MAC
                 # Renaming with side effects.
-                log2.debug("Rearranging associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
+                log2.debug("Overriding associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
-                yield self.rearrangeAssociations(row)
+                yield self.overrideAssociations(row)
                 self.invalidCache(row['name'])
                 self.invalidCache(row['prev_name'])
                 self.nSwap += 1
-                log2.info("Rearranged associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
+                log2.info("Overridden associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 log2.warn("Label {label} has no associated photometer now!", label=row['prev_name'])
             
@@ -632,10 +632,10 @@ class TESS(Table):
 
     
 
-    def rearrangeAssociation(self, row):
-        def _rearrangeAssociation(cursor, row):
+    def overrideAssociations(self, row):
+        def _overrideAssociations(cursor, row):
             '''
-            Renaming (name, MAC) association with a side effect thet there is one name
+            Overrides two (name, MAC) associations in such a way that there is one name
             without a photometer.
             Returns a Deferred.
             '''
@@ -643,6 +643,12 @@ class TESS(Table):
                 '''
                 UPDATE name_to_mac_t SET valid_until = :eff_date, valid_state = :valid_expired
                 WHERE mac_address == :prev_mac AND valid_state == :valid_current
+                ''', row)
+            # This association row leaves a name without a photometer.
+            cursor.execute(
+                '''
+                UPDATE name_to_mac_t SET valid_until = :eff_date, valid_state = :valid_expired
+                WHERE name == :prev_name AND valid_state == :valid_current
                 ''', row)
             cursor.execute(
                 '''
@@ -660,13 +666,6 @@ class TESS(Table):
                     :valid_current
                 );
                 ''',  row)
-            # This association row leaves a name without a photometer.
-            cursor.execute(
-                '''
-                UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE name == :prev_name AND valid_state == :valid_current
-                ''', row)
-
-        return self.pool.runInteraction( _rearrangeAssociation, row)
+        return self.pool.runInteraction( _overrideAssociations, row)
 
     
