@@ -1141,17 +1141,17 @@ def readings_list_single(connection, options):
     row['count'] = options.count
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude, r.signal_strength
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN location_t as l USING (location_id)
         JOIN tess_t     as i USING (tess_id)
-        WHERE i.name == :name
+        WHERE i.mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name)
         ORDER BY r.date_id DESC, r.time_id DESC
         LIMIT :count
         ''' , row)
-    paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude","RSS"], size=options.count)
+    paging(cursor, ["Timestamp (UTC)","TESS MAC","Location","Frequency","Magnitude","RSS"], size=options.count)
    
 
 def readings_list_all(connection, options):
@@ -1160,7 +1160,7 @@ def readings_list_all(connection, options):
     row['count'] = options.count
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.name, l.site, r.frequency, r.magnitude, r.signal_strength
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
@@ -1169,7 +1169,7 @@ def readings_list_all(connection, options):
         ORDER BY r.date_id DESC, r.time_id DESC
         LIMIT :count
         ''', row)
-    paging(cursor, ["Timestamp (UTC)","TESS","Location","Frequency","Magnitude","RSS"], size=options.count)
+    paging(cursor, ["Timestamp (UTC)","TESS MAC","Location","Frequency","Magnitude","RSS"], size=options.count)
 
 
 def readings_list(connection, options):
