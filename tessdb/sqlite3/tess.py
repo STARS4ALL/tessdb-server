@@ -276,14 +276,14 @@ class TESS(Table):
         self.nCreation = 0
         self.nRename   = 0
         self.nReplace  = 0
-        self.nSwap     = 0
+        self.nOverriden = 0
         self.nZPChange = 0
         self.nReboot   = 0
 
     def getCounters(self):
         '''get stat counters'''
         return (    
-                    "[Total, New, Rebooted, Renamed, ZP Changed, Replaced, Swapped]",
+                    "[Total, New, Rebooted, Renamed, ZP Changed, Replaced, Overriden]",
                     [
                         self.nRegister, 
                         self.nCreation,
@@ -291,7 +291,7 @@ class TESS(Table):
                         self.nRename, 
                         self.nZPChange, 
                         self.nReplace, 
-                        self.nSwap,
+                        self.nOverriden,
                     ]
                 )
 
@@ -373,7 +373,7 @@ class TESS(Table):
                 yield self.overrideAssociations(row)
                 self.invalidCache(row['name'])
                 self.invalidCache(row['prev_name'])
-                self.nSwap += 1
+                self.nOverriden += 1
                 log2.info("Overridden associations ({n1} -> {m1}) and ({n2} -> {m2}) with new ({log_tag} -> {m}) association data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 log2.warn("Label {label} has no associated photometer now!", label=row['prev_name'])
