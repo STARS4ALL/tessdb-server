@@ -313,7 +313,7 @@ class TESS(Table):
         self.nRegister += 1
 
         # Adding extra metadadta for all create/update operations
-        row['eff_date']      = row['tstamp']
+        row['eff_date']      = row['tstamp'].replace(microsecond=0)
         row['exp_date']      = INFINITE_TIME
         row['valid_expired'] = EXPIRED
         row['valid_current'] = CURRENT
