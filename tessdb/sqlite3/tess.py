@@ -128,11 +128,11 @@ class TESS(Table):
             '''
             CREATE TABLE IF NOT EXISTS name_to_mac_t
             (
-            name          TEXT,
-            mac_address   TEXT REFERENCES tess_t(mac_address), 
-            valid_since   TEXT,
-            valid_until   TEXT,
-            valid_state   TEXT
+            name          TEXT NOT NULL,
+            mac_address   TEXT NOT NULL REFERENCES tess_t(mac_address), 
+            valid_since   TEXT NOT NULL,
+            valid_until   TEXT NOT NULL,
+            valid_state   TEXT NOT NULL
             );
             '''
         )
@@ -368,13 +368,13 @@ class TESS(Table):
                 # So we must invalidate both existing pairs and create a new one
                 # The name not coming in the message will get unassigned to a photometer.
                 # Renaming with side effects.
-                log2.debug("Overriding associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
+                log2.debug("Overriding associations ({n1} -> {m1}) and ({n2} -> {m2}) with new ({log_tag} -> {m}) association data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 yield self.overrideAssociations(row)
                 self.invalidCache(row['name'])
                 self.invalidCache(row['prev_name'])
                 self.nSwap += 1
-                log2.info("Overridden associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) association data",
+                log2.info("Overridden associations ({n1} -> {m1}) and ({n2} -> {m2}) with new ({log_tag} -> {m}) association data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 log2.warn("Label {label} has no associated photometer now!", label=row['prev_name'])
             
