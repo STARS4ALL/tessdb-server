@@ -277,7 +277,7 @@ class MQTTService(ClientService):
             raise ReadingTypeError('chan', str, type(row['chan']))
 
 
-    def handleRegistration(self, row):
+    def handleRegistration(self, row, now):
         '''
         Handle registration data coming from onPublish()
         '''
@@ -285,6 +285,7 @@ class MQTTService(ClientService):
         if self.validate:
             try:
                 self.validateRegister(row)
+                self.handleTimestamps(row, now)
             except ValidationError as e:
                 log.error('Validation error in registration payload={payload!s}', payload=row)
                 log.error('{excp!s}', excp=e)
@@ -394,7 +395,7 @@ class MQTTService(ClientService):
         topic_part  = topic.split('/')
         
         if self.regAllowed and topic == self.options["tess_topic_register"]:
-            self.handleRegistration(row)
+            self.handleRegistration(row, now)
         elif topic_part[0] in self.tess_heads and topic_part[-1] in self.tess_tails:
             self.handleReadings(row, now)
         else:

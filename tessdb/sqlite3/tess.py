@@ -313,10 +313,10 @@ class TESS(Table):
         self.nRegister += 1
 
         # Adding extra metadadta for all create/update operations
-        row['eff_date']      = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
+        row['eff_date']      = row['tstamp']
         row['exp_date']      = INFINITE_TIME
         row['valid_expired'] = EXPIRED
-        row['valid_current']    = CURRENT
+        row['valid_current'] = CURRENT
         row['registered']    = AUTOMATIC
 
         mac  = yield self.lookupMAC(row)    # Returns list of pairs (MAC, name)
