@@ -374,7 +374,7 @@ class TESS(Table):
                 self.invalidCache(row['name'])
                 self.invalidCache(row['prev_name'])
                 self.nSwap += 1
-                log2.info("Overridden associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) data",
+                log2.info("Overridden associations ({m1},{n1}) and ({m2},{n2}) with new ({m},{log_tag}) association data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 log2.warn("Label {label} has no associated photometer now!", label=row['prev_name'])
             
