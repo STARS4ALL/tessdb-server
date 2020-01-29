@@ -239,6 +239,12 @@ def createParser():
     ire.add_argument('new_name',  type=str, help='new friendly name')
     ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    iov = subparser.add_parser('override', help='override instrument name')
+    iov.add_argument('old_name',  type=str, help='old friendly name')
+    iov.add_argument('new_name',  type=str, help='new friendly name')
+    iov.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='effective date')
+    iov.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     ide = subparser.add_parser('delete', help='delete instrument')
     ide.add_argument('name',  type=str, help='instrument friendly name')
     ide.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
@@ -279,7 +285,7 @@ def main():
         connection = open_database(options)
         command = options.command
         subcommand = options.subcommand
-        if subcommand in ["rename","enable","disable","update","delete"]:
+        if subcommand in ["rename","enable","disable","update","delete","override"]:
             invalid_cache = True
         # Call the function dynamically
         func = command + '_' + subcommand
@@ -614,6 +620,84 @@ def instrument_rename(connection, options):
         ''', row)
     connection.commit()
     # Now display it
+    cursor.execute(
+        '''
+        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
+        FROM   tess_v
+        WHERE  name == :newname
+        AND    valid_state == :valid_flag
+        ''', row)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
+
+
+def instrument_override(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['newname']  = options.new_name
+    row['oldname']  = options.old_name
+    row['valid_flag'] = CURRENT
+    row['valid_expired'] = EXPIRED
+    row['eff_date'] =  datetime.datetime.utcnow().replace(microsecond=0) if options.eff_date is None else options.eff_date
+    row['exp_date'] = INFINITE_TIME
+
+    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :newname", row)
+    newmac = cursor.fetchone()
+    if not newmac:
+        raise IndexError("Cannot override.  Instrument with new name %s does not exist." 
+            % (options.new_name,) ) 
+    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :oldname", row)
+    oldmac = cursor.fetchone()
+    if not oldmac:
+        raise IndexError("Cannot override. Instrument with old name %s does not exist." 
+            % (options.old_name,) )
+    row['oldmac'] =oldmac[0]
+    row['newmac'] =newmac[0]
+    cursor.execute(
+        '''
+        UPDATE name_to_mac_t 
+        SET valid_until = :eff_date, valid_state = :valid_expired
+        WHERE mac_address == :oldmac
+        AND name == :oldname
+        AND valid_state == :valid_flag
+        ''', row)
+    cursor.execute(
+        '''
+        UPDATE name_to_mac_t 
+        SET valid_until = :eff_date, valid_state = :valid_expired
+        WHERE mac_address == :newmac
+        AND name == :newname
+        AND valid_state == :valid_flag
+        ''', row)
+    # Insert a new association
+    cursor.execute(
+        '''
+        INSERT INTO name_to_mac_t (
+            name,
+            mac_address,
+            valid_since,
+            valid_until,
+            valid_state
+        ) VALUES (
+            :newname,
+            :oldmac,
+            :eff_date,
+            :exp_date,
+            :valid_flag
+        )
+        ''', row)
+    connection.commit()
+    # Now display it
+    # ==========================
+    ##### ME QUEDE AQUI #######
+    # ==========================
+    cursor.execute(
+        '''
+        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
+        FROM   tess_v
+        WHERE  name == :newname
+        AND    valid_state == :valid_flag
+        ''', row)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
     cursor.execute(
         '''
         SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
