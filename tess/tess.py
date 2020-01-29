@@ -87,7 +87,7 @@ def mkdate(datestr):
 
 def createParser():
     # create the top-level parser
-    parser = argparse.ArgumentParser(prog=sys.argv[0], description="tessdb command line utility " + __version__)
+    parser = argparse.ArgumentParser(prog=sys.argv[0], description="tessdb command line tool " + __version__)
 
     subparser = parser.add_subparsers(dest='command')
 
@@ -335,7 +335,7 @@ def instrument_assign(connection, options):
     cursor.execute(
         '''
         UPDATE tess_t SET location_id = :ident
-        WHERE name == :tess
+        WHERE mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name AND valid_state == :state)
         ''', row)
     cursor.execute(
         '''
@@ -350,12 +350,12 @@ def instrument_assign(connection, options):
 
 def instrument_single_history(connection, options):
     cursor = connection.cursor()
-    row = {'tess': options.name }
+    row = {'tess': options.name, 'state': CURRENT}
     cursor.execute(
             '''
             SELECT name,tess_id,mac_address,zero_point,filter,azimuth,altitude,valid_since,valid_until
-            FROM tess_t
-            WHERE name = :tess
+            FROM tess_v
+            WHERE name == :name
             ORDER BY tess_t.valid_since ASC;
             ''',row)
     paging(cursor,["TESS","Id","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Since","Until"], size=100)
@@ -443,7 +443,7 @@ def instrument_enable(connection, options):
     cursor.execute('''
         UPDATE tess_t 
         SET authorised = 1 
-        WHERE name == :tess 
+        WHERE mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name AND valid_state == :state)
         AND valid_state == :state
         ''',row)
     
@@ -463,7 +463,7 @@ def instrument_disable(connection, options):
     cursor.execute('''
         UPDATE tess_t 
         SET authorised = 0 
-        WHERE name == :tess 
+        WHERE mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name AND valid_state == :state) 
         AND valid_state == :state
         ''',row)
     
@@ -495,7 +495,7 @@ def instrument_create(connection, options):
     # Find existing MAC and abort if so
     cursor.execute(
         '''
-        SELECT name, mac_address
+        SELECT mac_address
         FROM tess_t 
         WHERE mac_address == :mac
         AND valid_state == :valid_flag
@@ -506,9 +506,9 @@ def instrument_create(connection, options):
     # Find existing name and abort if so
     cursor.execute(
         '''
-        SELECT name, mac_address
+        SELECT mac_address
         FROM tess_t 
-        WHERE name == :name
+        WHERE mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name AND valid_state == :valid_flag)
         AND valid_state == :valid_flag 
         ''', row)
     result = cursor.fetchone()
@@ -518,7 +518,6 @@ def instrument_create(connection, options):
     cursor.execute(
         '''
         INSERT INTO tess_t (
-            name,
             mac_address, 
             zero_point,
             filter,
@@ -529,13 +528,28 @@ def instrument_create(connection, options):
             valid_until,
             valid_state
         ) VALUES (
-            :name,
             :mac,
             :zp,
             :filter,
             :azimuth,
             :altitude,
             :registered,
+            :eff_date,
+            :exp_date,
+            :valid_flag
+        )
+        ''',  row)
+    cursor.execute(
+        '''
+        INSERT INTO name_to_mac_t (
+            name,
+            mac_address, 
+            valid_since,
+            valid_until,
+            valid_state
+        ) VALUES (
+            :name
+            :mac,
             :eff_date,
             :exp_date,
             :valid_flag
@@ -559,19 +573,47 @@ def instrument_rename(connection, options):
     row = {}
     row['newname']  = options.new_name
     row['oldname']  = options.old_name
-    cursor.execute("SELECT mac_address FROM tess_t WHERE name == :oldname", row)
-    result = cursor.fetchone()
-    if not result:
-        raise IndexError("Cannot rename. Existing instrument with old name %s does not exist." 
-            % (options.old_name,) )
-    cursor.execute("SELECT mac_address FROM tess_t WHERE name == :newname", row)
+    row['valid_flag'] = CURRENT
+    row['valid_expired'] = EXPIRED
+    row['eff_date'] = datetime.datetime.utcnow().replace(microsecond=0)
+    row['exp_date'] = INFINITE_TIME
+
+    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :newname", row)
     result = cursor.fetchone()
     if result:
-        raise IndexError("Cannot rename. Existing instrument MAC %s owns this name." % (result[0],) ) 
-    cursor.execute("UPDATE tess_t SET name = :newname WHERE name == :oldname", row)
+        raise IndexError("Cannot rename. Other instrument with MAC %s owns this name." % (result[0],) ) 
+    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :oldname", row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot rename. Instrument with old name %s does not exist." 
+            % (options.old_name,) )
+    row['mac'] =result[0]
+    cursor.execute(
+        '''
+        UPDATE name_to_mac_t 
+        SET valid_until = :eff_date, valid_state = :valid_expired
+        WHERE mac_address == :mac AND valid_state == :valid_flag
+
+        ''', row)
+    # Insert a new association
+    cursor.execute(
+        '''
+        INSERT INTO name_to_mac_t (
+            name,
+            mac_address,
+            valid_since,
+            valid_until,
+            valid_state
+        ) VALUES (
+            :newname,
+            :mac,
+            :eff_date,
+            :exp_date,
+            :valid_flag
+        )
+        ''', row)
     connection.commit()
     # Now display it
-    row['valid_flag'] = CURRENT
     cursor.execute(
         '''
         SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
@@ -586,20 +628,27 @@ def instrument_delete(connection, options):
     cursor = connection.cursor()
     row = {}
     row['name']  = options.name
+    row['valid_flag'] = CURRENT
 
-    cursor.execute("SELECT mac_address FROM tess_t WHERE name == :name", row)
+    cursor.execute(
+        '''
+        SELECT mac_address
+        FROM   tess_v
+        WHERE  name == :name
+        ''', row)
     result = cursor.fetchone()
     if not result:
         raise IndexError("Cannot delete. Instrument with name %s does not exist." 
             % (options.name,) )
     
+    row['mac'] = result[0]
     # Find out what's being deleted
     print("About to delete")
     cursor.execute(
         '''
         SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
         FROM   tess_v
-        WHERE  name == :name
+        WHERE  mac_address == :mac
         ''', row)
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
     
@@ -607,15 +656,16 @@ def instrument_delete(connection, options):
     # This may go away if readings are stored in another database (i.e influxdb)
     cursor.execute(
         '''
-        SELECT i.name, count(*) AS readings
+        SELECT i.mac_address, count(*) AS readings
         FROM tess_readings_t AS r
         JOIN tess_t          AS i USING (tess_id)
-        WHERE i.name == :name
+        WHERE i.mac_address == :mac
         ''', row)
     paging(cursor,["TESS","Acumulated Readings"])
     raw_input("Are you sure ???? Press Enter to continue [Ctrl-C to abort] ...")
 
-    cursor.execute("DELETE FROM tess_t WHERE name == :name", row)
+    cursor.execute("DELETE FROM name_to_mac_t WHERE mac_address == :mac", row)
+    cursor.execute("DELETE FROM tess_t WHERE mac_address == :mac", row)
     connection.commit()
     print("Instrument deleted")
 
@@ -640,8 +690,8 @@ def instrument_raw_update(connection, options):
     row['valid_flag'] = CURRENT
     cursor.execute(
         '''
-        SELECT name, mac_address, location_id
-        FROM tess_t 
+        SELECT name, mac_address
+        FROM tess_v 
         WHERE name == :name
         AND valid_state == :valid_flag 
         ''', row)
@@ -716,28 +766,28 @@ def instrument_controlled_update(connection, options):
     row['valid_flag'] = CURRENT
     cursor.execute(
         '''
-        SELECT name, mac_address, location_id, valid_since, zero_point, filter, azimuth, altitude, authorised, registered 
+        SELECT mac_address, location_id, valid_since, zero_point, filter, azimuth, altitude, authorised, registered 
         FROM tess_t 
-        WHERE name == :name
+        WHERE mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name AND valid_state == :valid_flag)
         AND valid_state == :valid_flag 
         ''', row)
     result = cursor.fetchone()
     if not result:
         raise IndexError("Cannot rename. Existing instrument with name %s does not exist." % (options.name,) )
-    if result[3] >= options.start_time:
-        raise ValueError("Cannot set valid_since (%s) column to an equal or earlier date (%s)" % (result[3], options.start_time) )
+    if result[2] >= options.start_time:
+        raise ValueError("Cannot set valid_since (%s) column to an equal or earlier date (%s)" % (result[2], options.start_time) )
 
-    row['mac']           = result[1]
-    row['location']      = result[2]
+    row['mac']           = result[0]
+    row['location']      = result[1]
     row['eff_date']      = options.start_time
     row['exp_date']      = INFINITE_TIME
     row['valid_expired'] = EXPIRED
-    row['zp']            = result[4] if options.zero_point is None else options.zero_point
-    row['filter']        = result[5] if options.filter is None else options.filter
-    row['azimuth']       = result[6] if options.azimuth is None else options.azimuth
-    row['altitude']      = result[7] if options.altitude is None else options.altitude
-    row['authorised']    = result[8]
-    row['registered']    = result[9] if options.registered is None else options.registered
+    row['zp']            = result[3] if options.zero_point is None else options.zero_point
+    row['filter']        = result[4] if options.filter is None else options.filter
+    row['azimuth']       = result[5] if options.azimuth is None else options.azimuth
+    row['altitude']      = result[6] if options.altitude is None else options.altitude
+    row['authorised']    = result[7]
+    row['registered']    = result[8] if options.registered is None else options.registered
     cursor.execute(
         '''
         UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
@@ -747,7 +797,6 @@ def instrument_controlled_update(connection, options):
     cursor.execute(
         '''
         INSERT INTO tess_t (
-            name,
             mac_address, 
             zero_point,
             filter,
@@ -760,7 +809,6 @@ def instrument_controlled_update(connection, options):
             registered,
             location_id
         ) VALUES (
-            :name,
             :mac,
             :zp,
             :filter,
@@ -773,6 +821,22 @@ def instrument_controlled_update(connection, options):
             :registered,
             :location
             )
+        ''',  row)
+    cursor.execute(
+        '''
+        INSERT INTO name_to_mac_t (
+            name,
+            mac_address, 
+            valid_since,
+            valid_until,
+            valid_state
+        ) VALUES (
+            :name
+            :mac,
+            :eff_date,
+            :exp_date,
+            :valid_flag
+        )
         ''',  row)
     connection.commit()
     print("Operation complete.")
