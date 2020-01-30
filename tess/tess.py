@@ -206,6 +206,7 @@ def createParser():
     ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
+    ip.add_argument('-x', '--extended', action='store_true', default=False, help='show TESS instrument name changes')
 
     ik = subparser.add_parser('unassigned', help='list unassigned instruments')
     ik.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
@@ -378,6 +379,8 @@ def instrument_list(connection, options):
             instrument_specific_historic_list(connection, options)
         else:
             instrument_specific_current_list(connection, options)
+        if options.extended:
+            instrument_name_history_list(connection, options)
 
 def instrument_historic_list(connection, options):
     cursor = connection.cursor()
@@ -401,6 +404,20 @@ def instrument_specific_historic_list(connection, options):
             ORDER BY tess_v.valid_since ASC;
             ''',row)
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled","Registered"], size=100)
+
+
+def instrument_name_history_list(connection, options):
+    cursor = connection.cursor()
+    row = {'state': CURRENT, 'name': options.name}
+    cursor.execute(
+            '''
+            SELECT name,mac_address,valid_state,valid_since,valid_until
+            FROM name_to_mac_t
+            WHERE name == :name
+            ORDER BY valid_since ASC;
+            ''',row)
+    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"], size=100)
+
 
 
 def instrument_current_list(connection, options):
@@ -571,6 +588,14 @@ def instrument_create(connection, options):
         AND    valid_state == :valid_flag
         ''', row)
     paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Azimuth","Altitude","Registered","Site"])
+    cursor.execute(
+        '''
+        SELECT name,mac_address,valid_state,valid_since,valid_until
+        FROM   name_to_mac_t
+        WHERE  name == :name
+        ''', row)
+    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"])
+
 
 
 
@@ -627,7 +652,7 @@ def instrument_rename(connection, options):
         WHERE  name == :newname
         OR     name == :oldname
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Valid State","Valid Since","Valid Until"])
+    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"])
 
 
 
@@ -695,7 +720,7 @@ def instrument_override(connection, options):
         WHERE  name == :newname
         OR     name == :oldname
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Valid State","Valid Since","Valid Until"])
+    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"])
     
 
 def instrument_delete(connection, options):
