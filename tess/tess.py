@@ -242,7 +242,7 @@ def createParser():
     iov = subparser.add_parser('override', help='override instrument name')
     iov.add_argument('old_name',  type=str, help='old friendly name')
     iov.add_argument('new_name',  type=str, help='new friendly name')
-    iov.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='effective date')
+    iov.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
     iov.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ide = subparser.add_parser('delete', help='delete instrument')
@@ -622,12 +622,13 @@ def instrument_rename(connection, options):
     # Now display it
     cursor.execute(
         '''
-        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
-        FROM   tess_v
+        SELECT name,mac_address,valid_state,valid_since,valid_until
+        FROM   name_to_mac_t
         WHERE  name == :newname
-        AND    valid_state == :valid_flag
+        OR     name == :oldname
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
+    paging(cursor,["TESS","MAC Addr.","Valid State","Valid Since","Valid Until"])
+
 
 
 def instrument_override(connection, options):
@@ -687,26 +688,15 @@ def instrument_override(connection, options):
         ''', row)
     connection.commit()
     # Now display it
-    # ==========================
-    ##### ME QUEDE AQUI #######
-    # ==========================
     cursor.execute(
         '''
-        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
-        FROM   tess_v
+        SELECT name,mac_address,valid_state,valid_since,valid_until
+        FROM   name_to_mac_t
         WHERE  name == :newname
-        AND    valid_state == :valid_flag
+        OR     name == :oldname
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
-    cursor.execute(
-        '''
-        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
-        FROM   tess_v
-        WHERE  name == :newname
-        AND    valid_state == :valid_flag
-        ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
-
+    paging(cursor,["TESS","MAC Addr.","Valid State","Valid Since","Valid Until"])
+    
 
 def instrument_delete(connection, options):
     cursor = connection.cursor()
@@ -1287,16 +1277,27 @@ def readings_adjloc(connection, options):
             % (options.new_site,) )
     row['new_site_id'] = result[0]
 
+    cursor.execute('''
+        SELECT mac_address FROM name_to_mac_t 
+        WHERE name == :tess_name
+        AND valid_state == "Current"
+        ''', row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot find MAC for '%s'" 
+            % (options.instrument,) )
+    row['mac'] = result[0]
+
     # Find out how many rows to change fro infromative purposes
     cursor.execute(
         '''
-        SELECT :tess_name, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) 
+        SELECT :tess_name, ;mac, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) 
         FROM tess_readings_t
         WHERE location_id == :old_site_id
         AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
-        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
         ''', row)
-    paging(cursor,["Name", "From Loc. Id", "To Loc. Id", "Start Date", "End Date", "Records to change"], size=5)
+    paging(cursor,["Name", "MAC", "From Loc. Id", "To Loc. Id", "Start Date", "End Date", "Records to change"], size=5)
 
     if not options.test:
         # And perform the change
@@ -1305,7 +1306,7 @@ def readings_adjloc(connection, options):
             UPDATE tess_readings_t SET location_id = :new_site_id 
             WHERE location_id == :old_site_id
             AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
-            AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+            AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
             ''', row)
         connection.commit()
 
@@ -1325,17 +1326,27 @@ def readings_purge(connection, options):
             % (options.site,) )
     row['site_id'] = result[0]
   
+    cursor.execute('''
+        SELECT mac_address FROM name_to_mac_t 
+        WHERE name == :tess_name
+        AND valid_state == "Current"
+        ''', row)
+    result = cursor.fetchone()
+    if not result:
+        raise IndexError("Cannot find MAC for '%s'" 
+            % (options.instrument,) )
+    row['mac'] = result[0]
 
     # Find out how many rows to change fro infromative purposes
     cursor.execute(
         '''
-        SELECT :tess_name, :site_id, :start_date, :end_date, COUNT(*) 
+        SELECT :tess_name, :mac, :site_id, :start_date, :end_date, COUNT(*) 
         FROM tess_readings_t
         WHERE location_id == :site_id
         AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
-        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
         ''', row)
-    paging(cursor,["Name", "Location Id", "Start Date", "End Date", "Records to delete"], size=5)
+    paging(cursor,["Name", "MAC", "Location Id", "Start Date", "End Date", "Records to delete"], size=5)
 
     if not options.test:
         # And perform the change
@@ -1344,7 +1355,7 @@ def readings_purge(connection, options):
             DELETE FROM tess_readings_t
             WHERE location_id == :site_id
             AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
-            AND   tess_id IN (SELECT tess_id FROM tess_t WHERE name == :tess_name)
+            AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
             ''', row)
         connection.commit()
 
