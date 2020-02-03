@@ -190,7 +190,9 @@ class TESS(Table):
                 location_t.location,
                 location_t.province,
                 location_t.country,
-                location_t.timezone
+                location_t.timezone,
+                location_t.sunrise,
+                location_t.sunset
             FROM tess_t 
             JOIN location_t    USING (location_id)
             JOIN name_to_mac_t USING (mac_address)
