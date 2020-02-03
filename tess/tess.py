@@ -97,7 +97,6 @@ def createParser():
     parser_instrument = subparser.add_parser('instrument', help='instrument commands')
     parser_location   = subparser.add_parser('location',   help='location commands')
     parser_readings   = subparser.add_parser('readings',   help='readings commands')
-    parser_system     = subparser.add_parser('system',     help='system related commands')
 
     # ------------------------------------------
     # Create second level parsers for 'location'
@@ -235,12 +234,13 @@ def createParser():
     icr.add_argument('-t', '--altitude',   type=float, default=DEFAULT_ALTITUDE, help='Altitude (degrees). 90.0 = Zenith')
     icr.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    ire = subparser.add_parser('rename', help='rename instrument')
+    ire = subparser.add_parser('rename', help='rename <old> instrument with <new> non existing name')
     ire.add_argument('old_name',  type=str, help='old friendly name')
     ire.add_argument('new_name',  type=str, help='new friendly name')
+    ire.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
     ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    iov = subparser.add_parser('override', help='override instrument name')
+    iov = subparser.add_parser('override', help='rename <old> instrument with <new> existing name')
     iov.add_argument('old_name',  type=str, help='old friendly name')
     iov.add_argument('new_name',  type=str, help='new friendly name')
     iov.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
@@ -262,17 +262,6 @@ def createParser():
     now = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
     iupex.add_argument("-s", "--start-time", type=str, default=now, metavar="YYYYMMDDTHHMMSS", help='update start date')
     iupex.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
-    
-    # ------------------------------------------
-    # Create second level parsers for 'system'
-    # ------------------------------------------
-    # Choices:
-    #   tess system window
-    #
-    subparser = parser_system.add_subparsers(dest='subcommand')
-    syw = subparser.add_parser('window', help='show current system maintenance window')
-    syw.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    syw.add_argument('-r', '--restart', action='store_true', default=False, help='Schedule "at job" to restart tessdb')
  
     return parser
 
@@ -375,12 +364,13 @@ def instrument_list(connection, options):
         else:
             instrument_current_list(connection, options)
     else:
+        if options.extended:
+            instrument_name_history_list(connection, options)
         if options.log:
             instrument_specific_historic_list(connection, options)
         else:
             instrument_specific_current_list(connection, options)
-        if options.extended:
-            instrument_name_history_list(connection, options)
+        
 
 def instrument_historic_list(connection, options):
     cursor = connection.cursor()
@@ -582,21 +572,20 @@ def instrument_create(connection, options):
     # Now display it
     cursor.execute(
         '''
+        SELECT name,mac_address,valid_state,valid_since,valid_until
+        FROM   name_to_mac_t
+        WHERE  name == :name
+        ''', row)
+    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"])
+    cursor.execute(
+        '''
         SELECT name, mac_address, zero_point, filter, azimuth, altitude, registered, site
         FROM   tess_v
         WHERE  name == :name
         AND    valid_state == :valid_flag
         ''', row)
     paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Azimuth","Altitude","Registered","Site"])
-    cursor.execute(
-        '''
-        SELECT name,mac_address,valid_state,valid_since,valid_until
-        FROM   name_to_mac_t
-        WHERE  name == :name
-        ''', row)
-    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"])
-
-
+    
 
 
 def instrument_rename(connection, options):
@@ -606,7 +595,7 @@ def instrument_rename(connection, options):
     row['oldname']  = options.old_name
     row['valid_flag'] = CURRENT
     row['valid_expired'] = EXPIRED
-    row['eff_date'] = datetime.datetime.utcnow().replace(microsecond=0)
+    row['eff_date'] = datetime.datetime.utcnow().replace(microsecond=0) if options.eff_date is None else options.eff_date
     row['exp_date'] = INFINITE_TIME
 
     cursor.execute("SELECT mac_address FROM tess_v WHERE name == :newname", row)
@@ -1277,6 +1266,7 @@ def readings_list(connection, options):
     else:
         readings_list_all(connection, options)
 
+
 def readings_adjloc(connection, options):
     row = {}
     row['new_site']   = options.new_site
@@ -1335,6 +1325,7 @@ def readings_adjloc(connection, options):
             ''', row)
         connection.commit()
 
+
 def readings_purge(connection, options):
     row = {}
     row['site']   = options.site
@@ -1343,7 +1334,7 @@ def readings_purge(connection, options):
     row['tess_name']  = options.instrument
     
     cursor = connection.cursor()
-    # Test if old and new locations exists and return its Id
+    # Test if location exists and return its Id
     cursor.execute("SELECT location_id FROM location_t WHERE site == :site", row)
     result = cursor.fetchone()
     if not result:
@@ -1383,86 +1374,3 @@ def readings_purge(connection, options):
             AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
             ''', row)
         connection.commit()
-
-   
-
-# --------------------
-# SYSTEM SUBCOMMANDS
-# --------------------
-
-def system_window(connection, options):
-    ONE_PAGE = 10
-    cursor = connection.cursor()
-    cursor.execute(
-        '''
-        SELECT DISTINCT l.sunrise,l.sunset,l.site, l.country, t.name
-        FROM tess_t     AS t 
-        JOIN location_t AS l USING (location_id)
-        WHERE l.location_id > -1
-        AND t.valid_state = "Current"
-        ''')
-
-    sunrise_list = []
-    sunset_list  = []
-    sites_dict   = {}
-    while True:
-        result = cursor.fetchone()
-        if result is None:
-            break
-        try:
-            info = result[4] + ', ' + result[2] + ' (' + result[3] +')'
-            sunrise = datetime.datetime.strptime(result[0], "%Y/%m/%d %H:%M:%S")
-            sunset  = datetime.datetime.strptime(result[1], "%Y/%m/%d %H:%M:%S")
-        except Exception as e:
-            if result[0] == NEVER_UP: print("FUNCIONALIDAD INACABADA ...")
-        else:
-            sites_dict[sunrise] = info
-            sites_dict[sunset]  = info
-            if sunrise > sunset:
-                sunrise_list.append(sunrise)
-                # Good approximation, since sunset will be slightly different
-                sunset_list.append(sunset + datetime.timedelta(hours=24))  
-            else:
-                sunrise_list.append(sunrise)
-                sunset_list.append(sunset)
-    
-    # Find out the Window State
-    window_start = max(sunrise_list)
-    window_end   = min(sunset_list)
-    window_duration = window_end - window_start
-    utcnow = datetime.datetime.utcnow()
-    utcoffset = datetime.datetime.now() - utcnow     # The 'at' command uses local time
-    window_open_flag = False
-    if window_start >= window_end:
-        window_state = "CLOSED FOR WINTER"
-    elif window_start <  utcnow < window_end:
-        window_state = "OPEN"
-        window_open_flag = True
-    elif utcnow <= window_start:
-        window_state = "WAITING TO OPEN"
-    else:
-        window_state = "CLOSED FOR TODAY"
-    table = [ [window_start, window_end, window_duration, window_state] ]
-    print (tabulate.tabulate(table, headers=["Start Time (UTC)","End Time (UTC)","Window Size", "State"], tablefmt='grid'))
-    print("Window start given by: %s" % sites_dict[window_start])
-    print("Window end   given by: %s" % sites_dict[window_end])
-    
-    # Restart if requested
-    if not options.restart:
-        return
-
-    if utcnow < window_start:
-        exec_tstamp = (window_start + utcoffset + datetime.timedelta(minutes=1)).strftime("%H:%M")
-    elif utcnow < window_end:
-        exec_tstamp = (window_end + utcoffset - datetime.timedelta(minutes=1)).strftime("%H:%M")
-    else:
-        print("Cannot schedule an 'at job' for today: %s" % window_state)
-        return
-    cmd1 = shlex.split('echo "sudo service tessdb restart"')
-    cmd2 = shlex.split("at %s" % exec_tstamp)
-    p1 = subprocess.Popen(cmd1, stdout=subprocess.PIPE)
-    p2 = subprocess.Popen(cmd2, stdin=p1.stdout, stdout=subprocess.PIPE)
-    p1.stdout.close()  # Allow p1 to receive a SIGPIPE if p2 exits.
-    output = p2.communicate()[0]
-    print(output)
-       
