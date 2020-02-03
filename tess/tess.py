@@ -17,10 +17,7 @@ import argparse
 import sqlite3
 import os
 import os.path
-import json
 import datetime
-import shlex
-import subprocess
 
 #--------------
 # other imports
@@ -29,7 +26,6 @@ import subprocess
 from . import __version__
 
 import tabulate
-from tessdb.sqlite3.utils import CURRENT, UNKNOWN, NEVER_UP, ALWAYS_UP
 
 
 # Python3 catch
@@ -42,19 +38,18 @@ except:
 # Module constants
 # ----------------
 
-
 DEFAULT_DBASE = "/var/dbase/tess.db"
 
+UNKNOWN       = 'Unknown'
 
 INFINITE_TIME = "2999-12-31T23:59:59"
 EXPIRED       = "Expired"
 CURRENT       = "Current"
 TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 
-UNKNOWN_SITE   = "Unknown"
 OUT_OF_SERVICE = "Out of Service"
 
-MANUAL = "Manual"
+MANUAL         = "Manual"
 
 # Default values for version-controlled attributes
 DEFAULT_AZIMUTH  =  0.0 # Degrees, 0.0 = North
@@ -438,7 +433,7 @@ def instrument_specific_current_list(connection, options):
 
 def instrument_unassigned(connection, options):
     cursor = connection.cursor()
-    row = {'state': CURRENT, 'site1': UNKNOWN_SITE, 'site2': OUT_OF_SERVICE}
+    row = {'state': CURRENT, 'site1': UNKNOWN, 'site2': OUT_OF_SERVICE}
     cursor.execute(
             '''
             SELECT name,mac_address,zero_point,filter,azimuth,altitude,site,authorised,registered
