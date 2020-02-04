@@ -229,8 +229,8 @@ class TESSReadings(Table):
             # With the INSERT OR IGNORE this error could never happen
             # but we keep it like this to trace the number of duplicates
             # Raise the log level so as not to overwhelm the logfile
-            log.debug("TESSReadings.update({log_tag}): TESS id={id} is sending a duplicated reading", 
-                id=tess_id, log_tag=row['name'])
+            log.warn("TESSReadings.update({log_tag}): SQL integrity error for TESS id={id}, new row {row!r}", 
+                id=tess_id, log_tag=row['name'], row=row)
             self.rejDuplicate += 1
         except Exception as e:
             log.error("TESSReadings.update({log_tag}): exception {excp!s} for row {row!r}", 
