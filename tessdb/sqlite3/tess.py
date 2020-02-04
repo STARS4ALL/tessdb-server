@@ -149,7 +149,7 @@ class TESS(Table):
         cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
         # For the associative table
         cursor.execute("CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);")
-        cursor.execute("CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(mac_address);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);")
         self.connection.commit()
 
 
