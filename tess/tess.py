@@ -75,7 +75,7 @@ def utf8(s):
 
 def mkdate(datestr):
     try:
-        date = datetime.datetime.strptime(datestr, '%Y-%m-%d')
+        date = datetime.datetime.strptime(datestr, '%Y-%m-%d').replace(hour=12)
     except ValueError:
         date = datetime.datetime.strptime(datestr, '%Y-%m-%dT%H:%M:%S')
     return date
@@ -197,6 +197,7 @@ def createParser():
 
     ip = subparser.add_parser('list', help='list instruments')
     ip.add_argument('-n', '--name', type=str, help='specific instrument name')
+    ip.add_argument('-m', '--mac', type=str, help='instrument MAC')
     ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
@@ -229,17 +230,11 @@ def createParser():
     icr.add_argument('-t', '--altitude',   type=float, default=DEFAULT_ALTITUDE, help='Altitude (degrees). 90.0 = Zenith')
     icr.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    ire = subparser.add_parser('rename', help='rename <old> instrument with <new> non existing name')
+    ire = subparser.add_parser('rename', help='rename instrument friendly name')
     ire.add_argument('old_name',  type=str, help='old friendly name')
     ire.add_argument('new_name',  type=str, help='new friendly name')
     ire.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
     ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    iov = subparser.add_parser('override', help='rename <old> instrument with <new> existing name')
-    iov.add_argument('old_name',  type=str, help='old friendly name')
-    iov.add_argument('new_name',  type=str, help='new friendly name')
-    iov.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
-    iov.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ide = subparser.add_parser('delete', help='delete instrument')
     ide.add_argument('name',  type=str, help='instrument friendly name')
@@ -270,7 +265,7 @@ def main():
         connection = open_database(options)
         command = options.command
         subcommand = options.subcommand
-        if subcommand in ["rename","enable","disable","update","delete","override"]:
+        if subcommand in ["rename","enable","disable","update","delete"]:
             invalid_cache = True
         # Call the function dynamically
         func = command + '_' + subcommand
@@ -353,21 +348,68 @@ def instrument_single_history(connection, options):
 
 
 def instrument_list(connection, options):
-    if options.name is None:
+    if options.name is None and options.mac is None:
         if options.log:
-            instrument_historic_list(connection, options)
+            instrument_all_attribute_changes(connection, options)
         else:
-            instrument_current_list(connection, options)
+            instrument_all_current_list(connection, options)
+    elif options.name is not None and options.mac is None:
+        if options.extended:
+            instrument_name_history_changes1(connection, options)
+        if options.log:
+            instrument_name_attribute_changes(connection, options)
+        else:
+            instrument_name_current_attributes(connection, options)
     else:
         if options.extended:
-            instrument_name_history_list(connection, options)
+            instrument_name_history_changes2(connection, options)
         if options.log:
-            instrument_specific_historic_list(connection, options)
+            instrument_mac_attribute_changes(connection, options)
         else:
-            instrument_specific_current_list(connection, options)
-        
+            instrument_mac_current_attributes(connection, options)
 
-def instrument_historic_list(connection, options):
+
+def instrument_mac_current_attributes(connection, options):
+    cursor = connection.cursor()
+    row = {'mac': options.mac, 'state': CURRENT}
+    cursor.execute(
+            '''
+            SELECT tess_id,mac_address,zero_point,filter,authorised,registered,l.site
+            FROM tess_t
+            JOIN location_t AS l USING (location_id)
+            WHERE mac_address = :mac 
+            AND valid_state == :state
+            ORDER BY tess_id ASC;
+            ''', row)
+    paging(cursor,["TESS Id","MAC Addr.","Zero Point","Filter","Enabled","Registered","Site"], size=100)
+
+def instrument_mac_attribute_changes(connection, options):
+    cursor = connection.cursor()
+    row = {'mac': options.mac}
+    cursor.execute(
+            '''
+            SELECT tess_id,mac_address,zero_point,filter,authorised,registered,l.site
+            FROM tess_t
+            JOIN location_t AS l USING (location_id)
+            WHERE mac_address = :mac
+            ORDER BY tess_id ASC;
+            ''', row)
+    paging(cursor,["TESS Id","MAC Addr.","Zero Point","Filter","Enabled","Registered","Site"], size=100)
+
+
+def instrument_all_current_list(connection, options):
+    cursor = connection.cursor()
+    row = {'state': CURRENT}
+    cursor.execute(
+            '''
+            SELECT name,mac_address,zero_point,filter,site,authorised,registered
+            FROM tess_v
+            WHERE valid_state == :state
+            ORDER BY CAST(substr(tess_v.name, 6) as decimal) ASC;
+            ''', row)
+    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled","Registered"], size=100)
+
+def instrument_all_attribute_changes(connection, options):
     cursor = connection.cursor()
     cursor.execute(
             '''
@@ -378,7 +420,7 @@ def instrument_historic_list(connection, options):
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled","Registered"], size=100)
 
 
-def instrument_specific_historic_list(connection, options):
+def instrument_name_attribute_changes(connection, options):
     cursor = connection.cursor()
     row = {'state': CURRENT, 'name': options.name}
     cursor.execute(
@@ -391,9 +433,9 @@ def instrument_specific_historic_list(connection, options):
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Since","Until","Enabled","Registered"], size=100)
 
 
-def instrument_name_history_list(connection, options):
+def instrument_name_history_changes1(connection, options):
     cursor = connection.cursor()
-    row = {'state': CURRENT, 'name': options.name}
+    row = {'name': options.name}
     cursor.execute(
             '''
             SELECT name,mac_address,valid_state,valid_since,valid_until
@@ -404,8 +446,20 @@ def instrument_name_history_list(connection, options):
     paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"], size=100)
 
 
+def instrument_name_history_changes2(connection, options):
+    cursor = connection.cursor()
+    row = {'mac': options.mac}
+    cursor.execute(
+            '''
+            SELECT name,mac_address,valid_state,valid_since,valid_until
+            FROM name_to_mac_t
+            WHERE mac_address == :mac
+            ORDER BY valid_since ASC;
+            ''',row)
+    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"], size=100)
 
-def instrument_current_list(connection, options):
+
+def instrument_all_current_list(connection, options):
     cursor = connection.cursor()
     row = {'state': CURRENT}
     cursor.execute(
@@ -418,7 +472,7 @@ def instrument_current_list(connection, options):
     paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Site","Enabled","Registered"], size=100)
 
 
-def instrument_specific_current_list(connection, options):
+def instrument_name_current_attributes(connection, options):
     cursor = connection.cursor()
     row = {'state': CURRENT, 'name': options.name}
     cursor.execute(
@@ -582,7 +636,6 @@ def instrument_create(connection, options):
     paging(cursor,["TESS","MAC Addr.","Calibration","Filter","Azimuth","Altitude","Registered","Site"])
     
 
-
 def instrument_rename(connection, options):
     cursor = connection.cursor()
     row = {}
@@ -593,75 +646,15 @@ def instrument_rename(connection, options):
     row['eff_date'] = datetime.datetime.utcnow().replace(microsecond=0) if options.eff_date is None else options.eff_date
     row['exp_date'] = INFINITE_TIME
 
-    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :newname", row)
-    result = cursor.fetchone()
-    if result:
-        raise IndexError("Cannot rename. Other instrument with MAC %s owns this name." % (result[0],) ) 
-    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :oldname", row)
-    result = cursor.fetchone()
-    if not result:
-        raise IndexError("Cannot rename. Instrument with old name %s does not exist." 
-            % (options.old_name,) )
-    row['mac'] =result[0]
-    cursor.execute(
-        '''
-        UPDATE name_to_mac_t 
-        SET valid_until = :eff_date, valid_state = :valid_expired
-        WHERE mac_address == :mac AND valid_state == :valid_flag
-
-        ''', row)
-    # Insert a new association
-    cursor.execute(
-        '''
-        INSERT INTO name_to_mac_t (
-            name,
-            mac_address,
-            valid_since,
-            valid_until,
-            valid_state
-        ) VALUES (
-            :newname,
-            :mac,
-            :eff_date,
-            :exp_date,
-            :valid_flag
-        )
-        ''', row)
-    connection.commit()
-    # Now display it
-    cursor.execute(
-        '''
-        SELECT name,mac_address,valid_state,valid_since,valid_until
-        FROM   name_to_mac_t
-        WHERE  name == :newname
-        OR     name == :oldname
-        ''', row)
-    paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"])
-
-
-
-def instrument_override(connection, options):
-    cursor = connection.cursor()
-    row = {}
-    row['newname']  = options.new_name
-    row['oldname']  = options.old_name
-    row['valid_flag'] = CURRENT
-    row['valid_expired'] = EXPIRED
-    row['eff_date'] =  datetime.datetime.utcnow().replace(microsecond=0) if options.eff_date is None else options.eff_date
-    row['exp_date'] = INFINITE_TIME
-
-    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :newname", row)
-    newmac = cursor.fetchone()
-    if not newmac:
-        raise IndexError("Cannot override.  Instrument with new name %s does not exist." 
-            % (options.new_name,) ) 
+    # This check is common to both cases
     cursor.execute("SELECT mac_address FROM tess_v WHERE name == :oldname", row)
     oldmac = cursor.fetchone()
     if not oldmac:
-        raise IndexError("Cannot override. Instrument with old name %s does not exist." 
+        raise IndexError("Cannot rename. Instrument with old name %s does not exist." 
             % (options.old_name,) )
     row['oldmac'] =oldmac[0]
-    row['newmac'] =newmac[0]
+
+    # This is always performed, regardless clean rename or override
     cursor.execute(
         '''
         UPDATE name_to_mac_t 
@@ -670,7 +663,14 @@ def instrument_override(connection, options):
         AND name == :oldname
         AND valid_state == :valid_flag
         ''', row)
-    cursor.execute(
+
+    cursor.execute("SELECT mac_address FROM tess_v WHERE name == :newname", row)
+    newmac = cursor.fetchone()
+    if newmac:
+        # If instrument with name exists, this is an override
+        # And a second row must be updated too
+        row['newmac'] =newmac[0]
+        cursor.execute(
         '''
         UPDATE name_to_mac_t 
         SET valid_until = :eff_date, valid_state = :valid_expired
@@ -678,7 +678,8 @@ def instrument_override(connection, options):
         AND name == :newname
         AND valid_state == :valid_flag
         ''', row)
-    # Insert a new association
+
+    # Insert a new association, regardless clean rename or override
     cursor.execute(
         '''
         INSERT INTO name_to_mac_t (
@@ -696,7 +697,8 @@ def instrument_override(connection, options):
         )
         ''', row)
     connection.commit()
-    # Now display it
+
+    # Now display the changes
     cursor.execute(
         '''
         SELECT name,mac_address,valid_state,valid_since,valid_until
@@ -705,7 +707,7 @@ def instrument_override(connection, options):
         OR     name == :oldname
         ''', row)
     paging(cursor,["TESS","MAC Addr.","State","Name Valid Since","Name Valid Until"])
-    
+
 
 def instrument_delete(connection, options):
     cursor = connection.cursor()
