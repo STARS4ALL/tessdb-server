@@ -159,6 +159,12 @@ def createParser():
     rli.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
     rli.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    rco = subparser.add_parser('count', help='count readings')
+    rco.add_argument('-m', '--mac',  required=True, type=str, help='specific instrument MAC address')
+    rco.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='start date')
+    rco.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_END_DATE, help='end date')
+    rco.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     ral = subparser.add_parser('adjloc', help='adjust readings location for a given TESS')
     ral.add_argument('instrument', metavar='<instrument>', type=str, help='TESS instrument MAC address')
     ral.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
@@ -1404,3 +1410,25 @@ def readings_purge(connection, options):
             AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
             ''', row)
         connection.commit()
+
+
+def readings_count(connection, options):
+    row = {}
+    row['start_date'] = int(options.start_date.strftime("%Y%m%d%H%M%S"))
+    row['end_date']   = int(options.end_date.strftime("%Y%m%d%H%M%S"))
+    row['mac']        = options.mac
+    
+    cursor = connection.cursor()
+   
+
+    # Find out how many rows to change fro infromative purposes
+    cursor.execute(
+        '''
+        SELECT :mac, tess_id, l.site, :start_date, :end_date, COUNT(*)
+        FROM tess_readings_t
+        JOIN location_t AS l USING (location_id)
+        WHERE (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+        GROUP BY tess_id, location_id
+        ''', row)
+    paging(cursor,["MAC", "TESS Id.", "Location", "Start Date", "End Date", "Records"], size=5)
