@@ -374,27 +374,27 @@ def instrument_mac_current_attributes(connection, options):
     row = {'mac': options.mac, 'state': CURRENT}
     cursor.execute(
             '''
-            SELECT tess_id,mac_address,zero_point,filter,authorised,registered,l.site
+            SELECT tess_id,mac_address,zero_point,filter,valid_state,authorised,registered,l.site
             FROM tess_t
             JOIN location_t AS l USING (location_id)
             WHERE mac_address = :mac 
             AND valid_state == :state
             ORDER BY tess_id ASC;
             ''', row)
-    paging(cursor,["TESS Id","MAC Addr.","Zero Point","Filter","Enabled","Registered","Site"], size=100)
+    paging(cursor,["TESS Id","MAC Addr.","Zero Point","Filter","State","Enabled","Registered","Site"], size=100)
 
 def instrument_mac_attribute_changes(connection, options):
     cursor = connection.cursor()
     row = {'mac': options.mac}
     cursor.execute(
             '''
-            SELECT tess_id,mac_address,zero_point,filter,authorised,registered,l.site
+            SELECT tess_id,mac_address,zero_point,filter,valid_state,authorised,registered,l.site
             FROM tess_t
             JOIN location_t AS l USING (location_id)
             WHERE mac_address = :mac
             ORDER BY tess_id ASC;
             ''', row)
-    paging(cursor,["TESS Id","MAC Addr.","Zero Point","Filter","Enabled","Registered","Site"], size=100)
+    paging(cursor,["TESS Id","MAC Addr.","Zero Point","Filter","State","Enabled","Registered","Site"], size=100)
 
 
 def instrument_all_current_list(connection, options):
