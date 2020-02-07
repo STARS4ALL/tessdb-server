@@ -82,8 +82,7 @@ def mkdate(datestr):
 
 def createParser():
     # create the top-level parser
-    parser = argparse.ArgumentParser(prog=sys.argv[0], description="tessdb command line tool " + __version__)
-
+    parser    = argparse.ArgumentParser(prog=sys.argv[0], description="tessdb command line tool " + __version__)
     subparser = parser.add_subparsers(dest='command')
 
     # --------------------------
@@ -100,6 +99,7 @@ def createParser():
     #   tess location list
     #
     subparser = parser_location.add_subparsers(dest='subcommand')
+
     llp = subparser.add_parser('list', help='list locations')
     llp.add_argument('-n', '--name',      type=utf8,  help='specific location name')
     llp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
@@ -109,7 +109,6 @@ def createParser():
     lkp = subparser.add_parser('unassigned', help='list unassigned locations')
     lkp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     lkp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
 
     lcp = subparser.add_parser('create', help='create location')
     lcp.add_argument('site', metavar='<site>', type=utf8, help='Unique site name')
@@ -154,6 +153,7 @@ def createParser():
     #   tess readings adjloc <instrument name> -o <old site name> -n <new site name> -s <start date> -e <end date>
     #
     subparser = parser_readings.add_subparsers(dest='subcommand')
+
     rli = subparser.add_parser('list', help='list readings')
     rli.add_argument('-m', '--mac',  type=str, help='specific instrument MAC address')
     rli.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
@@ -205,36 +205,6 @@ def createParser():
     #   tess instrument disable <instrument name> 
     #
     subparser = parser_instrument.add_subparsers(dest='subcommand')
-    parser_instrument_assign = subparser.add_parser('assign', help='assign instrument to location')
-    parser_instrument_assign.add_argument('instrument', metavar='<instrument>', type=str, help='TESS instrument name')
-    parser_instrument_assign.add_argument('location',   metavar='<location>',   type=utf8,  help='Location name')
-    parser_instrument_assign.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    ip = subparser.add_parser('list', help='list instruments')
-    ip.add_argument('-n', '--name', type=str, help='specific instrument name')
-    ip.add_argument('-m', '--mac', type=str, help='instrument MAC')
-    ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
-    ip.add_argument('-x', '--extended', action='store_true', default=False, help='show TESS instrument name changes')
-
-    ik = subparser.add_parser('unassigned', help='list unassigned instruments')
-    ik.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    ik.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    iaz = subparser.add_parser('enable', help='enable storing instrument samples')
-    iaz.add_argument('name',  metavar='<instrument>', type=str,   help='instrument friendly name')
-    iaz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    iaz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    iuz = subparser.add_parser('disable', help='disable storing samples for instrument')
-    iuz.add_argument('name',  metavar='<instrument>', type=str,   help='instrument friendly name')
-    iuz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    iuz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    ihi = subparser.add_parser('history',  help='single instrument history')
-    ihi.add_argument('name',   type=str,   help='friendly name')
-    ihi.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     icr = subparser.add_parser('create',   help='create instrument')
     icr.add_argument('name',   type=str,   help='friendly name')
@@ -252,22 +222,69 @@ def createParser():
     ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ide = subparser.add_parser('delete', help='delete instrument')
-    ide.add_argument('name',  type=str, help='instrument friendly name')
+    ideex = ide.add_mutually_exclusive_group(required=True)
+    ideex.add_argument('-n', '--name', type=str, help='instrument name')
+    ideex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     ide.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
+    ide.add_argument('-t', '--test', action='store_true',  help='test only, do not delete')
+   
+    
     iup = subparser.add_parser('update',   help='update instrument attributes')
     iup.add_argument('name',   type=str,   help='instrument friendly name')
+    iupex1 = iup.add_mutually_exclusive_group(required=True)
+    iupex1.add_argument('-n', '--name', type=str, help='instrument name')
+    iupex1.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     iup.add_argument('-z', '--zero-point', type=float, help='new zero point')
     iup.add_argument('-f', '--filter',     type=str,  help='new filter glass')
     iup.add_argument('-a', '--azimuth',    type=float, help='Azimuth (degrees). 0.0 = North')
     iup.add_argument('-t', '--altitude',   type=float, help='Altitude (degrees). 90.0 = Zenith')
     iup.add_argument('-r', '--registered', type=str, choices=["Manual","Automatic","Unknown"], help='Registration Method: [Unknown,Manual,Automatic]')
     iup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    iupex = iup.add_mutually_exclusive_group()
+    iupex2 = iup.add_mutually_exclusive_group()
     now = datetime.datetime.utcnow().strftime(TSTAMP_FORMAT)
-    iupex.add_argument("-s", "--start-time", type=str, default=now, metavar="YYYYMMDDTHHMMSS", help='update start date')
-    iupex.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
+    iupex2.add_argument("-s", "--start-time", type=str, default=now, metavar="YYYYMMDDTHHMMSS", help='update start date')
+    iupex2.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
+
+    ias = subparser.add_parser('assign', help='assign instrument to location')
+    iasex = ias.add_mutually_exclusive_group(required=True)
+    iasex.add_argument('-n', '--name', type=str, help='instrument name')
+    iasex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    ias.add_argument('-l','--location',   required=True, metavar='<location>', type=utf8,  help='Location name')
+    ias.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ip = subparser.add_parser('list', help='list instruments')
+    ipex = ip.add_mutually_exclusive_group(required=False)
+    ipex.add_argument('-n', '--name', type=str, help='instrument name')
+    ipex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
+    ip.add_argument('-x', '--extended', action='store_true', default=False, help='show TESS instrument name changes')
  
+    ik = subparser.add_parser('unassigned', help='list unassigned instruments')
+    ik.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    ik.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    iaz = subparser.add_parser('enable', help='enable storing instrument samples')
+    iazex = iaz.add_mutually_exclusive_group(required=True)
+    iazex.add_argument('-n', '--name', type=str, help='instrument name')
+    iazex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    iaz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    iaz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    
+    iuz = subparser.add_parser('disable', help='disable storing samples for instrument')
+    iuzex = iuz.add_mutually_exclusive_group(required=True)
+    iuzex.add_argument('-n', '--name', type=str, help='instrument name')
+    iuzex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    iuz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    iuz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    
+    ihi = subparser.add_parser('history',  help='single instrument history')
+    ihiex = ihi.add_mutually_exclusive_group(required=True)
+    ihiex.add_argument('-n', '--name', type=str, help='instrument name')
+    ihiex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    ihi.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     return parser
 
 def main():
@@ -326,26 +343,36 @@ def paging(cursor, headers, size=10):
 
 def instrument_assign(connection, options):
     cursor = connection.cursor()
-    row = {'site': options.location, 'tess': options.instrument, 'state': CURRENT}
+    row = {'site': options.location,  'state': CURRENT}
     cursor.execute("SELECT location_id FROM location_t WHERE site == :site",row)
     res =  cursor.fetchone()
     if not res:
         print("Location not found by {0}".format(row['site']))
         sys.exit(1)
-    row['ident'] = res[0]
+    row['loc_id'] = res[0]
+    if options.name is not None:
+        row['name'] = options.name
+        cursor.execute(
+            '''
+            UPDATE tess_t SET location_id = :loc_id
+            WHERE mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name AND valid_state == :state)
+            ''', row)
+    else:
+         row['mac'] = options.mac
+         cursor.execute(
+            '''
+            UPDATE tess_t SET location_id = :loc_id
+            WHERE mac_address = :mac)
+            ''', row)
+    
     cursor.execute(
         '''
-        UPDATE tess_t SET location_id = :ident
-        WHERE mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name AND valid_state == :state)
-        ''', row)
-    cursor.execute(
-        '''
-        SELECT name,site
+        SELECT name,mac_address,site
         FROM tess_v
         WHERE valid_state == :state
-        AND name = :tess
+        AND name = :name
         ''',row)
-    paging(cursor,["TESS","Site"])
+    paging(cursor,["TESS","MAC","Site"])
     connection.commit()    
 
 
@@ -727,30 +754,47 @@ def instrument_rename(connection, options):
 def instrument_delete(connection, options):
     cursor = connection.cursor()
     row = {}
-    row['name']  = options.name
+    
     row['valid_flag'] = CURRENT
 
-    cursor.execute(
-        '''
-        SELECT mac_address
-        FROM   tess_v
-        WHERE  name == :name
-        ''', row)
-    result = cursor.fetchone()
-    if not result:
-        raise IndexError("Cannot delete. Instrument with name %s does not exist." 
-            % (options.name,) )
-    
-    row['mac'] = result[0]
+    if options.name is not None:
+        row['name']  = options.name
+        cursor.execute(
+            '''
+            SELECT mac_address
+            FROM   tess_v
+            WHERE  name == :name
+            ''', row)
+        result = cursor.fetchone()
+        if not result:
+            raise IndexError("Cannot delete. Instrument with name %s does not exist." 
+                % (options.name,) )
+        
+        row['mac'] = result[0]
+    else:
+        row['mac']  = options.mac
+        cursor.execute(
+            '''
+            SELECT name
+            FROM   tess_v
+            WHERE  mac_address == :mac
+            ''', row)
+        result = cursor.fetchone()
+        if not result:
+            raise IndexError("Cannot delete. Instrument with MAC %s does not exist." 
+                % (options.mac,) )
+        
+        row['name'] = result[0]
+
     # Find out what's being deleted
     print("About to delete")
     cursor.execute(
         '''
-        SELECT name,mac_address,zero_point,filter,azimuth,altitude,site
+        SELECT name,tess_id,mac_address,zero_point,filter,azimuth,altitude,site
         FROM   tess_v
         WHERE  mac_address == :mac
         ''', row)
-    paging(cursor,["TESS","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
+    paging(cursor,["TESS","Id.","MAC Addr.","Zero Point","Filter","Azimuth","Altitude","Site"])
     
     # Find out if it has accumulated readings
     # This may go away if readings are stored in another database (i.e influxdb)
@@ -762,12 +806,17 @@ def instrument_delete(connection, options):
         WHERE i.mac_address == :mac
         ''', row)
     paging(cursor,["TESS","Acumulated Readings"])
-    raw_input("Are you sure ???? Press Enter to continue [Ctrl-C to abort] ...")
 
-    cursor.execute("DELETE FROM name_to_mac_t WHERE mac_address == :mac", row)
-    cursor.execute("DELETE FROM tess_t WHERE mac_address == :mac", row)
-    connection.commit()
-    print("Instrument deleted")
+    if not options.test:
+        cursor.execute('''
+            DELETE 
+            FROM tess_readings_t
+            WHERE tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+            ''', row)
+        cursor.execute("DELETE FROM name_to_mac_t WHERE mac_address == :mac", row)
+        cursor.execute("DELETE FROM tess_t WHERE mac_address == :mac", row)
+        connection.commit()
+        print("Instrument and readings deleted")
 
 
 def instrument_update(connection, options):
