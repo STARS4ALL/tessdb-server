@@ -1490,24 +1490,37 @@ def readings_purge(connection, options):
             ''', row)
         connection.commit()
 
-
+#### PENSARV ESTE CON CUIDADO YA QUE
+# Y SOBRE TODO UN NOMBRE PUEDE HABER TENIDO VARIAS MAC
 def readings_count(connection, options):
     row = {}
     row['start_date'] = int(options.start_date.strftime("%Y%m%d%H%M%S"))
     row['end_date']   = int(options.end_date.strftime("%Y%m%d%H%M%S"))
-    row['mac']        = options.mac
-    
     cursor = connection.cursor()
-   
 
-    # Find out how many rows to change fro infromative purposes
-    cursor.execute(
-        '''
-        SELECT :mac, tess_id, l.site, :start_date, :end_date, COUNT(*)
-        FROM tess_readings_t
-        JOIN location_t AS l USING (location_id)
-        WHERE (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
-        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
-        GROUP BY tess_id, location_id
-        ''', row)
-    paging(cursor,["MAC", "TESS Id.", "Location", "Start Date", "End Date", "Records"], size=5)
+    if options.mac is not None:
+        row['mac']        = options.mac
+        # Find out how many rows to change fro infromative purposes
+        cursor.execute(
+            '''
+            SELECT :mac, tess_id, l.site, :start_date, :end_date, COUNT(*)
+            FROM tess_readings_t
+            JOIN location_t AS l USING (location_id)
+            WHERE (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+            AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+            GROUP BY tess_id, location_id
+            ''', row)
+        paging(cursor,["MAC", "TESS Id.", "Location", "Start Date", "End Date", "Records"], size=5)
+    else:
+        row['name']        = options.name
+        cursor.execute(
+            '''
+            SELECT :name, tess_id, l.site, :start_date, :end_date, COUNT(*)
+            FROM name_to_mac_t AS m, tess_readings_t
+            JOIN location_t AS l USING (location_id)
+            JOIN tess_t     AS i USING (tess_id)
+            WHERE (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+            AND i.mac_address IN (SELECT mac_address FROM name_to_mac_t WHERE name == :name)
+            GROUP BY tess_id, l.location_id
+            ''', row)
+        paging(cursor,["TESS", "TESS Id.", "Location", "Start Date", "End Date", "Records"], size=5)
