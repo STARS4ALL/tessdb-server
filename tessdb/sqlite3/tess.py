@@ -259,7 +259,7 @@ class TESS(Table):
             log.info("tess_t cache invalidated with size = {size}", size=len(self._cache))
             self._cache = dict()
         elif name in self._cache:
-            log.info("tess_t cache selective invalidataion for name {log_tag}", name=name)
+            log.info("tess_t cache selective invalidataion for name {log_tag}", log_tag=name)
             del self._cache[name]
 
     def updateCache(self, resultset, name):
