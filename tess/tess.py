@@ -155,27 +155,35 @@ def createParser():
     subparser = parser_readings.add_subparsers(dest='subcommand')
 
     rli = subparser.add_parser('list', help='list readings')
-    rli.add_argument('-m', '--mac',  type=str, help='specific instrument MAC address')
+    rliex = rli.add_mutually_exclusive_group(required=False)
+    rliex.add_argument('-n', '--name', type=str, help='instrument name')
+    rliex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     rli.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
     rli.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     rco = subparser.add_parser('count', help='count readings')
-    rco.add_argument('-m', '--mac',  required=True, type=str, help='specific instrument MAC address')
+    rcoex = rco.add_mutually_exclusive_group(required=True)
+    rcoex.add_argument('-n', '--name', type=str, help='instrument name')
+    rcoex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     rco.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='start date')
     rco.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_END_DATE, help='end date')
     rco.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     ral = subparser.add_parser('adjloc', help='adjust readings location for a given TESS')
-    ral.add_argument('instrument', metavar='<instrument>', type=str, help='TESS instrument MAC address')
+    ralex = ral.add_mutually_exclusive_group(required=True)
+    ralex.add_argument('-n', '--name', type=str, help='instrument name')
+    ralex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     ral.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     ral.add_argument('-o', '--old-site',   type=utf8, required=True, help='old site name')
-    ral.add_argument('-n', '--new-site',   type=utf8, required=True, help='new site name')
+    ral.add_argument('-w', '--new-site',   type=utf8, required=True, help='new site name')
     ral.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='start date')
     ral.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_END_DATE, help='end date')
     ral.add_argument('-t', '--test', action='store_true',  help='test only, do not change readings')
 
     rpu = subparser.add_parser('purge', help='purge readings for a given TESS')
-    rpu.add_argument('instrument', metavar='<instrument>', type=str, help='TESS instrument MAC address')
+    rpuex = rpu.add_mutually_exclusive_group(required=True)
+    rpuex.add_argument('-n', '--name', type=str, help='instrument name')
+    rpuex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     rpu.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     rpu.add_argument('-i', '--site',   type=utf8, required=True, help='site name')
     rpu.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='start date')
@@ -230,7 +238,6 @@ def createParser():
    
     
     iup = subparser.add_parser('update',   help='update instrument attributes')
-    iup.add_argument('name',   type=str,   help='instrument friendly name')
     iupex1 = iup.add_mutually_exclusive_group(required=True)
     iupex1.add_argument('-n', '--name', type=str, help='instrument name')
     iupex1.add_argument('-m', '--mac',  type=str, help='instrument MAC')
@@ -1283,14 +1290,14 @@ def location_rename(connection, options):
 # READINGS SUBCOMMANDS
 # --------------------
 
-def readings_list_single(connection, options):
+def readings_list_name_single(connection, options):
     cursor = connection.cursor()
     row = {}
     row['name']  = options.name
     row['count'] = options.count
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, :name, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
         FROM tess_readings_t as r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
@@ -1300,32 +1307,55 @@ def readings_list_single(connection, options):
         ORDER BY r.date_id DESC, r.time_id DESC
         LIMIT :count
         ''' , row)
-    paging(cursor, ["Timestamp (UTC)","TESS MAC","Location","Frequency","Magnitude","RSS"], size=options.count)
-   
+    paging(cursor, ["Timestamp (UTC)","TESS","MAC","Location","Frequency","Magnitude","RSS"], size=options.count)
 
+def readings_list_mac_single(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['mac']  = options.mac
+    row['count'] = options.count
+    cursor.execute(
+        '''
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, m.name, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
+        FROM name_to_mac_t AS m, tess_readings_t AS r
+        JOIN date_t     as d USING (date_id)
+        JOIN time_t     as t USING (time_id)
+        JOIN location_t as l USING (location_id)
+        JOIN tess_t     as i USING (tess_id)
+        WHERE i.mac_address == :mac
+        AND   i.mac_address == m.mac_address
+        ORDER BY r.date_id DESC, r.time_id DESC
+        LIMIT :count
+        ''' , row)
+    paging(cursor, ["Timestamp (UTC)","TESS","MAC","Location","Frequency","Magnitude","RSS"], size=options.count)
+   
 def readings_list_all(connection, options):
     cursor = connection.cursor()
     row = {}
     row['count'] = options.count
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time) AS timestamp, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
-        FROM tess_readings_t as r
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, m.name, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
+        FROM name_to_mac_t AS m, tess_readings_t AS r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN location_t as l USING (location_id)
         JOIN tess_t     as i USING (tess_id)
+        WHERE i.mac_address == m.mac_address
         ORDER BY r.date_id DESC, r.time_id DESC
         LIMIT :count
         ''', row)
-    paging(cursor, ["Timestamp (UTC)","TESS MAC","Location","Frequency","Magnitude","RSS"], size=options.count)
+    paging(cursor, ["Timestamp (UTC)","TESS","MAC","Location","Frequency","Magnitude","RSS"], size=options.count)
 
 
 def readings_list(connection, options):
-    if options.name is not None:
-        readings_list_single(connection, options)
-    else:
+    if options.name is None and options.mac is None:
         readings_list_all(connection, options)
+    elif options.name is not None:
+        readings_list_name_single(connection, options)
+    else:
+        readings_list_mac_single(connection, options)
+
 
 
 def readings_adjloc(connection, options):
