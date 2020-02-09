@@ -1517,7 +1517,7 @@ def readings_count(connection, options):
         cursor.execute(
             '''
             SELECT :name, i.mac_address, tess_id, l.site, :start_date, :end_date, COUNT(*)
-            FROM name_to_mac_t AS m, tess_readings_t
+            FROM tess_readings_t
             JOIN location_t AS l USING (location_id)
             JOIN tess_t     AS i USING (tess_id)
             WHERE (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
