@@ -1316,14 +1316,13 @@ def readings_list_mac_single(connection, options):
     row['count'] = options.count
     cursor.execute(
         '''
-        SELECT (d.sql_date || 'T' || t.time) AS timestamp, m.name, i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
-        FROM name_to_mac_t AS m, tess_readings_t AS r
+        SELECT (d.sql_date || 'T' || t.time) AS timestamp, (SELECT name FROM name_to_mac_t WHERE mac_address == :mac AND valid_state = "Current"), i.mac_address, l.site, r.frequency, r.magnitude, r.signal_strength
+        FROM tess_readings_t AS r
         JOIN date_t     as d USING (date_id)
         JOIN time_t     as t USING (time_id)
         JOIN location_t as l USING (location_id)
         JOIN tess_t     as i USING (tess_id)
         WHERE i.mac_address == :mac
-        AND   i.mac_address == m.mac_address
         ORDER BY r.date_id DESC, r.time_id DESC
         LIMIT :count
         ''' , row)
@@ -1364,7 +1363,7 @@ def readings_adjloc(connection, options):
     row['old_site']   = options.old_site
     row['start_date'] = int(options.start_date.strftime("%Y%m%d%H%M%S"))
     row['end_date']   = int(options.end_date.strftime("%Y%m%d%H%M%S"))
-    row['mac']        = options.instrument
+   
     
     cursor = connection.cursor()
     # Test if old and new locations exists and return its Id
@@ -1383,29 +1382,52 @@ def readings_adjloc(connection, options):
             % (options.new_site,) )
     row['new_site_id'] = result[0]
 
-
-    # Find out how many rows to change fro infromative purposes
-    cursor.execute(
-        '''
-        SELECT ;mac, tess_id, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) 
-        FROM tess_readings_t
-        WHERE location_id == :old_site_id
-        AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
-        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
-        GROUP BY tess_id
-        ''', row)
-    paging(cursor,["MAC", "TESS Id.", "From Loc. Id", "To Loc. Id", "Start Date", "End Date", "Records to change"], size=5)
-
-    if not options.test:
-        # And perform the change
+    if options.mac is not None:
+        row['mac']        = options.mac
+        # Find out how many rows to change fro infromative purposes
         cursor.execute(
             '''
-            UPDATE tess_readings_t SET location_id = :new_site_id 
+            SELECT (SELECT name FROM name_to_mac_t WHERE mac_address == :mac AND valid_state = "Current"), :mac, tess_id, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) 
+            FROM tess_readings_t
             WHERE location_id == :old_site_id
             AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
             AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+            GROUP BY tess_id
             ''', row)
-        connection.commit()
+        paging(cursor,["TESS","MAC", "TESS Id.", "From Loc. Id", "To Loc. Id", "Start Date", "End Date", "Records to change"], size=5)
+        if not options.test:
+            # And perform the change
+            cursor.execute(
+                '''
+                UPDATE tess_readings_t SET location_id = :new_site_id 
+                WHERE location_id == :old_site_id
+                AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+                AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+                ''', row)
+    else:
+        row['name']       = options.name
+        cursor.execute(
+            '''
+            SELECT :name, i.mac_address , tess_id, :old_site_id, :new_site_id, :start_date, :end_date, COUNT(*) 
+            FROM tess_readings_t AS r
+            JOIN tess_t AS i USING (tess_id) 
+            WHERE r.location_id == :old_site_id
+            AND  (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+            AND tess_id IN (SELECT tess_id FROM tess_t JOIN name_to_mac_t AS m USING (mac_address) WHERE m.name == :name)
+            GROUP BY r.tess_id, r.location_id
+            ''', row)
+        paging(cursor,["TESS","MAC", "TESS Id.", "From Loc. Id", "To Loc. Id", "Start Date", "End Date", "Records to change"], size=5)
+        if not options.test:
+            # And perform the change
+            cursor.execute(
+                '''
+                UPDATE tess_readings_t SET location_id = :new_site_id 
+                WHERE location_id == :old_site_id
+                AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+                AND   tess_id IN (SELECT tess_id FROM tess_t JOIN name_to_mac_t AS m USING (mac_address) WHERE m.name == :name)
+                ''', row)
+
+    connection.commit()
 
 def readings_adjins(connection, options):
     row = {}
@@ -1490,8 +1512,7 @@ def readings_purge(connection, options):
             ''', row)
         connection.commit()
 
-#### PENSARV ESTE CON CUIDADO YA QUE
-# Y SOBRE TODO UN NOMBRE PUEDE HABER TENIDO VARIAS MAC
+
 def readings_count(connection, options):
     row = {}
     row['start_date'] = int(options.start_date.strftime("%Y%m%d%H%M%S"))
