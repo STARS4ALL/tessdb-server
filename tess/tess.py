@@ -1503,7 +1503,7 @@ def readings_count(connection, options):
         # Find out how many rows to change fro infromative purposes
         cursor.execute(
             '''
-            SELECT (SELECT name FROM name_to_mac_t WHERE mac_address == :mac), :mac, tess_id, l.site, :start_date, :end_date, COUNT(*)
+            SELECT (SELECT name FROM name_to_mac_t WHERE mac_address == :mac AND valid_state = "Current"), :mac, tess_id, l.site, :start_date, :end_date, COUNT(*)
             FROM tess_readings_t
             JOIN location_t AS l USING (location_id)
             JOIN tess_t AS i USING (tess_id)
@@ -1516,7 +1516,7 @@ def readings_count(connection, options):
         row['name']        = options.name
         cursor.execute(
             '''
-            SELECT :name, i.mac_address, tess_id, l.site, :start_date, :end_date, COUNT(frequency)
+            SELECT :name, i.mac_address, tess_id, l.site, :start_date, :end_date, COUNT(*)
             FROM name_to_mac_t AS m, tess_readings_t
             JOIN location_t AS l USING (location_id)
             JOIN tess_t     AS i USING (tess_id)
