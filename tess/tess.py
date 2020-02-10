@@ -82,7 +82,7 @@ def mkdate(datestr):
 
 def createParser():
     # create the top-level parser
-    parser    = argparse.ArgumentParser(prog=sys.argv[0], description="tessdb command line tool " + __version__)
+    parser    = argparse.ArgumentParser(prog="tess", description="tessdb command line tool " + __version__)
     subparser = parser.add_subparsers(dest='command')
 
     # --------------------------
@@ -100,22 +100,7 @@ def createParser():
     #
     subparser = parser_location.add_subparsers(dest='subcommand')
 
-    llp = subparser.add_parser('list', help='list locations')
-    llp.add_argument('-n', '--name',      type=utf8,  help='specific location name')
-    llp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    llp.add_argument('-x', '--extended', action='store_true',  help='extended listing')
-    llp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    lkp = subparser.add_parser('unassigned', help='list unassigned locations')
-    lkp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    lkp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    ldup = subparser.add_parser('duplicates', help='list duplicated locations')
-    ldup.add_argument('--distance', type=int, default=100, help='Maximun distance in meters')
-    ldup.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    ldup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    lcp = subparser.add_parser('create', help='create location')
+    lcp = subparser.add_parser('create', help='create single location')
     lcp.add_argument('site', metavar='<site>', type=utf8, help='Unique site name')
     lcp.add_argument('-o', '--longitude', type=float, default=0.0,       help='geographical longitude (degrees)')
     lcp.add_argument('-a', '--latitude',  type=float, default=0.0,       help='geographical latitude (degrees)')
@@ -130,7 +115,13 @@ def createParser():
     lcp.add_argument('-t', '--tzone',     type=str,   default='Etc/UTC', help='Olson Timezone')
     lcp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    lup = subparser.add_parser('update', help='update location')
+    llp = subparser.add_parser('list', help='list single location or all locations')
+    llp.add_argument('-n', '--name',      type=utf8,  help='specific location name')
+    llp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    llp.add_argument('-x', '--extended', action='store_true',  help='extended listing')
+    llp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    lup = subparser.add_parser('update', help='update single location')
     lup.add_argument('site', metavar='<site>', type=utf8, help='Unique site name')
     lup.add_argument('-o', '--longitude', type=float, help='geographical longitude (degrees)')
     lup.add_argument('-a', '--latitude',  type=float, help='geographical latitude (degrees)')
@@ -145,10 +136,20 @@ def createParser():
     lup.add_argument('-t', '--tzone',     type=str,   help='Olson Timezone')
     lup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    lre = subparser.add_parser('rename', help='rename location')
+    lre = subparser.add_parser('rename', help='rename single location')
     lre.add_argument('old_site',  type=utf8, help='old site name')
     lre.add_argument('new_site',  type=utf8, help='new site name')
     lre.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    lkp = subparser.add_parser('unassigned', help='list all unassigned locations')
+    lkp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    lkp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ldup = subparser.add_parser('duplicates', help='list all duplicated locations')
+    ldup.add_argument('--distance', type=int, default=100, help='Maximun distance in meters')
+    ldup.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    ldup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
 
     # ------------------------------------------
     # Create second level parsers for 'readings'
@@ -219,7 +220,7 @@ def createParser():
     #
     subparser = parser_instrument.add_subparsers(dest='subcommand')
 
-    icr = subparser.add_parser('create',   help='create instrument')
+    icr = subparser.add_parser('create',   help='create single instrument')
     icr.add_argument('name',   type=str,   help='friendly name')
     icr.add_argument('mac',    type=str,   help='MAC address')
     icr.add_argument('zp',     type=float, help='Zero Point')
@@ -228,30 +229,22 @@ def createParser():
     icr.add_argument('-t', '--altitude',   type=float, default=DEFAULT_ALTITUDE, help='Altitude (degrees). 90.0 = Zenith')
     icr.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
-    ian = subparser.add_parser('anonymous', help='list anonymous instruments without a friendly name')
-    ian.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    ip = subparser.add_parser('list', help='list single instrument or all instruments')
+    ipex = ip.add_mutually_exclusive_group(required=False)
+    ipex.add_argument('-n', '--name', type=str, help='instrument name')
+    ipex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
+    ip.add_argument('-x', '--extended', action='store_true', default=False, help='show TESS instrument name changes')
 
-    ire = subparser.add_parser('rename', help='rename instrument friendly name')
-    ire.add_argument('old_name',  type=str, help='old friendly name')
-    ire.add_argument('new_name',  type=str, help='new friendly name')
-    ire.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
-    ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    ings = subparser.add_parser('renamings', help='list all instrument renamings')
-    ingsex = ings.add_mutually_exclusive_group(required=True)
-    ingsex.add_argument('-n', '--name', action='store_true', help='by instrument name')
-    ingsex.add_argument('-m', '--mac',  action='store_true', help='by instrument MAC')
-    ings.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
-    ings.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    ide = subparser.add_parser('delete', help='delete instrument')
-    ideex = ide.add_mutually_exclusive_group(required=True)
-    ideex.add_argument('-n', '--name', type=str, help='instrument name')
-    ideex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
-    ide.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    ide.add_argument('-t', '--test', action='store_true',  help='test only, do not delete')
+    ihi = subparser.add_parser('history',  help='single instrument history')
+    ihiex = ihi.add_mutually_exclusive_group(required=True)
+    ihiex.add_argument('-n', '--name', type=str, help='instrument name')
+    ihiex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    ihi.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     
-    iup = subparser.add_parser('update',   help='update instrument attributes')
+    iup = subparser.add_parser('update',   help='update single instrument attributes')
     iupex1 = iup.add_mutually_exclusive_group(required=True)
     iupex1.add_argument('-n', '--name', type=str, help='instrument name')
     iupex1.add_argument('-m', '--mac',  type=str, help='instrument MAC')
@@ -266,45 +259,53 @@ def createParser():
     iupex2.add_argument("-s", "--start-time", type=str, default=now, metavar="YYYYMMDDTHHMMSS", help='update start date')
     iupex2.add_argument('-l', '--latest', action='store_true', default=False, help='Latest entry only (no change control)')
 
-    ias = subparser.add_parser('assign', help='assign instrument to location')
-    iasex = ias.add_mutually_exclusive_group(required=True)
-    iasex.add_argument('-n', '--name', type=str, help='instrument name')
-    iasex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
-    ias.add_argument('-l','--location',   required=True, metavar='<location>', type=utf8,  help='Location name')
-    ias.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    ip = subparser.add_parser('list', help='list instruments')
-    ipex = ip.add_mutually_exclusive_group(required=False)
-    ipex.add_argument('-n', '--name', type=str, help='instrument name')
-    ipex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
-    ip.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    ip.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    ip.add_argument('-l', '--log', action='store_true', default=False, help='show TESS instrument change log')
-    ip.add_argument('-x', '--extended', action='store_true', default=False, help='show TESS instrument name changes')
- 
-    ik = subparser.add_parser('unassigned', help='list unassigned instruments')
-    ik.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
-    ik.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-
-    iaz = subparser.add_parser('enable', help='enable storing instrument samples')
+    iaz = subparser.add_parser('enable', help='enable storing single instrument samples')
     iazex = iaz.add_mutually_exclusive_group(required=True)
     iazex.add_argument('-n', '--name', type=str, help='instrument name')
     iazex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     iaz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     iaz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     
-    iuz = subparser.add_parser('disable', help='disable storing samples for instrument')
+    iuz = subparser.add_parser('disable', help='disable storing single instrument samples')
     iuzex = iuz.add_mutually_exclusive_group(required=True)
     iuzex.add_argument('-n', '--name', type=str, help='instrument name')
     iuzex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     iuz.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     iuz.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    
-    ihi = subparser.add_parser('history',  help='single instrument history')
-    ihiex = ihi.add_mutually_exclusive_group(required=True)
-    ihiex.add_argument('-n', '--name', type=str, help='instrument name')
-    ihiex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
-    ihi.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ide = subparser.add_parser('delete', help='delete single instrument')
+    ideex = ide.add_mutually_exclusive_group(required=True)
+    ideex.add_argument('-n', '--name', type=str, help='instrument name')
+    ideex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    ide.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+    ide.add_argument('-t', '--test', action='store_true',  help='test only, do not delete')
+
+    ire = subparser.add_parser('rename', help='rename instrument friendly name')
+    ire.add_argument('old_name',  type=str, help='old friendly name')
+    ire.add_argument('new_name',  type=str, help='new friendly name')
+    ire.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
+    ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ias = subparser.add_parser('assign', help='assign single instrument to location')
+    iasex = ias.add_mutually_exclusive_group(required=True)
+    iasex.add_argument('-n', '--name', type=str, help='instrument name')
+    iasex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
+    ias.add_argument('-l','--location',   required=True, metavar='<location>', type=utf8,  help='Location name')
+    ias.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ik = subparser.add_parser('unassigned', help='list unassigned instruments')
+    ik.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    ik.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ian = subparser.add_parser('anonymous', help='list anonymous instruments without a friendly name')
+    ian.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
+    ings = subparser.add_parser('renamings', help='list all instrument renamings')
+    ingsex = ings.add_mutually_exclusive_group(required=True)
+    ingsex.add_argument('-n', '--name', action='store_true', help='by instrument name')
+    ingsex.add_argument('-m', '--mac',  action='store_true', help='by instrument MAC')
+    ings.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
+    ings.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
     return parser
 
