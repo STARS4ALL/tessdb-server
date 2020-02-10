@@ -24,10 +24,22 @@ Tres fases
 
 Prioridad media
 ===============
+1) tess instrument anonymous
+2) tess location duplicates
+3) Nueva tabla observer_t, con atributos gestionados de email y organization
 
-*) INDICE MULTICOLUMNA
-
-Probarlo en el código
+CREATE TABLE IF NOT EXISTS observer_t
+(
+  observer_id  INTEGER PRIMARY KEY,
+  name         TEXT NOT NULL, -- Family name
+  nickname     TEXT,          -- nickname (i,e. nick in epicollect5)
+  organization TEXT,          -- i.e. AstroHenares
+  email        TEXT           -- contact e-mail 
+  valid_since  TEXT  DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now')), -- timestamp since organization value is valid
+  valid_until  TEXT  DEFAULT '2999-12-31T23:59:59', 
+  valid_state  TEXT  DEFAULT 'Current'
+  -- Alternate key would be PRIMARY KEY (name)
+);
 
 
 Prioridad baja
