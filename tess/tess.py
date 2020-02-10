@@ -185,7 +185,7 @@ def createParser():
     rpuex.add_argument('-n', '--name', type=str, help='instrument name')
     rpuex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     rpu.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
-    rpu.add_argument('-i', '--site',   type=utf8, required=True, help='site name')
+    rpu.add_argument('-l', '--location',   type=utf8, required=True, help='site name')
     rpu.add_argument('-s', '--start-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_START_DATE, help='start date')
     rpu.add_argument('-e', '--end-date',   type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>', default=DEFAULT_END_DATE, help='end date')
     rpu.add_argument('-t', '--test', action='store_true',  help='test only, do not change readings')
@@ -1474,11 +1474,10 @@ def readings_adjins(connection, options):
 
 def readings_purge(connection, options):
     row = {}
-    row['site']   = options.site
+    row['site']   = options.location
     row['start_date'] = int(options.start_date.strftime("%Y%m%d%H%M%S"))
     row['end_date']   = int(options.end_date.strftime("%Y%m%d%H%M%S"))
-    row['mac']  = options.instrument
-    
+   
     cursor = connection.cursor()
     # Test if location exists and return its Id
     cursor.execute("SELECT location_id FROM location_t WHERE site == :site", row)
@@ -1488,29 +1487,52 @@ def readings_purge(connection, options):
             % (options.site,) )
     row['site_id'] = result[0]
   
-
-    # Find out how many rows to change fro infromative purposes
-    cursor.execute(
-        '''
-        SELECT :mac, tess_id, :site_id, :start_date, :end_date, COUNT(*)
-        FROM tess_readings_t
-        WHERE location_id == :site_id
-        AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
-        AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
-        GROUP BY tess_id
-        ''', row)
-    paging(cursor,["MAC", "TESS Id.", "Location Id", "Start Date", "End Date", "Records to delete"], size=5)
-
-    if not options.test:
-        # And perform the change
+    if options.mac is not None:
+        row['mac']        = options.mac
+        # Find out how many rows to change fro infromative purposes
         cursor.execute(
             '''
-            DELETE FROM tess_readings_t
+            SELECT (SELECT name FROM name_to_mac_t WHERE mac_address == :mac AND valid_state = "Current"), :mac, tess_id, :site, :start_date, :end_date, COUNT(*)
+            FROM tess_readings_t
             WHERE location_id == :site_id
             AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
             AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+            GROUP BY tess_id
             ''', row)
-        connection.commit()
+        paging(cursor,["TESS","MAC", "TESS Id.", "Location", "Start Date", "End Date", "Records to delete"], size=5)
+
+        if not options.test:
+            # And perform the change
+            cursor.execute(
+                '''
+                DELETE FROM tess_readings_t
+                WHERE location_id == :site_id
+                AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+                AND   tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+                ''', row)
+    else:
+        row['name']       = options.name
+        cursor.execute(
+            '''
+            SELECT :name, i.mac_address , tess_id, :site, :start_date, :end_date, COUNT(*) 
+            FROM tess_readings_t AS r
+            JOIN tess_t AS i USING (tess_id) 
+            WHERE r.location_id == :site_id
+            AND  (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+            AND tess_id IN (SELECT tess_id FROM tess_t JOIN name_to_mac_t AS m USING (mac_address) WHERE m.name == :name)
+            GROUP BY r.tess_id
+            ''', row)
+        paging(cursor,["TESS","MAC", "TESS Id.", "Location", "Start Date", "End Date", "Records to delete"], size=5)
+        if not options.test:
+            # And perform the change
+            cursor.execute(
+                '''
+                DELETE FROM tess_readings_t
+                WHERE location_id == :site_id
+                AND   (date_id*1000000 + time_id) BETWEEN :start_date AND :end_date
+                AND   tess_id IN (SELECT tess_id FROM tess_t JOIN name_to_mac_t AS m USING (mac_address) WHERE m.name == :name)
+                ''', row)
+    connection.commit()
 
 
 def readings_count(connection, options):
