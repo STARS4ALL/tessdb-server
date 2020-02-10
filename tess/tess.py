@@ -110,6 +110,11 @@ def createParser():
     lkp.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
     lkp.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    ldup = subparser.add_parser('duplicates', help='list duplicated locations')
+    ldup.add_argument('--distance', type=int, default=100, help='Maximun distance in meters')
+    ldup.add_argument('-p', '--page-size', type=int, default=10, help='list page size')
+    ldup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     lcp = subparser.add_parser('create', help='create location')
     lcp.add_argument('site', metavar='<site>', type=utf8, help='Unique site name')
     lcp.add_argument('-o', '--longitude', type=float, default=0.0,       help='geographical longitude (degrees)')
@@ -1099,6 +1104,25 @@ def location_unassigned(connection, options):
         ''')
     paging(cursor,["Name","Longitude","Latitude","Elevation","Contact","Email"], size=100)
 
+
+def location_duplicates(connection, options):
+    cursor = connection.cursor()
+    row = {}
+    row['distance'] = options.distance
+    row['unknown'] = UNKNOWN
+    cursor.execute(
+        '''
+        SELECT src.site, dst.site, ABS(src.latitude - dst.latitude) AS DLat, ABS(src.longitude - dst.longitude) as DLong
+        FROM location_t AS src
+        JOIN location_t AS dst
+        WHERE src.longitude != :unknown
+        AND   dst.longitude != :unknown
+        AND   src.latitude  != :unknown
+        AND   src.longitude != :unknown
+        AND DLat  > 0 AND DLat  <= ((:distance*180.0)/6371000.0*3.1415926535)
+        AND DLong > 0 AND DLong <= ((:distance*180.0)/6371000.0*3.1415926535)
+        ''', row)
+    paging(cursor,["Site A","Site B","Delta Latitude","Delta Longitude"], size=100)
 
 # Location update is a nightmare if done properly, since we have to generate
 # SQL updates tailored to the attributes being given in the command line

@@ -25,8 +25,7 @@ Tres fases
 Prioridad media
 ===============
 
-2) tess location duplicates
-3) Nueva tabla observer_t, con atributos gestionados de email y organization
+1) Nueva tabla observer_t, con atributos gestionados de email y organization
 
 CREATE TABLE IF NOT EXISTS observer_t
 (
