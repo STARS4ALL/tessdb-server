@@ -237,13 +237,19 @@ def createParser():
     ire.add_argument('-s', '--eff-date', type=mkdate, metavar='<YYYY-MM-DD|YYYY-MM-DDTHH:MM:SS>',  help='effective date')
     ire.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    ings = subparser.add_parser('renamings', help='list all instrument renamings')
+    ingsex = ings.add_mutually_exclusive_group(required=True)
+    ingsex.add_argument('-n', '--name', action='store_true', help='by instrument name')
+    ingsex.add_argument('-m', '--mac',  action='store_true', help='by instrument MAC')
+    ings.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
+    ings.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     ide = subparser.add_parser('delete', help='delete instrument')
     ideex = ide.add_mutually_exclusive_group(required=True)
     ideex.add_argument('-n', '--name', type=str, help='instrument name')
     ideex.add_argument('-m', '--mac',  type=str, help='instrument MAC')
     ide.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
     ide.add_argument('-t', '--test', action='store_true',  help='test only, do not delete')
-   
     
     iup = subparser.add_parser('update',   help='update instrument attributes')
     iupex1 = iup.add_mutually_exclusive_group(required=True)
@@ -554,6 +560,28 @@ def instrument_anonymous(connection, options):
             ORDER BY CAST(substr(name, 6) as decimal) ASC;
             ''', row)
     paging(cursor,["TESS Tag (free)","Previous MAC Addr.","Name valid since","Name valid until","State"])
+
+def instrument_renamings(connection, options):
+    cursor = connection.cursor()
+    row = {'state': EXPIRED}
+    if options.name:
+        cursor.execute(
+            '''
+            SELECT name,mac_address,valid_since,valid_until,valid_state
+            FROM name_to_mac_t
+            WHERE name in (SELECT name FROM name_to_mac_t GROUP BY name HAVING count(*) > 1)
+            ORDER BY CAST(substr(name, 6) as decimal) ASC;
+            ''', row)
+    else:
+        cursor.execute(
+            '''
+            SELECT name,mac_address,valid_since,valid_until,valid_state
+            FROM name_to_mac_t
+            WHERE mac_address in (SELECT mac_address FROM name_to_mac_t GROUP BY mac_address HAVING count(*) > 1)
+            ORDER BY CAST(substr(name, 6) as decimal) ASC;
+            ''', row)
+    paging(cursor,["TESS","MAC Addr.","Name valid since","Name valid until","State"], size=100)
+
 
 def instrument_unassigned(connection, options):
     cursor = connection.cursor()
