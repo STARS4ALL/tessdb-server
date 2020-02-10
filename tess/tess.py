@@ -223,6 +223,9 @@ def createParser():
     icr.add_argument('-t', '--altitude',   type=float, default=DEFAULT_ALTITUDE, help='Altitude (degrees). 90.0 = Zenith')
     icr.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+    ian = subparser.add_parser('anonymous', help='list anonymous instruments without a friendly name')
+    ian.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     ire = subparser.add_parser('rename', help='rename instrument friendly name')
     ire.add_argument('old_name',  type=str, help='old friendly name')
     ire.add_argument('new_name',  type=str, help='new friendly name')
@@ -533,6 +536,19 @@ def instrument_name_current_attributes(connection, options):
             ''', row)
     paging(cursor,["TESS","Id","MAC Addr.","Zero Point","Filter","Site","Enabled","Registered"], size=100)
 
+
+def instrument_anonymous(connection, options):
+    cursor = connection.cursor()
+    row = {'state': EXPIRED}
+    cursor.execute(
+            '''
+            SELECT name,mac_address,min(valid_since),max(valid_until),min(valid_state)
+            FROM name_to_mac_t
+            GROUP BY name
+            HAVING min(valid_state) = :state
+            ORDER BY CAST(substr(name, 6) as decimal) ASC;
+            ''', row)
+    paging(cursor,["TESS Tag (free)","Previous MAC Addr.","Name valid since","Name valid until","State"])
 
 def instrument_unassigned(connection, options):
     cursor = connection.cursor()
