@@ -844,10 +844,10 @@ def instrument_delete(connection, options):
             ''', row)
         result = cursor.fetchone()
         if not result:
-            raise IndexError("Cannot delete. Instrument with name %s does not exist." 
+            raise IndexError("Cannot delete. Instrument with name '%s' does not exist." 
                 % (options.name,) )
-        
         row['mac'] = result[0]
+
     else:
         row['mac']  = options.mac
         cursor.execute(
@@ -858,10 +858,17 @@ def instrument_delete(connection, options):
             ''', row)
         result = cursor.fetchone()
         if not result:
-            raise IndexError("Cannot delete. Instrument with MAC %s does not exist." 
+            raise IndexError("Cannot delete. Instrument with MAC '%s' does not exist." 
                 % (options.mac,) )
-        
         row['name'] = result[0]
+
+    cursor.execute('''
+        SELECT COUNT(*) from tess_readings_t
+        WHERE tess_id IN (SELECT tess_id FROM tess_t WHERE mac_address == :mac)
+        ''', row)
+    result = cursor.fetchone()
+    if result[0] > 0:
+        raise IndexError("Cannot delete instrument. Existing readings with this instrument '%s' are already stored." % (row['mac'],) )
 
     # Find out what's being deleted
     print("About to delete")
@@ -1145,13 +1152,21 @@ def location_list(connection, options):
 def location_delete(connection, options):
     row = {'name': options.name}
     cursor = connection.cursor()
+    # Fetch ithis location has been used
+    cursor.execute('''
+        SELECT COUNT(*) from tess_readings_t
+        WHERE location_id = (SELECT location_id FROM location_t WHERE site == :name)
+        ''', row)
+    result = cursor.fetchone()
+    if result[0] > 0:
+        raise IndexError("Cannot delete. Existing readings with this site '%s' are already stored." % (options.name,) )
     cursor.execute(
         '''
-        SELECT l.site,l.longitude,l.latitude,l.elevation
+        SELECT l.site,l.location_id,l.longitude,l.latitude,l.elevation
         FROM location_t AS l
         WHERE l.site == :name
         ''', row)
-    paging(cursor,["Name","Longitude","Latitude","Elevation"], size=100)
+    paging(cursor,["Name","Id.","Longitude","Latitude","Elevation"], size=100)
     if not options.test:
         cursor.execute(
         '''
