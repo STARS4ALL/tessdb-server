@@ -136,6 +136,12 @@ def createParser():
     lup.add_argument('-t', '--tzone',     type=str,   help='Olson Timezone')
     lup.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
+
+    lde = subparser.add_parser('delete', help='single location to delete')
+    lde.add_argument('name', type=utf8,  help='location name')
+    lde.add_argument('-t', '--test', action='store_true',  help='test only, do not delete')
+    lde.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
+
     lre = subparser.add_parser('rename', help='rename single location')
     lre.add_argument('old_site',  type=utf8, help='old site name')
     lre.add_argument('new_site',  type=utf8, help='new site name')
@@ -302,8 +308,9 @@ def createParser():
 
     ings = subparser.add_parser('renamings', help='list all instrument renamings')
     ingsex = ings.add_mutually_exclusive_group(required=True)
-    ingsex.add_argument('-n', '--name', action='store_true', help='by instrument name')
-    ingsex.add_argument('-m', '--mac',  action='store_true', help='by instrument MAC')
+    ingsex.add_argument('-s', '--summary', action='store_true', help='summary')
+    ingsex.add_argument('-n', '--name', action='store_true', help='detail by instrument name')
+    ingsex.add_argument('-m', '--mac',  action='store_true', help='detali by instrument MAC')
     ings.add_argument('-c', '--count', type=int, default=10, help='list up to <count> entries')
     ings.add_argument('-d', '--dbase', default=DEFAULT_DBASE, help='SQLite database full file path')
 
@@ -565,7 +572,19 @@ def instrument_anonymous(connection, options):
 def instrument_renamings(connection, options):
     cursor = connection.cursor()
     row = {'state': EXPIRED}
-    if options.name:
+    if options.summary:
+        cursor.execute(
+            '''
+            SELECT src.name,dst.name,dst.valid_since
+            FROM name_to_mac_t AS src
+            JOIN name_to_mac_t AS dst USING (mac_address)
+            WHERE src.name != dst.name
+            AND   src.valid_state == "Expired"
+            ORDER BY CAST(substr(src.name, 6) as decimal) ASC;
+            ''', row)
+        paging(cursor,["Original TESS Name","Renamed To TESS name.","Renamed at"], size=100)
+
+    elif options.name:
         cursor.execute(
             '''
             SELECT name,mac_address,valid_since,valid_until,valid_state
@@ -573,6 +592,7 @@ def instrument_renamings(connection, options):
             WHERE name in (SELECT name FROM name_to_mac_t GROUP BY name HAVING count(*) > 1)
             ORDER BY CAST(substr(name, 6) as decimal) ASC;
             ''', row)
+        paging(cursor,["TESS","MAC Addr.","Name valid since","Name valid until","State"], size=100)
     else:
         cursor.execute(
             '''
@@ -581,7 +601,7 @@ def instrument_renamings(connection, options):
             WHERE mac_address in (SELECT mac_address FROM name_to_mac_t GROUP BY mac_address HAVING count(*) > 1)
             ORDER BY CAST(substr(name, 6) as decimal) ASC;
             ''', row)
-    paging(cursor,["TESS","MAC Addr.","Name valid since","Name valid until","State"], size=100)
+        paging(cursor,["TESS","MAC Addr.","Name valid since","Name valid until","State"], size=100)
 
 
 def instrument_unassigned(connection, options):
@@ -1122,6 +1142,28 @@ def location_list(connection, options):
             location_list_short(connection,options)
 
 
+def location_delete(connection, options):
+    row = {'name': options.name}
+    cursor = connection.cursor()
+    cursor.execute(
+        '''
+        SELECT l.site,l.longitude,l.latitude,l.elevation
+        FROM location_t AS l
+        WHERE l.site == :name
+        ''', row)
+    paging(cursor,["Name","Longitude","Latitude","Elevation"], size=100)
+    if not options.test:
+        cursor.execute(
+        '''
+        DELETE
+        FROM location_t
+        WHERE site == :name
+        ''', row)
+    connection.commit()
+
+
+
+
 def location_unassigned(connection, options):
     cursor = connection.cursor()
     cursor.execute(
@@ -1144,12 +1186,13 @@ def location_duplicates(connection, options):
         SELECT src.site, dst.site, ABS(src.latitude - dst.latitude) AS DLat, ABS(src.longitude - dst.longitude) as DLong
         FROM location_t AS src
         JOIN location_t AS dst
-        WHERE src.longitude != :unknown
-        AND   dst.longitude != :unknown
-        AND   src.latitude  != :unknown
-        AND   src.longitude != :unknown
-        AND DLat  > 0 AND DLat  <= ((:distance*180.0)/6371000.0*3.1415926535)
-        AND DLong > 0 AND DLong <= ((:distance*180.0)/6371000.0*3.1415926535)
+        WHERE  src.site      != dst.site
+        AND    src.longitude != :unknown
+        AND    dst.longitude != :unknown
+        AND    src.latitude  != :unknown
+        AND    src.longitude != :unknown
+        AND DLat  <= (:distance*180.0)/(6371000.0*3.1415926535)
+        AND DLong <= (:distance*180.0)/(6371000.0*3.1415926535)
         ''', row)
     paging(cursor,["Site A","Site B","Delta Latitude","Delta Longitude"], size=100)
 
