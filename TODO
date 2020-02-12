@@ -22,8 +22,13 @@ Tres fases
 4) Drop column name de la tabla tess_t
 
 
+Retocar la utilidad de tess para mostar min(fecha), max(fecha) con reading counts y demás
+en luger de la fecha metida por linea de comandos
+
 Prioridad media
 ===============
+
+1) Pauqyee nuevo para la utilidad de tess YA. Asi las mejoras de la herramienta no suben la version del paquete tessdb
 
 1) Nueva tabla observer_t, con atributos gestionados de email y organization
 
@@ -44,7 +49,20 @@ CREATE TABLE IF NOT EXISTS observer_t
 Prioridad baja
 ==============
 
-*) Batch load utility ?
+*) Batch load utility
+
+- Al final tiene que quedar un fichero SQL con inserciones para que sea muy efeciente
+
+- Funcion (tstamp,name) => tess_id, location_id, observer_id
+Esta funcion tiene que ser calculada por agregados diarios, group by (date) y ver si ha habido
+cambios en location_id y observer_id empelando min() y max(). 
+No podemos estar llamandola por cada muestra que queremos insertar
+
+aqui es importanet tambien usar la fecha de la muestra para ver cambios de nombre y de zp, que dan lugar a nuevos tess_id 
+y nuevas asociaciones
+
+- Tambien se puede calcular el epriodo de envío por día y fijándonos en  3 números de secuencia consecutivos
+
 
 *) Tess muticanal
 
