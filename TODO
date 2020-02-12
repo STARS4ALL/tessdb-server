@@ -29,6 +29,11 @@ Prioridad media
 ===============
 
 1) Pauqyee nuevo para la utilidad de tess YA. Asi las mejoras de la herramienta no suben la version del paquete tessdb
+tessdb -> tessdb-server
+       -> tessdb-cmdline
+Hay que tocar los ansible
+
+Fuera la rama develop, usar master y ramas feature
 
 1) Nueva tabla observer_t, con atributos gestionados de email y organization
 
