@@ -1,4 +1,7 @@
 # Change Log
+# 2.6.0
+First release as a standalone tessdb-server package. Production-ready
+
 # 2.0.0
 standalone systemd service along with dbase backup by logrotate and pause/resume scripts
 # 1.1.4

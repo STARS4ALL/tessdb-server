@@ -8,14 +8,14 @@ import versioneer
 LONG_DESCRIPTION = open('README.md').read()
 
 
-PKG_NAME     = 'tessdb'
+PKG_NAME     = 'tessdb-server'
 AUTHOR       = 'Rafael Gonzalez'
 AUTHOR_EMAIL = 'astrorafael@yahoo.es'
 DESCRIPTION  = 'A package to collect measurements published by TESS instruments into a SQlite database',
 LICENSE      = 'MIT'
 KEYWORDS     = 'Astronomy Python RaspberryPi LightPollution'
 URL          = 'http://github.com/stars4all/tessdb/'
-PACKAGES     = ["tessdb","tessdb.sqlite3","tessdb.service", "tess"]
+PACKAGES     = ["tessdb","tessdb.sqlite3","tessdb.service"]
 DEPENDENCIES = [
                   'twisted >= 16.3.0',
                   'twisted-mqtt',
@@ -33,15 +33,13 @@ CLASSIFIERS  = [
     'Programming Language :: SQL',
     'Topic :: Scientific/Engineering :: Astronomy',
     'Topic :: Scientific/Engineering :: Atmospheric Science',
-    'Development Status :: 4 - Beta',
+    'Development Status :: 5 - Production/Stable',
 ]
 
 DATA_FILES  = [ 
   ('/lib/systemd/system',    ['files/lib/systemd/system/tessdb.service']),
   ('/etc/tessdb',            ['files/etc/tessdb/config.example']),
   ('/usr/local/bin',         ['files/usr/local/bin/tessdb',
-                              'files/usr/local/bin/tessdb3',
-                              'files/usr/local/bin/tess',
                               'files/usr/local/bin/tessdb_pause',
                               'files/usr/local/bin/tessdb_resume',
                               'files/usr/local/bin/tessdb_flush',

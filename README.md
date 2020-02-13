@@ -1,4 +1,4 @@
-# tessdb (overview)
+# tessdb-server(overview)
 
 Linux service to collect measurements pubished by TESS Sky Quality Meter via MQTT. TESS stands for [Cristobal Garcia's Telescope Encoder and Sky Sensor](http://www.observatorioremoto.com/TESS.pdf)
 
@@ -376,36 +376,24 @@ Payloads are transmitted in JSON format, with the format described below.
 
 # OPERATION & MAINTENANCE
 
+## Pause & resume
+
+Since the current database used is SQLite - a single user database - you need to pause tessdb-server if dealing directly with the database
+like issuing SQL commands directly or using the `tess` command line utility
+
+Use `/usr/local/bin/tessdb_pause` and `/usr/local/bin/tessdb_resume` to coordinate your direct interactions to the database with tessdb-server.
+
+## Reload
+
+Since tessdb-server maintains a RAM cache of photometers data, some `tess` command requires a server reload to rfefress the cache.
+The `tess`utility wanrs you when this is necessary.
+
+## Restart
+
+The newest filter operation mode in tessdb-server maintains a sliding window of photometers samples before writting to database
+If it is necessary to restart the server, use `/usr/local/bin/tessdb_restart` instead of `service tessdb restart`. This will ensure that the lastest
+readings are stored in the database.
+
 ## The `tess` utility
 
 `tess` is a command line utility to perform some common operations on the database without having to write SQL statements. As this utility modifies the database, it is necessary to invoke it within using `sudo`. Also, you should ensure that the database is not being written by `tessdb` to avoid *database is locked* exceptions, either by using it at daytime or by pausing the `tessdb` service with `/usr/local/bin/tessdb_pause` and then resume it with `/usr/local/bin/tessdb_resume`.
-
-It has several subcommands. You can find the all by typing `tess --help`
-```
-pi@rb-tess:~ $ tess --help
-usage: /usr/local/bin/tess [-h] {instrument,location,readings} ...
-
-positional arguments:
-  {instrument,location,readings}
-    instrument          instrument commands
-    location            location commands
-    readings            readings commands
-
-optional arguments:
-  -h, --help            show this help message and exit
-```
-
-Each subcommand has its own help that you may display by issuing `tess <subcommand> --help`
-
-Example:
-```
-pi@rb-tess:~ $ tess location list --help
-usage: /usr/local/bin/tess location list [-h] [-p PAGE_SIZE] [-d DBASE]
-
-optional arguments:
-  -h, --help            show this help message and exit
-  -p PAGE_SIZE, --page-size PAGE_SIZE
-                        list page size
-  -d DBASE, --dbase DBASE
-                        SQLite database full file path
-```
