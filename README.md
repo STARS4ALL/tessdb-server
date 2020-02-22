@@ -77,22 +77,13 @@ This file is self explanatory.
 In special, the database file name and location is specified in this file.
 Some of the properities marked in this file are marked as *reloadable property*. This means that this value can be changed and the process reloads its new value on the fly.
 
-## Sunrise / Sunset filtering (obsolete)
-It is recommended to activate the sunrise/sunset filter to reject TESS readings coming in daytime and avoid unnecessary grouth in the database.
-Each location has a latitude (degrees), longitude (degrees) and elevation (meters) which can be neglected is this filter is not used. 
+## Sunrise / Sunset filtering
 
-Activating this filter have the following conecuences:
-1. Once a day, at arount 00:00 UTC, all locations will have their sunrise and sunset time computed, according to the local horizon defined (configurable).
-2. Instruments assigned to locations found to be in daytime will have their readings rejected.
-3. ***New***: ***Instruments assigned to locations with `NULL` or `Unknown` longitude, latitude or elvation will have their readings accepted anyway***. The only way to enable or disable writting to the database is by using the *tess utility*.
-
-## Sunrise / Sunset filtering (new)
-
-A configurable window (7 default) of sampled is stored in the server for each photometer. 
+A configurable window (7 samples by default) is stored in the server for each photometer. 
 A filter process analyzes the middle sample in this window, if it finds all saturated values (magnitude=0)
-around this middle sample (past and future), this sample is discarded, other¡wise it is elegible to be written to the database.
+around this middle sample (past and future), this sample is discarded, otherwise it is elegible to be written to the database.
 
-*Positive*: This filtering does not need to kenow where the phoytometer is placed.
+*Positive*: This filtering does not need to know the position where the photometer is placed.
 *Negative*: There is a time lag (Window size/2) between receiving the sample and storing it.
 Furthermore, if the server crashes or is abruptly stopped, the so-called "future samples" are lost.
 
@@ -107,8 +98,14 @@ File is rotated by logrotate **only under Linux**.
 ## Server Status/Start/Stop/Restart
 
 * Service status: `sudo systemctl status tessdb` or `sudo service tessdb status`
-* Start Service:  `sudo systemctl start tessdb` or `sudo service tessdb start`
-* Stop Service:   `sudo systemctl stop tessdb` or `sudo service tessdb stop`
+* Start Service:  `sudo systemctl start tessdb`  or `sudo service tessdb start`
+
+Strongly recommended:
+* Stop Service:    `sudo /usr/local/bin/tessdb_stop`
+* Restart Service: `sudo /usr/local/bin/tessdb_restart`
+
+No don use:
+* Stop Service:    `sudo systemctl stop tessdb`    or `sudo service tessdb stop`
 * Restart Service: `sudo systemctl restart tessdb` or `sudo service tessdb stop`
 
 ## Service Pause/Resume
@@ -143,7 +140,7 @@ During a reload the service is not stopped and re-reads the new values form the 
 
 * Type `sudo systemctl reload tessdb` or `sudo service tessdb reload`. 
 
-## Mainrteinance
+## Mainteinance
 
 Database mainteinance is made through the `tess` command line utility, installed by the tessdb-reports package.
 Mainteninance operations include:
