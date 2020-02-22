@@ -54,73 +54,21 @@ from tessdb.sqlite3.utils import Table, fromJSON, START_TIME, INFINITE_TIME, CUR
 DEFAULT_UNITS = [
     {  
         "units_id"                  : 0, 
-        "frequency_units"           : "Hz",
-        "magnitude_units"           : "Mv/arcsec^2",
-        "ambient_temperature_units" : "deg. C",
-        "sky_temperature_units"     : "deg. C",
-        "azimuth_units"             : "degrees",
-        "altitude_units"            : "degrees",
-        "longitude_units"           : "degrees",
-        "latitude_units"            : "degrees",
-        "height_units"              : "m",
-        "signal_strength_units"     : "dBm",
-        "valid_since"               : START_TIME,
-        "valid_until"               : INFINITE_TIME,
-        "valid_state"               : CURRENT,
         "timestamp_source"          : "Subscriber",
         "reading_source"            : "Direct"
     },
     {
         "units_id"                  : 1, 
-        "frequency_units"           : "Hz",
-        "magnitude_units"           : "Mv/arcsec^2",
-        "ambient_temperature_units" : "deg. C",
-        "sky_temperature_units"     : "deg. C",
-        "azimuth_units"             : "degrees",
-        "altitude_units"            : "degrees",
-        "longitude_units"           : "degrees",
-        "latitude_units"            : "degrees",
-        "height_units"              : "m",
-        "signal_strength_units"     : "dBm",
-        "valid_since"               : START_TIME,
-        "valid_until"               : INFINITE_TIME,
-        "valid_state"               : CURRENT,
         "timestamp_source"          : "Publisher",
         "reading_source"            : "Direct"
     },
     {  
-        "units_id"                  : 2, 
-        "frequency_units"           : "Hz",
-        "magnitude_units"           : "Mv/arcsec^2",
-        "ambient_temperature_units" : "deg. C",
-        "sky_temperature_units"     : "deg. C",
-        "azimuth_units"             : "degrees",
-        "altitude_units"            : "degrees",
-        "longitude_units"           : "degrees",
-        "latitude_units"            : "degrees",
-        "height_units"              : "m",
-        "signal_strength_units"     : "dBm",
-        "valid_since"               : START_TIME,
-        "valid_until"               : INFINITE_TIME,
-        "valid_state"               : CURRENT,
+        "units_id"                  : 2,
         "timestamp_source"          : "Subscriber",
         "reading_source"            : "Imported"
     },
     {
         "units_id"                  : 3, 
-        "frequency_units"           : "Hz",
-        "magnitude_units"           : "Mv/arcsec^2",
-        "ambient_temperature_units" : "deg. C",
-        "sky_temperature_units"     : "deg. C",
-        "azimuth_units"             : "degrees",
-        "altitude_units"            : "degrees",
-        "longitude_units"           : "degrees",
-        "latitude_units"            : "degrees",
-        "height_units"              : "m",
-        "signal_strength_units"     : "dBm",
-        "valid_since"               : START_TIME,
-        "valid_until"               : INFINITE_TIME,
-        "valid_state"               : CURRENT,
         "timestamp_source"          : "Publisher",
         "reading_source"            : "Imported"
     }
@@ -165,21 +113,8 @@ class TESSUnits(Table):
             CREATE TABLE IF NOT EXISTS tess_units_t
             (
             units_id                  INTEGER PRIMARY KEY AUTOINCREMENT, 
-            frequency_units           TEXT,
-            magnitude_units           TEXT,
-            ambient_temperature_units TEXT,
-            sky_temperature_units     TEXT,
-            azimuth_units             TEXT,
-            altitude_units            TEXT,
-            longitude_units           TEXT,
-            latitude_units            TEXT,
-            height_units              TEXT,
-            signal_strength_units     TEXT,
             timestamp_source          TEXT,
-            reading_source            TEXT,
-            valid_since               TEXT,
-            valid_until               TEXT,
-            valid_state               TEXT
+            reading_source            TEXT
             );
             '''
         )
@@ -194,39 +129,13 @@ class TESSUnits(Table):
         log.info("Populating/Replacing Units Table data")
         self.connection.executemany(
             '''INSERT OR REPLACE INTO tess_units_t (
-                units_id,
-                frequency_units,
-                magnitude_units,
-                ambient_temperature_units,
-                sky_temperature_units,
-                azimuth_units,
-                altitude_units,
-                longitude_units,
-                latitude_units,
-                height_units,
-                signal_strength_units,
+                units_id,   
                 timestamp_source,
-                reading_source,
-                valid_since,
-                valid_until,
-                valid_state
+                reading_source
             ) VALUES (
                 :units_id,
-                :frequency_units,
-                :magnitude_units,
-                :ambient_temperature_units,
-                :sky_temperature_units,
-                :azimuth_units,
-                :altitude_units,
-                :longitude_units,
-                :latitude_units,
-                :height_units,
-                :signal_strength_units,
                 :timestamp_source,
-                :reading_source,
-                :valid_since,
-                :valid_until,
-                :valid_state
+                :reading_source
             )'''
             , read_rows 
         )
@@ -252,17 +161,15 @@ class TESSUnits(Table):
 
         def queryLatest(dbpool, timestamp_source):
             row = {
-                'valid_state'     : CURRENT, 
                 'timestamp_source': timestamp_source,  
                 'reading_source'  : reading_source
             }
             return dbpool.runQuery(
-            '''
-            SELECT units_id FROM tess_units_t 
-            WHERE valid_state == :valid_state 
-            AND timestamp_source == :timestamp_source
-            AND reading_source == :reading_source
-            ''', row)
+                '''
+                SELECT units_id FROM tess_units_t
+                WHERE timestamp_source == :timestamp_source
+                AND reading_source == :reading_source
+                ''', row)
 
         if self._id.get(timestamp_source) is None:
             row = yield queryLatest(self.pool, timestamp_source)
