@@ -199,7 +199,7 @@ class TESS(Table):
         self.connection.commit()
 
 
-    def populate(self, json_dir):
+    def populate(self):
         '''
         Populate the SQLite Instruments Table.
         '''

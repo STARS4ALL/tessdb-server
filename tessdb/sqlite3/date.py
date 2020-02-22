@@ -69,7 +69,7 @@ class Date(Table):
         self.__start = datetime.date(year_start,1,1)
         self.__end   = datetime.date(year_end,12,31)
         self.table()
-        self.populate(None)
+        self.populate()
 
       
     def table(self):
@@ -100,7 +100,7 @@ class Date(Table):
         self.connection.commit()
 
 
-    def populate(self, json_dir):
+    def populate(self):
         '''
         Populate the SQLite Date Table.
         Returns a Deferred

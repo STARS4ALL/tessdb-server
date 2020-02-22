@@ -98,7 +98,7 @@ class TimeOfDay(Table):
         self.connection.commit()
 
 
-    def populate(self, json_dir):
+    def populate(self):
         '''
         Populate the SQLite Time Table.
         '''

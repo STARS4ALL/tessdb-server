@@ -1,30 +1,9 @@
 Prioridad Alta
 ==============
 
-Estrategia de migracion de BD por la no identidad TESS-W <=> nombre de tess.
-Ahora los TESS-W se pueden renombrar a cualqueir nombe incluso a otros existentes y hay que hacerlo manteniendo el histórico
-
-Tres fases
-
-1) FASE 1
-   Añadir tabla de asociacion (MAC, nombre)
-   Modificar el proceso de registro
-   Seguri actualizando la columnan name de los TESS-W para no romper los informes
-   Modificar la command line tess para tener esto en cuenta en las altas manuales
-
-2) FASE 2
-   Modificar TODOS los informes para no usar ya la columna name de TESS
-   Validar informes
-
-3) Rescatar las asociaciones perdidas de los log
-   Regenerarb informes
-
-4) Drop column name de la tabla tess_t
-
 
 Prioridad media
 ===============
-
 
 1) Nueva tabla observer_t, con atributos gestionados de email y organization
 

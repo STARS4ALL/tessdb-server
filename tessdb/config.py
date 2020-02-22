@@ -117,18 +117,11 @@ def loadCfgFile(path):
     options['dbase']['type']              = parser.get("dbase","type")
     options['dbase']['connection_string'] = parser.get("dbase","connection_string")
     options['dbase']['close_when_pause']  = parser.getboolean("dbase","close_when_pause")
-    options['dbase']['json_dir']          = parser.get("dbase","json_dir")
     options['dbase']['year_start']        = parser.getint("dbase","year_start")
     options['dbase']['year_end']          = parser.getint("dbase","year_end")
     options['dbase']['date_fmt']          = parser.get("dbase","date_fmt")
     options['dbase']['secs_resolution']   = parser.getint("dbase","secs_resolution")
-
-    options['dbase']['auth_filter']         = parser.getboolean("dbase","auth_filter")
-    options['dbase']['location_filter']     = parser.getboolean("dbase","location_filter")
-    options['dbase']['location_horizon']    = parser.get("dbase","location_horizon")
-    options['dbase']['location_batch_size'] = parser.getfloat("dbase","location_batch_size")
-    options['dbase']['location_pause']      = parser.getint("dbase","location_pause")
-    options['dbase']['location_minimum_batch_size']  = parser.getint("dbase","location_minimum_batch_size")
+    options['dbase']['auth_filter']       = parser.getboolean("dbase","auth_filter")
 
     options['filter'] = {}
     options['filter']['enabled']   = parser.getboolean("filter","enabled")

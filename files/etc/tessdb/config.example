@@ -111,6 +111,30 @@ log_level = info
 
 #------------------------------------------------------------------------#
 
+[filter]
+# Invalid samples filter
+# This module filters out invalid incoming data by analyzing a window
+# of samples before and after a given one.
+
+# Filter depth (window size)
+# Should be an odd, number, minimun 3, recommended 7.
+# depth = 3 -> keep 1 invalid sample  after the valid ones
+# depth = 5 -> keep 2 invalid samples after the valid ones
+# depth = 7 -> keep 3 invalid samples after the valid ones
+# Not reloadable property
+depth = 7
+
+# Enable flag
+# If not enabled, the new reading is passed directly to the database input queue
+# Reloadable property
+enabled = yes
+
+# namespace log level (debug, info, warn, error, critical)
+# Reloadable property
+log_level = info
+
+#------------------------------------------------------------------------#
+
 # Database configuration section
 [dbase]
 
@@ -126,10 +150,6 @@ connection_string = /var/dbase/tess.db
 # This is useful for special situations (i.e. moving an SQLite3 database file)
 # Reloadable property
 close_when_pause = no
-
-# Directory where JSON data is located
-# Not reloadable property
-json_dir = /etc/tessdb
 
 # Limit years (included) for the Date dimension (from Jan 1 to Dec 12)
 # Not reloadable property
@@ -148,59 +168,12 @@ date_fmt = %d/%m/%Y
 # Not reloadable property.
 secs_resolution = 1
 
-# --------------- BEGIN RECORDING FILTERS CONFIG ---------------------
-
-#
-#               +-------------+     +-----------------+   
-#  (sample) --> | Auth Filter | --> | Location Filter | --> Database
-#               +-------------+     +-----------------+
-#
-
 # Authorisation filter
 # Each TESS-W photometer must be authorised to write to the database
 # The recommended use is to manually authorise it after the TESS photomenter
 # is in place and measuring properly
 # However, this can be disabled.
 auth_filter = yes
-
-# Filter by location sunrise/sunset
-# if set, filtering of readings will be performed for each TESS associated with
-# a given location. 
-# Readings received when at daytime in that location will be discarded.
-# A TESS associated with the UNKNOWN location (id=-1) will have all its readings
-# ACCEPTED regardless being day/night.
-# Reloadable property.
-location_filter = yes
-
-# Local Horizon threshold for sunrise/sunset, used for the day/night test.
-# Format DD:MM:SS or -DD:MM:SS
-# Reloadable property.
-location_horizon = -00:34
-
-
-# How many locations to process in a batch. Measured in %. 
-# It can be floating point
-# To avoid long CPU and I/O peaks with a large set of locations (i.e. 10000), 
-# their sunrise/sunset timestamps are proceses in batches.
-# A good rule of thumb is 10%
-# Reloadable property
-location_batch_size = 10
-
-# How many locations should be process in a batch at a minimun.
-# Using percentages specifying the batch size may lead 
-# to lopping over very small batches. 
-# This property sets the minimun batch size
-# A good rule of thumb is 100 locations
-# Reloadable property
-location_minimum_batch_size = 100
-
-# Wait time in seconds between two batches.
-# To smooth CPU and I/O peaks computing sunrise/sunset for large 
-# set of locations (i.e. 10000)
-# Reloadable property
-location_pause = 10
-
-# --------------- END RECORDING FILTERS CONFIG ---------------------
 
 # general namespace log level (debug, info, warn, error, critical)
 # Reloadable property

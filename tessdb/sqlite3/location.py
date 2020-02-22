@@ -29,25 +29,20 @@
 
 from __future__ import division, absolute_import
 
-import os
-import math
-import ephem
-
 # ---------------
 # Twisted imports
 # ---------------
 
 from twisted.internet         import reactor, defer
-from twisted.internet.defer   import inlineCallbacks, returnValue
+from twisted.internet.defer   import inlineCallbacks
 from twisted.logger           import Logger
-from twisted.internet.threads import deferToThread
-from twisted.internet.task    import deferLater
+
 
 #--------------
 # local imports
 # -------------
 
-from   tessdb.sqlite3.utils import Table, utcnoon, UNKNOWN, NEVER_UP, ALWAYS_UP
+from   tessdb.sqlite3.utils import Table, UNKNOWN
 
 # ----------------
 # Module Constants
@@ -98,13 +93,6 @@ log = Logger(namespace='dbase')
 # ------------------------
 
 
-def _updateSunrise(transaction, rows):
-    '''Update sunrise/sunset in given rows'''
-    transaction.executemany(
-        '''
-        UPDATE location_t SET sunrise = :sunrise, sunset = :sunset
-        WHERE location_id == :id
-        ''', rows)
        
 # ============================================================================ #
 #                               LOCATION TABLE (DIMENSION)
@@ -157,12 +145,12 @@ class Location(Table):
         self.connection.commit()
 
 
-    def populate(self, json_dir):
+    def populate(self):
         '''
         Populate the SQLite Location Table
         '''
-        read_rows = self.rows(json_dir)
-        log.info("Populating/Replacing Units Table data")
+        read_rows = self.rows()
+        log.info("Populating/Replacing Units Table with default data")
         self.connection.executemany( 
             '''INSERT OR REPLACE INTO location_t (
             location_id,
@@ -200,7 +188,7 @@ class Location(Table):
     # --------------
 
 
-    def rows(self, json_dir):
+    def rows(self):
         '''Generate a list of rows to inject in SQLite API'''
         read_rows = []
         read_rows.append(DEFAULT_LOCATION)
@@ -222,147 +210,4 @@ class Location(Table):
     # ===============
     # OPERATIONAL API
     # ===============
-
-    def findSunrise(self, ident):
-        '''
-        Find location given by 'ident'
-        Returns a Deferred.
-        '''
-        if ident in self._cache.keys():
-            return defer.succeed(self._cache.get(ident))
-
-        param = {'id': ident }
-        d = self.pool.runQuery(
-            '''
-            SELECT sunrise, sunset 
-            FROM location_t 
-            WHERE location_id == :id
-            ''', param)
-        d.addCallback(self.updateCache, ident)
-        return d
-
-    def getLocations(self, index, count):
-        '''
-        Get 'count' locations starting from 'index'
-        This query is optimized for SQLite.
-        Returns a Deferred.
-        '''
-        param = {'id': index, 'count': count }
-        return self.pool.runQuery(
-            '''
-            SELECT location_id, longitude, latitude, elevation, site 
-            FROM location_t 
-            WHERE location_id >= :id
-            ORDER BY location_id
-            LIMIT :count 
-            ''', param)
-
-    def updateSunrise(self, rows):
-        '''
-        Update sunrise/sunset in given rows.
-        Rows is a dictionary with at least the following keys:
-        - 'id'
-        - 'sunrise'
-        - 'sunset'
-        Returns a Deferred.
-        '''
-        return self.pool.runInteraction( _updateSunrise, rows )
-
-
-    def validPosition(self, location):
-        '''
-        Test for valid longitude,latitude elevation in result set.
-
-        location[1] - longitude
-        location[2] - latitude
-        location[3] - elevation
-        '''
-        return location[1] and location[1] != UNKNOWN and  location[2] and location[2] != UNKNOWN and location[3] and location[3] != UNKNOWN
-    
-
-    def computeSunrise(self, locations, sun, noon, horizon):
-        '''
-        Computes sunrise/sunset for a given list of locations.
-        Ideally, it needs only to be computed once, after midnight.
-        'locations' is a list of tuples (id,longitude,latitude,elevation)
-        returned by getLocations() method
-        Returns a list of dictionaries ready to be written back to location_t 
-        table with the following keys:
-        - id
-        - 'sunrise'
-        - 'sunset'
-        '''
-        observer = ephem.Observer()
-        observer.pressure  = 0      # disable refraction calculation
-        observer.horizon   = horizon
-        observer.date      = noon
-        midnight = ephem.Date(utcnoon() - 12 * ephem.hour)
-        rows = []
-        for location in locations:
-            if self.validPosition(location):
-                observer.lon       = math.radians(location[1])
-                observer.lat       = math.radians(location[2])
-                observer.elevation = location[3]
-                site               = location[4]
-                # In locations near Grenwich: (prev) sunrise < (next) sunset
-                # In location far away from Greenwich: (prev) sunset < (next) sunrise
-                # Circumpolar sites may raise exceptions
-                try:
-                    prev_sunrise = observer.previous_rising(sun, use_center=True)
-                    next_sunset  = observer.next_setting(sun, use_center=True)
-                    prev_sunset  = observer.previous_setting(sun, use_center=True)
-                    next_sunrise = observer.next_rising(sun, use_center=True)
-                except ephem.NeverUpError as e:
-                    sunrise = NEVER_UP
-                    sunset  = NEVER_UP
-                except ephem.AlwaysUpError as e:
-                    sunrise = ALWAYS_UP
-                    sunset  = ALWAYS_UP
-                else:
-                    if prev_sunrise < midnight: # Far West from Greenwich
-                        log.debug("{site}: Chose Far West from Greenwich", site=site)
-                        sunrise = str(next_sunrise)
-                        sunset  = str(prev_sunset)
-                    else:                       # Our normal case in Spain
-                        log.debug("{site}: Chose our normal case in Spain", site=site)
-                        sunrise = str(prev_sunrise)
-                        sunset  = str(next_sunset)
-                finally:
-                    rows.append ({ 
-                        'id'     : location[0], 
-                        'sunrise': sunrise,
-                        'sunset' : sunset,
-                        'site'   : site
-                    })
-        return rows
-
-
-    @inlineCallbacks
-    def sunrise(self, batch_perc=0, batch_min_size=1, horizon='-0:34', pause=0, today=utcnoon()):
-        '''
-        This is the long running process that iterates all locations in the table
-        computing their sunrise/sunset and storing them back to the database.
-        It may take a while so it is divided in batches to smooth CPU and I/O peaks
-        '''
-       
-        log.info("Begin sunrise/sunset computation process for {today!s}", today=today)
-        self.finished = False
-        nlocations = yield self.pool.runQuery('SELECT count(*) FROM location_t WHERE location_id >= 0')
-        index = 0
-        count = int( batch_perc * 0.01 * nlocations[0][0] )
-        count = max(count,  batch_min_size)
-        today = ephem.Date(today)
-        sun   = ephem.Sun(today)
-        while not self.finished:
-            locations = yield self.getLocations(index, count)
-            if len(locations) :
-                rows = yield deferToThread(self.computeSunrise, locations, sun, today, horizon)
-                log.debug("sunrise/sunset: rows {rows!s}", rows=rows)
-                yield self.updateSunrise(rows)
-                log.debug("sunrise/sunset: done with index {i}",i=index)
-                index += count
-                # Pause for some time to smooth I/O & CPU peaks
-                yield deferLater(reactor, pause, lambda: None)
-            else:
-                self.finished = True
-        log.info("End sunrise/sunset computation process")
+  

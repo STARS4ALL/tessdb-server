@@ -122,7 +122,7 @@ class Table(object):
         '''
         return
 
-    def schema(self, json_dir):
+    def schema(self):
         '''
         Generates a table, taking an open data connection
         and a replace flag.
@@ -130,4 +130,4 @@ class Table(object):
         self.table()
         self.indices()
         self.views()
-        self.populate(json_dir)
+        self.populate()

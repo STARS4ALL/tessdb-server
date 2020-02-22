@@ -78,7 +78,7 @@ class TESSReadings(Table):
 
         Table.__init__(self, connection)
         self.parent = parent
-        self.setOptions(auth_filter=True, location_filter=True)
+        self.setOptions(auth_filter=True)
         self.resetCounters()
 
 
@@ -113,7 +113,7 @@ class TESSReadings(Table):
         )
         self.connection.commit()
 
-    def populate(self, json_dir):
+    def populate(self):
         return
 
     # -------------
@@ -184,35 +184,7 @@ class TESSReadings(Table):
             log.debug("TESSReadings.update({log_tag}): not authorised", log_tag=row['name'])
             self.rejNotAuthorised += 1
             returnValue(None)
-
-        # --------------------------------------------------------------
-        # Filter for Daytime if this filter is activated
-        # Also filters if lacking enough data.
-        # It is very important to assing an instrument a location asap
-        # The Unknown location has no sunrise/sunset data
-        # --------------------------------------------------------------
         
-        if self.locationFilter:
-            if  'lat' in row:   # mobile instrument
-                self.computeSunrise(row, now)
-                if  isDaytime(row['sunrise'], row['sunset'], now):
-                    log.debug("TESSReadings.update({log_tag}): reading rejected at daytime", log_tag=row['name'])
-                    self.rejSunrise += 1
-                    returnValue(None)
-            else:               # fixed instrument assigned to location
-                riseset = yield self.parent.tess_locations.findSunrise(location_id)
-                riseset = riseset[0]  # Keep only the first row
-                sunrise = riseset[0]
-                sunset  = riseset[1]
-                log.debug("TESSReadings.update({log_tag}): testing sunrise({sunrise!s}) <  now({now!s}) < sunset({sunset!s})", 
-                    log_tag=row['name'], sunrise=sunrise, sunset=sunset, now=now)
-                if not sunrise:
-                    log.debug("TESSReadings.update({log_tag}): reading accepted even if no sunrise/sunset data", 
-                        log_tag=row['name'])
-                elif isDaytime(sunrise, sunset, now):
-                    log.debug("TESSReadings.update({log_tag}): reading rejected at daytime", log_tag=row['name'])
-                    self.rejSunrise += 1
-                    returnValue(None)
 
         row['date_id'], row['time_id'] = roundDateTime(now, self.parent.time.secs_resol)
         row['instr_id'] = tess_id
@@ -241,44 +213,11 @@ class TESSReadings(Table):
     # Helper methods
     # ==============
 
-    def setOptions(self, auth_filter, location_filter, location_horizon='-0:34'):
+    def setOptions(self, auth_filter):
         '''
-        Set filtering. Auth and sunrise/sunset
+        Set filtering Auth
         '''
         self.authFilter     = auth_filter
-        self.locationFilter = location_filter
-        self.horizon        = location_horizon
-
-    def computeSunrise(self, row, now):
-        '''
-        Computes sunrise/sunset for a given mobile instrument reading 'row'.
-        Leaves the result in the same row of readings, ready to pass the snrise/sunset filter.
-        '''
-        utcnoon = ephem.Date(now.replace(hour=12, minute=0, second=0,microsecond=0))
-        midnight = ephem.Date(utcnoon - 12 * ephem.hour)
-        sun = ephem.Sun(utcnoon)
-        observer           = ephem.Observer()
-        observer.pressure  = 0      # disable refraction calculation
-        observer.horizon   = self.horizon
-        observer.date      = utcnoon
-        observer.lon       = math.radians(row['long'])
-        observer.lat       = math.radians(row['lat'])
-        observer.elevation = row['height']
-        # In locations near Grenwich: (prev) sunrise < (next) sunset
-        # In location far away from Greenwich: (prev) sunset < (next) sunrise
-        prev_sunrise = observer.previous_rising(sun, use_center=True)
-        next_sunset  = observer.next_setting(sun, use_center=True)
-        prev_sunset  = observer.previous_setting(sun, use_center=True)
-        next_sunrise = observer.next_rising(sun, use_center=True)
-        if prev_sunrise < midnight: # Far West from Greenwich
-            sunrise = str(next_sunrise)
-            sunset  = str(prev_sunset)
-        else:                       # Our normal case in Spain
-            sunrise = str(prev_sunrise)
-            sunset  = str(next_sunset)
-        row['sunrise']     = sunrise
-        row['sunset']      = sunset
-    
 
     def which(self, row):
         '''Find which updateN method must be used'''

@@ -121,12 +121,12 @@ class TESSUnits(Table):
         self.connection.commit()
 
 
-    def populate(self, json_dir):
+    def populate(self):
         '''
         Populate the SQLite Units Table.
         '''
-        read_rows = self.rows(json_dir)
-        log.info("Populating/Replacing Units Table data")
+        read_rows = self.rows()
+        log.info("Populating/Replacing Units Table data with default values")
         self.connection.executemany(
             '''INSERT OR REPLACE INTO tess_units_t (
                 units_id,   
@@ -144,10 +144,9 @@ class TESSUnits(Table):
     # Helper methods
     # --------------
 
-    def rows(self, json_dir):
+    def rows(self):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = DEFAULT_UNITS
-        return read_rows
+        return DEFAULT_UNITS
 
    # ================
    # OPERATIONAL API

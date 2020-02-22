@@ -88,7 +88,7 @@ class DBaseService(Service):
         self.onBoot   = True
         self.timeStatList  = []
         self.nrowsStatList = []
-        self.sunriseTask  = task.LoopingCall(self.sunrise)
+        
         setLogLevel(namespace='dbase', levelStr=options['log_level'])
         setLogLevel(namespace='registry', levelStr=options['register_log_level'])
         if self.options['secs_resolution'] not in self.SECS_RESOLUTION:
@@ -125,19 +125,16 @@ class DBaseService(Service):
     def startTasks(self):
         '''Start periodic tasks'''
         self.later = reactor.callLater(2, self.writter)
-        self.sunriseTask.start(self.T_SUNRISE, now=True)
 
     def schema(self):
         '''Create the schema and populate database'''
-        self.tess_readings.setOptions(auth_filter=self.options['auth_filter'],
-            location_filter=self.options['location_filter'], 
-            location_horizon=self.options['location_horizon'])
+        self.tess_readings.setOptions(auth_filter=self.options['auth_filter'])
         self.date.schema(date_fmt=self.options['date_fmt'], year_start=self.options['year_start'], year_end=self.options['year_end'])
-        self.time.schema(json_dir=self.options['json_dir'])
-        self.tess_locations.schema(json_dir=self.options['json_dir'])
-        self.tess.schema(json_dir=self.options['json_dir'])
-        self.tess_units.schema(json_dir=self.options['json_dir'])
-        self.tess_readings.schema(json_dir=self.options['json_dir'])
+        self.time.schema()
+        self.tess_locations.schema()
+        self.tess.schema()
+        self.tess_units.schema()
+        self.tess_readings.schema()
         self.tess.connection           = None
         self.tess_units.connection     = None
         self.tess_readings.connection  = None
@@ -167,7 +164,6 @@ class DBaseService(Service):
     # Extended Service API
     # --------------------
 
-    @inlineCallbacks
     def reloadService(self, new_options):
         '''
         Reload configuration.
@@ -176,19 +172,12 @@ class DBaseService(Service):
         setLogLevel(namespace='dbase', levelStr=new_options['log_level'])
         setLogLevel(namespace='register', levelStr=new_options['register_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.tess_readings.setOptions(auth_filter=new_options['auth_filter'],
-            location_filter=new_options['location_filter'], 
-            location_horizon=new_options['location_horizon'])
+        self.tess_readings.setOptions(auth_filter=new_options['auth_filter'])
         self.options = new_options
-        self.onBoot = True  # Forces sunrise/sunset computation
         self.tess.invalidCache()
         self.tess_locations.invalidCache()
-        # It is very convenient to recompute all sunrise/sunset data after a reload
-        # After having assigned an instrument to a location
-        # Otherwise, I have to restart tessdb and loose some samples
-        if not self.paused:
-            yield self.sunrise()
-        returnValue(None)
+        return defer.succeed(None)
+        
 
         
     def pauseService(self):
@@ -309,32 +298,6 @@ class DBaseService(Service):
         self.later = reactor.callLater(self.T_QUEUE_POLL,self.writter)
         
 
-    # ---------------------
-    # sunrise periodic Task
-    # ---------------------
-
-    @inlineCallbacks
-    def sunrise(self, today=utcstart()):
-        if self.paused or not self.options['location_filter']:
-            returnValue(None)
-
-        # Unitary testing passes an specific value of 'today'
-        # Normal operation leaves this to a default value 'utcstart()'
-        if today == utcstart():
-            today = utcnoon()
-
-        log.info("Sunrise Task: ON BOOT = {onboot} today = {today!s}", onboot=self.onBoot, today=today)
-        # Only compute Sunrise/Sunset once a day around midnight
-        # with sampling resolution given by T_SUNRISE
-        if  not self.onBoot and utcnow() - utcmidnight() > self.T_SUNRISE * ephem.second:
-              returnValue(None)
-        self.onBoot    = False  
-        batch_perc     = self.options['location_batch_size']
-        batch_min_size = self.options['location_minimum_batch_size']
-        horizon        = self.options['location_horizon']
-        pause          = self.options['location_pause']
-        yield self.tess_locations.sunrise(batch_perc=batch_perc, 
-            batch_min_size=batch_min_size, horizon=horizon, pause=pause, today=today)
       
     # ==============
     # Helper methods
@@ -358,4 +321,3 @@ class DBaseService(Service):
         log.info("Closing a DB Connection to {conn!s}", conn=self.options['connection_string'])
         self.pool.close()
         log.info("Closed a DB Connection to {conn!s}", conn=self.options['connection_string'])
-        
