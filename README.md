@@ -77,7 +77,7 @@ This file is self explanatory.
 In special, the database file name and location is specified in this file.
 Some of the properities marked in this file are marked as *reloadable property*. This means that this value can be changed and the process reloads its new value on the fly.
 
-## Sunrise / Sunset filtering
+## Sunrise / Sunset filtering (obsolete)
 It is recommended to activate the sunrise/sunset filter to reject TESS readings coming in daytime and avoid unnecessary grouth in the database.
 Each location has a latitude (degrees), longitude (degrees) and elevation (meters) which can be neglected is this filter is not used. 
 
@@ -85,6 +85,16 @@ Activating this filter have the following conecuences:
 1. Once a day, at arount 00:00 UTC, all locations will have their sunrise and sunset time computed, according to the local horizon defined (configurable).
 2. Instruments assigned to locations found to be in daytime will have their readings rejected.
 3. ***New***: ***Instruments assigned to locations with `NULL` or `Unknown` longitude, latitude or elvation will have their readings accepted anyway***. The only way to enable or disable writting to the database is by using the *tess utility*.
+
+## Sunrise / Sunset filtering (new)
+
+A configurable window (7 default) of sampled is stored in the server for each photometer. 
+A filter process analyzes the middle sample in this window, if it finds all saturated values (magnitude=0)
+around this middle sample (past and future), this sample is discarded, other¡wise it is elegible to be written to the database.
+
+*Positive*: This filtering does not need to kenow where the phoytometer is placed.
+*Negative*: There is a time lag (Window size/2) between receiving the sample and storing it.
+Furthermore, if the server crashes or is abruptly stopped, the so-called "future samples" are lost.
 
 ## Logging
 
@@ -184,7 +194,6 @@ This dimension holds the current list of TESS instruments.
 
 * The real key is an artificial key `tess_id` linked to the Fact table.
 * The `mac_address` could be the natural key if it weren't for the zero point and filter history tracking.
-* (OBSOLETE !) (To be removed soon) The `name` attribute could be an alternative key for the same reason. TESS instruments send readings using this name in the MQTT payload. A TESS instrument name can be changed as long as there is no other instrument with the same name.
 * The `location_id` is a reference to the current location assigned to the instrument. Location id -1 denotes the "Unknown" location.
 * `model` refers to the current TESS model.
 * `firmware` contains the current firmware version.
@@ -208,9 +217,9 @@ The current valid TESS instrument has its `valid_state` set to `Current` and the
 
 #### Unit dimension
 
-The `tess_units_t` table is what Dr. Kimball denotes as a *junk dimension*. It collects various labels denoting the current measurement units of samples in the fact table. 
+The `tess_units_t` table collects various flags for the fact table. 
 
-* Columns `valid_since`, `valid_until` and `valid_state` keep track of any units change in a similar technique as above should the units change.
+* (OBSOLETE) Columns `valid_since`, `valid_until` and `valid_state` keep track of any units change in a similar technique as above should the units change.
 
 #### Location dimension
 
@@ -258,7 +267,7 @@ The following are samples queries illustraing how to use the data model. They ar
 sqlite3 /var/dbase/tess.db <<EOF
 .mode column
 .headers on
-SELECT d.sql_date, i.name, count(*) AS readings
+SELECT d.sql_date, i.mac_address, count(*) AS readings
 FROM tess_readings_t AS r
 JOIN tess_t AS i USING (tess_id)
 JOIN date_t AS d USING (date_id)
@@ -273,13 +282,13 @@ EOF
 #!/bin/bash
 instrument_name=$1
 sqlite3 -csv -header /var/dbase/tess.db <<EOF
-SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time) AS timestamp, r.sequence_number, l.site, i.name, r.frequency, r.magnitude, i.zero_point, r.sky_temperature, r.ambient_temperature
+SELECT (d.julian_day + t.day_fraction) AS julian_day, (d.sql_date || 'T' || t.time) AS timestamp, r.sequence_number, l.site, i.mac_address, r.frequency, r.magnitude, i.zero_point, r.sky_temperature, r.ambient_temperature
 FROM tess_readings_t AS r
 JOIN tess_t          AS i USING (tess_id)
 JOIN location_t      AS l USING (location_id)
 JOIN date_t          AS d USING (date_id)
 JOIN time_t          AS t USING (time_id)
-WHERE i.name = "${instrument_name}"
+WHERE i.mac_address  IN (SELECT mac_address FROM name_to_mac_t WHERE name = "${instrument_name}")
 ORDER BY r.date_id ASC, r.time_id ASC;
 EOF
 ```
@@ -317,13 +326,13 @@ EOF
 sqlite3 /var/dbase/tess.db <<EOF
 .mode column
 .headers on;
-SELECT i.name, MIN(d.sql_date || 'T' || t.time || 'Z') AS earliest, MAX(d.sql_date || 'T' || t.time || 'Z') AS latest
+SELECT i.mac_address, MIN(d.sql_date || 'T' || t.time || 'Z') AS earliest, MAX(d.sql_date || 'T' || t.time || 'Z') AS latest
 FROM tess_readings_t AS r
 JOIN tess_t          AS i USING (tess_id)
 JOIN location_t      AS l USING (location_id)
 JOIN date_t          AS d USING (date_id)
 JOIN time_t          AS t USING (time_id)
-GROUP BY i.name;
+GROUP BY i.mac_address;
 EOF
 ```
 
@@ -336,7 +345,7 @@ sqlite3 /var/dbase/tess.db <<EOF
 SELECT l.site
 FROM location_t        AS l 
 LEFT OUTER JOIN tess_t AS i USING (location_id)
-WHERE i.name IS NULL;
+WHERE i.mac_address IS NULL;
 EOF
 ```
 
