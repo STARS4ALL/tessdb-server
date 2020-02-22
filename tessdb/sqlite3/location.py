@@ -134,8 +134,6 @@ class Location(Table):
             location                TEXT,
             province                TEXT,
             country                 TEXT,
-            sunrise                 TEXT,
-            sunset                  TEXT,
             contact_name            TEXT,
             timezone                TEXT DEFAULT 'Etc/UTC',
             organization            TEXT

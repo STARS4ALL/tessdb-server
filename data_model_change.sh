@@ -35,23 +35,50 @@ CREATE TABLE IF NOT EXISTS tess_units_new_t
             reading_source            TEXT
             );
 
--- copy data from the table to the new_table
+CREATE TABLE IF NOT EXISTS location_new_t
+            (
+            location_id             INTEGER PRIMARY KEY AUTOINCREMENT,  
+            site                    TEXT,
+            longitude               REAL,
+            latitude                REAL,
+            elevation               REAL,
+            zipcode                 TEXT,
+            location                TEXT,
+            province                TEXT,
+            state                   TEXT,
+            country                 TEXT,
+            timezone                TEXT DEFAULT 'Etc/UTC',
+            contact_name            TEXT,
+            contact_email           TEXT,
+            organization            TEXT
+            );
+
+-- copy data from the tess_t table to the new_table
 INSERT INTO tess_new_t(tess_id,mac_address,zero_point,filter,valid_since,valid_until,valid_state,location_id,
 model,firmware,channel,cover_offset,fov,azimuth,altitude,authorised,registered)
 SELECT tess_id,mac_address,zero_point,filter,valid_since,valid_until,valid_state,location_id,
 model,firmware,channel,cover_offset,fov,azimuth,altitude,authorised,registered
 FROM tess_t;
  
+-- copy data from the location_t table to the new_table
+INSERT INTO location_new_t(location_id,site,longitude,latitude,elevation,zipcode,location,province,country,
+timezone,contact_name,contact_email,organization)
+SELECT location_id,site,longitude,latitude,elevation,zipcode,location,province,country,
+timezone,contact_name,contact_email,organization FROM location_t;
+
+-- copy data from the tess_units_t table to the new_table
 INSERT INTO tess_units_new_t(units_id,timestamp_source,reading_source)
 SELECT units_id,timestamp_source,reading_source FROM tess_units_t;
 
--- drop the table
+-- drop the tables
 DROP TABLE tess_t;
+DROP TABLE location_t;
 DROP TABLE tess_units_t;
 
  
--- rename the new_table to the table
+-- rename the new_tables to the old table names
 ALTER TABLE tess_new_t RENAME TO tess_t; 
+ALTER TABLE location_new_t RENAME TO location_t;
 ALTER TABLE tess_units_new_t RENAME TO tess_units_t; 
  
 UPDATE tess_t
