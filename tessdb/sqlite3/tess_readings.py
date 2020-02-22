@@ -370,7 +370,7 @@ class TESSReadings(Table):
             ''', row)
 
 
-    def update6(self, row):
+    def update2(self, row):
         '''
         Insert a new sample into the table. Version with:
         - GPS and no Accelerometer
