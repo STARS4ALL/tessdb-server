@@ -61,24 +61,6 @@ def roundDateTime(ts, secs_resol):
     return date_id, time_id
 
 
-# caveat: this is a blocking I/O operation, but since we are generating
-# the schema, it doesn't make any difference.
-def fromJSON(file_path, default_var):
-    '''
-    Read pre-populated JSON data from a file
-    '''
-    lines = []
-    if not os.path.exists(file_path):
-        log.warn("No JSON file found in {file}", file=file_path)
-        log.warn("loading defaults {var!s}.", var=default_var)
-        return default_var
-    log.info("loading from existing file {file}", file=file_path)
-    with open(file_path,'r') as fd:
-        for line in fd:
-            if not line.startswith('#'):
-                lines.append(line)
-    return  json.loads('\n'.join(lines))
-
 def utcnoon():
     '''Returns the ephem Date object at today's noon'''
     return ephem.Date(datetime.datetime.utcnow().replace(hour=12, minute=0, second=0,microsecond=0))

@@ -45,7 +45,7 @@ from twisted.logger           import Logger
 # local imports
 # -------------
 
-from tessdb.sqlite3.utils import Table, fromJSON, TSTAMP_FORMAT, INFINITE_TIME, EXPIRED, CURRENT
+from tessdb.sqlite3.utils import Table, TSTAMP_FORMAT, INFINITE_TIME, EXPIRED, CURRENT
 from tessdb.error import ReadingKeyError, ReadingTypeError
 
 # ----------------
@@ -98,10 +98,9 @@ class TESS(Table):
             CREATE TABLE IF NOT EXISTS tess_t
             (
             tess_id       INTEGER PRIMARY KEY AUTOINCREMENT,
-            name          TEXT, -- this column will dissappear some day
             mac_address   TEXT, 
             zero_point    REAL,
-            filter        TEXT DEFAULT 'UVIR',
+            filter        TEXT DEFAULT 'UV/IR-cut',
             valid_since   TEXT,
             valid_until   TEXT,
             valid_state   TEXT,
@@ -144,8 +143,6 @@ class TESS(Table):
         '''
         log.info("Creating tess_t Indexes if not exists")
         cursor = self.connection.cursor()
-        # This name index will be droped some day
-        cursor.execute("CREATE INDEX IF NOT EXISTS tess_name_i ON tess_t(name);")
         cursor.execute("CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);")
         # For the associative table
         cursor.execute("CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);")
@@ -206,48 +203,8 @@ class TESS(Table):
         '''
         Populate the SQLite Instruments Table.
         '''
-        if os.path.exists(os.path.join(json_dir, TESS.INSTRUMENTS_FILE)):
-            log.info("Loading instruments file")
-            read_rows = fromJSON(os.path.join(json_dir, TESS.INSTRUMENTS_FILE), DEFAULT_INSTRUMENT)
-            self.connection.executemany(
-                '''INSERT OR REPLACE INTO tess_t (
-                    tess_id,
-                    name,
-                    mac_address,
-                    zero_point,
-                    filter,
-                    valid_since,
-                    valid_until,
-                    valid_state,
-                    registered,
-                    location_id
-                ) VALUES (
-                    :tess_id,
-                    :name,
-                    :mac_address,
-                    :zero_point,
-                    :filter,
-                    :valid_since,
-                    :valid_until,
-                    :valid_state,
-                    :registered,
-                    :location_id
-                )
-                '''
-                , read_rows)
-            self.connection.commit()
-
-        log.info("Assigning locations to instruments")
-        read_rows = fromJSON(os.path.join(json_dir, TESS.DEPL_FILE), DEFAULT_DEPLOYMENT)
-        self.connection.executemany( 
-            '''UPDATE tess_t SET location_id = (
-                SELECT location_id FROM location_t
-                    WHERE  location_t.site == :site
-                )
-                WHERE name == :name
-            '''
-            , read_rows )
-        self.connection.commit()
+        log.warn("Not populating instruments table from files anymore.")
+        
 
     # --------------
     # Cache handling
@@ -398,7 +355,6 @@ class TESS(Table):
             cursor.execute(
                 '''
                 INSERT INTO tess_t (
-                    name,    -- this will dissapear in the future
                     mac_address, 
                     zero_point,
                     valid_since,
@@ -408,7 +364,6 @@ class TESS(Table):
                     registered,
                     location_id
                 ) VALUES (
-                    :name, -- this will dissapear in the future
                     :mac,
                     :calib,
                     :eff_date,
@@ -504,7 +459,6 @@ class TESS(Table):
             cursor.execute(
                 '''
                INSERT INTO tess_t (
-                    name,   -- this will dissapear in the future
                     mac_address,
                     registered,
                     zero_point,
@@ -512,7 +466,6 @@ class TESS(Table):
                     valid_until,
                     valid_state
                 ) VALUES (
-                    :name,  -- this will dissapear in the future
                     :mac,
                     :registered,
                     :calib,
@@ -577,7 +530,6 @@ class TESS(Table):
             cursor.execute(
                 '''
                INSERT INTO tess_t (
-                    name,   -- this will dissapear in the future
                     mac_address,
                     registered,
                     zero_point,
@@ -585,7 +537,6 @@ class TESS(Table):
                     valid_until,
                     valid_state
                 ) VALUES (
-                    :name,  -- this will dissapear in the future
                     :mac,
                     :registered,
                     :calib,

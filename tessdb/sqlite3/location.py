@@ -47,7 +47,7 @@ from twisted.internet.task    import deferLater
 # local imports
 # -------------
 
-from   tessdb.sqlite3.utils import Table, fromJSON, utcnoon, UNKNOWN, NEVER_UP, ALWAYS_UP
+from   tessdb.sqlite3.utils import Table, utcnoon, UNKNOWN, NEVER_UP, ALWAYS_UP
 
 # ----------------
 # Module Constants
@@ -202,7 +202,7 @@ class Location(Table):
 
     def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = fromJSON(os.path.join(json_dir, Location.FILE), [DEFAULT_LOCATION])
+        read_rows = []
         read_rows.append(DEFAULT_LOCATION)
         read_rows.append(OUT_OF_SERVICE_LOCATION)
         return (read_rows)

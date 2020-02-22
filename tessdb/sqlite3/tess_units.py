@@ -44,7 +44,7 @@ from twisted.logger         import Logger
 # -------------
 
 
-from tessdb.sqlite3.utils import Table, fromJSON, START_TIME, INFINITE_TIME, CURRENT
+from tessdb.sqlite3.utils import Table, START_TIME, INFINITE_TIME, CURRENT
 
 # ----------------
 # Module Constants
@@ -136,9 +136,7 @@ class TESSUnits(Table):
                 :units_id,
                 :timestamp_source,
                 :reading_source
-            )'''
-            , read_rows 
-        )
+            )''', read_rows )
         self.connection.commit()
       
     
@@ -148,7 +146,7 @@ class TESSUnits(Table):
 
     def rows(self, json_dir):
         '''Generate a list of rows to inject in SQLite API'''
-        read_rows = fromJSON(os.path.join(json_dir, TESSUnits.FILE), DEFAULT_UNITS)
+        read_rows = DEFAULT_UNITS
         return read_rows
 
    # ================
