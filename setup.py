@@ -15,7 +15,7 @@ DESCRIPTION  = 'A package to collect measurements published by TESS instruments 
 LICENSE      = 'MIT'
 KEYWORDS     = 'Astronomy Python RaspberryPi LightPollution'
 URL          = 'http://github.com/stars4all/tessdb/'
-PACKAGES     = ["tessdb","tessdb.sqlite3","tessdb.service","tess_event"]
+PACKAGES     = ["tessdb","tessdb.sqlite3","tessdb.service"]
 DEPENDENCIES = [
                   'twisted >= 16.3.0',
                   'twisted-mqtt',
@@ -44,7 +44,6 @@ DATA_FILES  = [
                               'files/usr/local/bin/tessdb_flush',
                               'files/usr/local/bin/tessdb_restart',
                               'files/usr/local/bin/tessdb_stop',
-                              'files/usr/local/bin/tess_event',
                               ]),
   ('/etc/logrotate_astro.d', ['files/etc/logrotate.d/tessdb']),
   ('/var/dbase',             ['files/var/dbase/placeholder.txt']),
