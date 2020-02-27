@@ -24,21 +24,22 @@ except:
 # Twisted imports
 # ---------------
 
-from .logger import LogLevel
+
+from twisted  import __version__ as __twisted_version__
 
 #--------------
 # local imports
 # -------------
 
-from .utils import chop
+from .logger import LogLevel
+from .utils  import chop
 from . import __version__
 
 # ----------------
 # Module constants
 # ----------------
 
-
-VERSION_STRING = "tessdb {0} on Python {1}.{2}".format(__version__, sys.version_info.major, sys.version_info.minor)
+VERSION_STRING = "{0} on Twisted {1}, Python {2}.{3}".format(__version__, __twisted_version__, sys.version_info.major, sys.version_info.minor)
 
 # Default config file path
 if os.name == "nt":
@@ -66,8 +67,9 @@ def cmdline():
     parser.add_argument('-v' , '--version',     action='version', version='{0}'.format(VERSION_STRING), help='print version and exit.')
     parser.add_argument('-k' , '--console',     action='store_true', help='log to console')
     parser.add_argument('-i' , '--interactive', action='store_true', help='run in foreground (Windows only)')
-    parser.add_argument('-c' , '--config', type=str,  action='store', metavar='<config file>', help='detailed configuration file')
+    parser.add_argument('-c' , '--config',  type=str,  action='store', metavar='<config file>', help='detailed configuration file')
     parser.add_argument('-s' , '--startup', type=str, action='store', metavar='<auto|manual>', help='Windows service starup mode')
+    parser.add_argument('--log-file',       type=str, default=None,    action='store', metavar='<log file>', help='log file path')
   
     
     group = parser.add_mutually_exclusive_group()
@@ -94,7 +96,6 @@ def loadCfgFile(path):
     parser.read(path)
 
     options['tessdb'] = {}
-    options['tessdb']['log_file']   = parser.get("tessdb","log_file")
     options['tessdb']['log_level']  = parser.get("tessdb","log_level")
     options['tessdb']['log_selected']   = chop(parser.get("tessdb","log_selected"),',')
 

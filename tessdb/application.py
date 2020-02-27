@@ -39,8 +39,7 @@ else:
    options = None
 
 # Start the logging subsystem
-log_file = options['tessdb']['log_file']
-startLogging(console=cmdline_opts.console, filepath=log_file)
+startLogging(console=cmdline_opts.console, filepath=cmdline_opts.log_file)
 
 # ------------------------------------------------
 # Assemble application from its service components
