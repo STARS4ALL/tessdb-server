@@ -386,13 +386,13 @@ class TESS(Table):
         photometer = yield self.findPhotometerByName(row)
         photometer = photometer[0]
         log2.debug("{log_tag}: previous stored info is {photometer}",log_tag=row['name'], photometer=photometer)
-        if row['calib'] != photometer[2]:
+        if row['calib'] != float(photometer[2]):
             row['location']   = photometer[3] # carries over the location id
             row['authorised'] = photometer[5] # carries over the authorised flag
             row['registered'] = photometer[6] # carries over the registration method
             yield self.updateCalibration(row)
             self.nZPChange += 1
-            log2.info("{log_tag} changed instrument calibration data to {calib} (MAC = {mac})", log_tag=row['name'], calib=row['calib'], mac=row['mac'])
+            log2.info("{log_tag} changed instrument calibration data from {old} to {calib} (MAC = {mac})", log_tag=row['name'], old=photometer[2], calib=row['calib'], mac=row['mac'])
         else:
             self.nReboot += 1
             log2.info("Detected reboot for photometer {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
