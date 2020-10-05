@@ -174,8 +174,8 @@ class DBaseService(Service):
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
         self.tess_readings.setOptions(auth_filter=new_options['auth_filter'])
         self.options = new_options
-        self.tess.invalidCache()
-        self.tess_locations.invalidCache()
+        # self.tess.invalidCache()
+        # self.tess_locations.invalidCache()
         return defer.succeed(None)
         
 

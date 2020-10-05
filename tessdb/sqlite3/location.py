@@ -108,7 +108,7 @@ class Location(Table):
     def __init__(self, connection):
         '''Create and populate the SQLite Location Table'''
         Table.__init__(self, connection)
-        self._cache = dict()
+        #self._cache = dict()
 
     # ==========
     # SCHEMA API
@@ -193,16 +193,20 @@ class Location(Table):
         read_rows.append(OUT_OF_SERVICE_LOCATION)
         return (read_rows)
 
-    def invalidCache(self):
-        '''Invalid sunrise/sunset cache'''
-        log.info("location_t sunset cache invalidated with size = {size}", size=len(self._cache))
-        self._cache = dict()
+    # --------------
+    # Cache handling
+    # --------------
 
-    def updateCache(self, resultset, loc_id):
-        '''Update sunrise/asunset cache if found'''
-        if(len(resultset)):
-            self._cache[loc_id] = resultset
-        return resultset
+    # def invalidCache(self):
+    #     '''Invalid sunrise/sunset cache'''
+    #     log.info("location_t sunset cache invalidated with size = {size}", size=len(self._cache))
+    #     self._cache = dict()
+
+    # def updateCache(self, resultset, loc_id):
+    #     '''Update sunrise/asunset cache if found'''
+    #     if(len(resultset)):
+    #         self._cache[loc_id] = resultset
+    #     return resultset
 
 
     # ===============

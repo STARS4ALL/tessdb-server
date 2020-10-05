@@ -86,7 +86,7 @@ class TESS(Table):
     def __init__(self, connection, validate=False):
         Table.__init__(self, connection)
         self.resetCounters()
-        self._cache = dict()
+        #self._cache = dict()
 
     def table(self):
         '''
@@ -208,20 +208,20 @@ class TESS(Table):
     # Cache handling
     # --------------
 
-    def invalidCache(self, name=None):
-        '''Invalid TESS names cache'''
-        if name is None:
-            log.info("tess_t cache invalidated with size = {size}", size=len(self._cache))
-            self._cache = dict()
-        elif name in self._cache:
-            log.info("tess_t cache selective invalidataion for name {log_tag}", log_tag=name)
-            del self._cache[name]
+    #def invalidCache(self, name=None):
+    #    '''Invalid TESS names cache'''
+    #    if name is None:
+    #        log.info("tess_t cache invalidated with size = {size}", size=len(self._cache))
+    #        self._cache = dict()
+    #    elif name in self._cache:
+    #        log.info("tess_t cache selective invalidataion for name {log_tag}", log_tag=name)
+    #        del self._cache[name]
 
-    def updateCache(self, resultset, name):
-        '''Update TESS names cache if found'''
-        if(len(resultset)):
-            self._cache[name] = resultset
-        return resultset
+    #def updateCache(self, resultset, name):
+    #    '''Update TESS names cache if found'''
+    #    if(len(resultset)):
+    #        self._cache[name] = resultset
+    #    return resultset
 
     # -------------
     # log stats API
@@ -384,7 +384,8 @@ class TESS(Table):
         photometer = yield self.findPhotometerByName(row)
         photometer = photometer[0]
         log2.debug("{log_tag}: previous stored info is {photometer}",log_tag=row['name'], photometer=photometer)
-        if row['calib'] != float(photometer[2]):
+        diff = abs(row['calib'] - float(photometer[2]))
+        if diff >= 0.005 :
             row['location']   = photometer[3] # carries over the location id
             row['authorised'] = photometer[5] # carries over the authorised flag
             row['registered'] = photometer[6] # carries over the registration method
@@ -429,8 +430,12 @@ class TESS(Table):
         Caches result if possible
         Returns a Deferred.
         '''
-        if row['name'] in self._cache.keys():
-            return defer.succeed(self._cache.get(row['name']))
+
+        # 2020-10-05: We suspect that cache nahdling is responsible for lots of false ZP changes
+        # so we disable it
+
+        #if row['name'] in self._cache.keys():
+        #    return defer.succeed(self._cache.get(row['name']))
 
         row['valid_current'] = CURRENT # needed when called by tess_readings.
         d = self.pool.runQuery(
@@ -443,7 +448,7 @@ class TESS(Table):
             AND   i.valid_state == :valid_current
             ''', row)
 
-        d.addCallback(self.updateCache, row['name'])
+        #d.addCallback(self.updateCache, row['name'])
         return d
 
     def addBrandNewTess(self, row):
