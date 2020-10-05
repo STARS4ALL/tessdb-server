@@ -53,7 +53,7 @@ Given a version number MAJOR.MINOR.PATCH, increment the:
 	
 5. Run `twine` to upload all of the archives under `dist/`.
 
-	`python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*`
+	`python3 -m twine upload --repository-url testpypi dist/*`
 
 	You will be prompted for the username and password you registered with Test PyPI.
 
