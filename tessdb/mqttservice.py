@@ -284,6 +284,8 @@ class MQTTService(ClientService):
         self.nregister += 1
         if self.validate:
             try:
+                if type(row['calib']) == int:
+                    row['calib'] = float(row['calib'])
                 self.validateRegister(row)
                 self.handleTimestamps(row, now)
             except ValidationError as e:
