@@ -296,8 +296,8 @@ class TESS(Table):
             oldname = mac[0][1]
             log2.debug("Renaming photometer {oldname} (MAC = {mac}) with brand new name {log_tag}", oldname=oldname, log_tag=row['name'], mac=row['mac'])
             yield self.renamingAssociation(row)
-            self.invalidCache(oldname)
-            self.nRename += 1
+            #self.invalidCache(oldname)
+            #self.nRename += 1
             log2.info("Renamed photometer {oldname} (MAC = {mac}) with brand new name {log_tag}", oldname=oldname, log_tag=row['name'], mac=row['mac'])
         elif not len(mac) and len(name):
             # A (NAC, name) pair exisst in the name_to_mac_t table with the same name as the registre message
@@ -306,7 +306,7 @@ class TESS(Table):
             oldmac = name[0][1]
             log2.debug("Replacing photometer tagged {log_tag} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, log_tag=row['name'], mac=row['mac']) 
             yield self.newTessReplacingBroken(row)
-            self.invalidCache(row['name'])
+            #self.invalidCache(row['name'])
             self.nReplace += 1
             log2.info("Replaced photometer tagged {log_tag} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, log_tag=row['name'], mac=row['mac']) 
         else:
@@ -328,8 +328,8 @@ class TESS(Table):
                 log2.debug("Overriding associations ({n1} -> {m1}) and ({n2} -> {m2}) with new ({log_tag} -> {m}) association data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 yield self.overrideAssociations(row)
-                self.invalidCache(row['name'])
-                self.invalidCache(row['prev_name'])
+                #self.invalidCache(row['name'])
+                #self.invalidCache(row['prev_name'])
                 self.nOverriden += 1
                 log2.info("Overridden associations ({n1} -> {m1}) and ({n2} -> {m2}) with new ({log_tag} -> {m}) association data",
                     m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
