@@ -291,6 +291,9 @@ class MQTTService(ClientService):
             except ValidationError as e:
                 log.error('Validation error in registration payload={payload!s}', payload=row)
                 log.error('{excp!s}', excp=e)
+            except KeyError as e:
+                log.error('No "calib" keyword sent in registration message={payload!s}', payload=row)
+                log.error('{excp!s}', excp=e)
             else:
                 log.debug('Enque registration from {log_tag} for DB Writter', log_tag=row['name'])
                 row['name'] = row['name'].lower()  # Get rid of upper case TESS names
