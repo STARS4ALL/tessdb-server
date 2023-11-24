@@ -162,7 +162,7 @@ CREATE TABLE IF NOT EXISTS name_to_mac_t
 );
 
 CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);
-CREATE INDEX name_to_mac_i ON name_to_mac_t(name);
+CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);
 
 -------------------------
 -- The main 'Facts' table
