@@ -6,8 +6,10 @@ Documentation=https://github.com/STARS4ALL/tessdb-server
 Type=simple
 User=root
 KillMode=process
-ExecStart=/usr/bin/python -m tessdb --config /etc/tessdb/config --log-file /var/log/tessdb.log
+ExecStart=tessdb --config /etc/tessdb/config --log-file /var/log/tessdb.log
 ExecReload=/bin/kill -s HUP -- $MAINPID
+EnvironmentFile=/home/pi/repos/tessdb-server/tessdb.env
+WorkingDirectory=/home/pi/repos/tessdb-server
 
 [Install]
 WantedBy=multi-user.target
