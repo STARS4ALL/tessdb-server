@@ -66,7 +66,6 @@ log = Logger(namespace=NAMESPACE)
 # ------------------------
 
 def _filter_factory(connection):
-    
     cursor = connection.cursor()
     cursor.execute(VERSION_QUERY)
     result = cursor.fetchone()
