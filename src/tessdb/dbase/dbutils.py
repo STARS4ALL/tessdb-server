@@ -66,13 +66,21 @@ log = Logger(namespace=NAMESPACE)
 # ------------------------
 
 def _filter_factory(connection):
+    
     cursor = connection.cursor()
     cursor.execute(VERSION_QUERY)
     result = cursor.fetchone()
     if not result:
         raise NotImplementedError(VERSION_QUERY)
     version = int(result[0])
-    return lambda path: int(os.path.basename(path)[:2]) > version
+    def _sql_file_version(path):
+        path = os.path.basename(path)[:2]
+        try:
+            flag = int(path) > version
+        except ValueError:
+            flag = False
+        return flag
+    return _sql_file_version
 
 
 # -------------------------
