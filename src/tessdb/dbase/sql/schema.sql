@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS tess_t
 
 CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);
 
-CREATE VIEW tess_v AS SELECT
+CREATE VIEW IF NOT EXISTS tess_v AS SELECT
     tess_t.tess_id,
     name_to_mac_t.name,
     tess_t.channel,

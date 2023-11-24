@@ -281,6 +281,7 @@ class MQTTService(ClientService):
         '''
         Handle registration data coming from onPublish()
         '''
+        log.info("Register message at {now}: {row}", row=row, now=now)
         self.nregister += 1
         if self.validate:
             try:
