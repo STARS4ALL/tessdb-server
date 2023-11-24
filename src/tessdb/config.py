@@ -33,7 +33,7 @@ from twisted  import __version__ as __twisted_version__
 
 from .logger import LogLevel
 from .utils  import chop
-from . import __version__
+from ._version import __version__
 
 # ----------------
 # Module constants
@@ -57,27 +57,7 @@ else:
 # Module Utility Functions
 # ------------------------
 
-def cmdline():
-    '''
-    Create and parse the command line for the tessdb package.
-    Minimal options are passed in the command line.
-    The rest goes into the config file.
-    '''
-    parser = argparse.ArgumentParser(prog='tessdb')
-    parser.add_argument('-v' , '--version',     action='version', version='{0}'.format(VERSION_STRING), help='print version and exit.')
-    parser.add_argument('-k' , '--console',     action='store_true', help='log to console')
-    parser.add_argument('-i' , '--interactive', action='store_true', help='run in foreground (Windows only)')
-    parser.add_argument('-c' , '--config',  type=str,  action='store', metavar='<config file>', help='detailed configuration file')
-    parser.add_argument('-s' , '--startup', type=str, action='store', metavar='<auto|manual>', help='Windows service starup mode')
-    parser.add_argument('--log-file',       type=str, default=None,    action='store', metavar='<log file>', help='log file path')
-  
-    
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument(' install', type=str, nargs='?', help='install Windows service')
-    group.add_argument(' start',   type=str, nargs='?', help='start Windows service')
-    group.add_argument(' stop',    type=str, nargs='?', help='start Windows service')
-    group.add_argument(' remove',  type=str, nargs='?', help='remove Windows service')
-    return parser.parse_args()
+
 
 
 def loadCfgFile(path):

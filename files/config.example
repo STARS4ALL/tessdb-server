@@ -106,30 +106,6 @@ log_level = info
 
 #------------------------------------------------------------------------#
 
-[filter]
-# Invalid samples filter
-# This module filters out invalid incoming data by analyzing a window
-# of samples before and after a given one.
-
-# Filter depth (window size)
-# Should be an odd, number, minimun 3, recommended 7.
-# depth = 3 -> keep 1 invalid sample  after the valid ones
-# depth = 5 -> keep 2 invalid samples after the valid ones
-# depth = 7 -> keep 3 invalid samples after the valid ones
-# Not reloadable property
-depth = 7
-
-# Enable flag
-# If not enabled, the new reading is passed directly to the database input queue
-# Reloadable property
-enabled = yes
-
-# namespace log level (debug, info, warn, error, critical)
-# Reloadable property
-log_level = info
-
-#------------------------------------------------------------------------#
-
 # Database configuration section
 [dbase]
 
@@ -139,7 +115,7 @@ type = sqlite3
 
 # For SQLite, this is the full path name to the database file
 # Reloadable property, but see below
-connection_string = /var/dbase/tess.db
+connection_string = tess.db
 
 # Closes the database connection when pausing
 # This is useful for special situations (i.e. moving an SQLite3 database file)

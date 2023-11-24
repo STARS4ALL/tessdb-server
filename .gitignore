@@ -12,4 +12,7 @@ tessdb/*~
 my*
 *.db
 sftp-config.json
+.venv
+.env
+_src/tessdb/_version.py
 

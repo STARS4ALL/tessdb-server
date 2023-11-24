@@ -15,6 +15,7 @@ import sys
 # ---------------
 # Twisted imports
 # ---------------
+
 from zope.interface import Interface, implementer
 
 from twisted.logger   import (
@@ -42,10 +43,10 @@ class LogTagFilterPredicate(object):
     If the tag set is empty, the events are also forwarded
     """
 
-    def __init__(self, defaultLogTags=[]):
+    def __init__(self, defaultLogTags=None):
         """
         """
-        self.logTags = defaultLogTags
+        self.logTags = list() if defaultLogTags is None else defaultLogTags
 
 
     def setLogTags(self, logTags):
@@ -125,37 +126,8 @@ def setLogTags(logTags):
 
 # ----------------------------------------------------------------------
 
-# Convenient syslog functions for both Widndows and Linux
-
-sysLogInfo  = None
-sysLogError = None
-
-if os.name == "nt":
-    import servicemanager
-
-    sysLogInfo  = servicemanager.LogInfoMsg
-    sysLogError = servicemanager.LogErrorMsg
-    
-else:
-    import syslog
-
-    def sysLogError(*args):
-        syslog.syslog(syslog.LOG_ERR, *args)
-
-    def sysLogWarn(*args):
-        syslog.syslog(syslog.LOG_WARNING, *args)    
-
-    def sysLogInfo(*args):
-        syslog.syslog(syslog.LOG_INFO, *args)
-
-
-    sysLogInfo  = syslog.syslog
-    sysLogError = syslog.syslog
-
 __all__ = [
     "startLogging", 
     "setLogLevel", 
     "setLogTags",
-    "sysLogError", 
-    "sysLogInfo",
 ]

@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tessdb-server"
+dynamic = ["version"]
+description = "A package to collect measurements published by TESS instruments into a SQlite database"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+    {name = "Rafael González", email = "rafael08@ucm.es"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Environment :: No Input/Output (Daemon)",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+dependencies = [
+   "python-decouple",
+   'ephem',
+   'twisted >= 16.3.0',
+   'twisted-mqtt',
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6",
+]
+
+[project.urls]
+Homepage = "https://github.com/astrorafael/tessdb-server"
+Repository = "https://github.com/astrorafael/tessdb-server.git"
+
+
+[project.scripts]
+tessdb = "tessdb.main:main"
+
+
+# pyproject.toml
+[tool.setuptools_scm]
+write_to = "src/tessdb/_version.py"
+
+[tool.setuptools.packages.find]
+# scanning for namespace packages is true by default in pyproject.toml, so
+# you do NOT need to include the following line.
+namespaces = true
+where = ["src"]
+
+
+[tool.setuptools]
+script-files = [
+    "scripts/tessdb_flush",
+    "scripts/tessdb_pause",
+    "scripts/tessdb_restart",
+    "scripts/tessdb_resume",
+    "scripts/tessdb_stop",
+]
+
+#[tool.setuptools.package-data]
+#"tessdb.dbase.sql" = ["*.sql"]
+#"tessdb.dbase.sql.initial" = ["*.sql"]
+#"tessdb.dbase.sql.updates" = ["*.sql"]
