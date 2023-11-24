@@ -60,7 +60,7 @@ else:
 
 
 
-def loadCfgFile(path):
+def load_config_file(path):
     '''
     Load options from configuration file whose path is given
     Returns a dictionary
@@ -115,6 +115,6 @@ def loadCfgFile(path):
 
 __all__ = [
     "VERSION_STRING", 
-    "loadCfgFile", 
+    "load_config_file", 
     "cmdline",
 ]

@@ -28,10 +28,10 @@ from twisted.internet.threads import deferToThread
 
 from tessdb.service.relopausable import MultiService
 
-from tessdb.config        import VERSION_STRING, loadCfgFile
+from tessdb.config        import VERSION_STRING, load_config_file
 from tessdb.mqttservice   import MQTTService
 from tessdb.filterservice import FilterService
-from tessdb.dbservice     import DBaseService
+from tessdb.dbase.service import DBaseService
 from tessdb.logger        import setLogLevel, setLogTags
 
 # ----------------
@@ -102,7 +102,7 @@ class TESSDBService(MultiService):
         '''
         log.warn("{tessdb} config being reloaded", tessdb=VERSION_STRING)
         try:
-            config_opts  = yield deferToThread(loadCfgFile, self.cfgFilePath)
+            config_opts  = yield deferToThread(load_config_file, self.cfgFilePath)
         except Exception as e:
             log.error("Error trying to reload: {excp!s}", excp=e)
         else:

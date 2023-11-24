@@ -25,11 +25,11 @@ from twisted.application.service import IService
 # -------------
 
 from ._version             import __version__
-from .config               import loadCfgFile
+from .config               import load_config_file
 from .service.relopausable import Service, MultiService, Application
 from .logger               import startLogging
 from .tessdb               import TESSDBService
-from .dbservice            import DBaseService
+from .dbase.service        import DBaseService
 from .mqttservice          import MQTTService
 from .filterservice        import FilterService 
 
@@ -47,51 +47,55 @@ package = __name__.split(".")[0]
 # Auxiliary functions
 # -------------------
 
+def valid_file(path):
+    """File validator for the command line interface"""
+    if not os.path.isfile(path):
+        raise IOError(f"Not valid or existing file: {path}")
+    return path
+
+
 def create_parser():
     '''
     Create and parse the command line for the tessdb package.
     Minimal options are passed in the command line.
     The rest goes into the config file.
-    '''
-    
+    '''    
     # -------------------------------
     # Global options to every command
     # -------------------------------
+
     parser = argparse.ArgumentParser(prog=package, description="TESS Database Server")
     parser.add_argument('--version', action='version', version='{0} {1}'.format(package, __version__), help='print version and exit.')
-    parser.add_argument('-k' , '--console',     action='store_true', help='log to console')
-    parser.add_argument('-c' , '--config',  type=str,  action='store', metavar='<config file>', help='detailed configuration file')
+    parser.add_argument('-k' , '--console',  action='store_true', help='log to console')
+    parser.add_argument('-c' , '--config',  type=valid_file, required=True, metavar='<config file>', help='detailed configuration file')
     parser.add_argument('--log-file',       type=str, default=None,    action='store', metavar='<log file>', help='log file path')
-  
     return parser
 
 
 
 def main():
-	'''The main entry point specified by pyproject.toml'''
-	cmdline_opts = create_parser().parse_args()
-	config_file = cmdline_opts.config
-	if config_file:
-   		options  = loadCfgFile(config_file)
-	else:
-   		options = None
+    '''The main entry point specified by pyproject.toml'''
+    cmdline_opts = create_parser().parse_args()
+    config_file = cmdline_opts.config
+    options  = load_config_file(config_file)
 
-	application = Application("TESSDB")
-	tessdbService  = TESSDBService(options['tessdb'], config_file)
-	tessdbService.setName(TESSDBService.NAME)
-	tessdbService.setServiceParent(application)
-	dbaseService = DBaseService(options['dbase'])
-	dbaseService.setName(DBaseService.NAME)
-	dbaseService.setServiceParent(tessdbService)
-	filterService = FilterService(options['filter'])
-	filterService.setName(FilterService.NAME)
-	filterService.setServiceParent(tessdbService)
-	mqttService = MQTTService(options['mqtt'])
-	mqttService.setName(MQTTService.NAME)
-	mqttService.setServiceParent(tessdbService)
+    url = options['dbase']['connection_string']
+    application = Application("TESSDB")
+    tessdbService  = TESSDBService(options['tessdb'], config_file)
+    tessdbService.setName(TESSDBService.NAME)
+    tessdbService.setServiceParent(application)
+    dbaseService = DBaseService(url, options['dbase'])
+    dbaseService.setName(DBaseService.NAME)
+    dbaseService.setServiceParent(tessdbService)
+    filterService = FilterService(options['filter'])
+    filterService.setName(FilterService.NAME)
+    filterService.setServiceParent(tessdbService)
+    mqttService = MQTTService(options['mqtt'])
+    mqttService.setName(MQTTService.NAME)
+    mqttService.setServiceParent(tessdbService)
 
-	# Start the logging subsystem
-	startLogging(console=cmdline_opts.console, filepath=cmdline_opts.log_file)
-	IService(application).startService()
-	reactor.run()
-	sys.exit(0)
+    # Start the logging subsystem
+    startLogging(console=cmdline_opts.console, filepath=cmdline_opts.log_file)
+    IService(application).startService()
+    reactor.run()
+    sys.exit(0)
