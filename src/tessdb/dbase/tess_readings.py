@@ -155,7 +155,7 @@ class TESSReadings:
             returnValue(None)
         
 
-        row['date_id'], row['time_id'] = roundDateTime(now, self.parent.time.secs_resol)
+        row['date_id'], row['time_id'] = roundDateTime(now, self.parent.options['secs_resolution'])
         row['instr_id'] = tess_id
         row['loc_id']   = location_id
         row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
