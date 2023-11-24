@@ -122,16 +122,6 @@ connection_string = tess.db
 # Reloadable property
 close_when_pause = no
 
-# Limit years (included) for the Date dimension (from Jan 1 to Dec 12)
-# Not reloadable property
-year_start = 2016
-year_end   = 2036
-
-# Date format for the Date dimension (date field)
-# Examples: (%Y/%m/%d => 2015/12/31) (%d/%m/%Y => 31/12/2015)
-# Not reloadable property
-date_fmt = %d/%m/%Y
-
 # Day resolution (in seconds)
 # Must be one of 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1
 # If changed to a lower time span it may be necessary to delete excess rows
