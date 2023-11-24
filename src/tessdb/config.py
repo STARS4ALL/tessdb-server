@@ -86,6 +86,7 @@ def load_config_file(path):
     options['mqtt']['broker']         = parser.get("mqtt","broker")
     options['mqtt']['username']       = parser.get("mqtt","username")
     options['mqtt']['password']       = parser.get("mqtt","password")
+    options['mqtt']['client_id']      = parser.get("mqtt","client_id")
     options['mqtt']['keepalive']      = parser.getint("mqtt","keepalive")
     options['mqtt']['tess_whitelist'] = chop(parser.get("mqtt","tess_whitelist"),',')
     options['mqtt']['tess_blacklist'] = chop(parser.get("mqtt","tess_blacklist"),',')

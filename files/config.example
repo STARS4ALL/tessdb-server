@@ -36,6 +36,9 @@ broker = tcp:test.mosquitto.org:1883
 username = 
 password = 
 
+# Cleint ID to use when connecting to MQTT broker
+client_id = test-tessdb
+
 # Keepalive connection (in seconds)
 # Not reloadable property
 keepalive = 60

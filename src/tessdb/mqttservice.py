@@ -16,7 +16,6 @@ import sys
 import datetime
 import json
 import math
-import platform
 
 # ---------------
 # Twisted imports
@@ -44,8 +43,6 @@ from tessdb.utils  import chop
 # ----------------
 # Module constants
 # ----------------
-
-HOSTNAME = platform.uname()[1]
 
 # Reconencting Service. Default backoff policy parameters
 
@@ -179,7 +176,8 @@ class MQTTService(ClientService):
         self.protocol.onDisconnection = self.onDisconnection
 
         try:
-            yield self.protocol.connect("TwistedMQTT-subs" + '@' + HOSTNAME, 
+            client_id = self.options['client_id']
+            yield self.protocol.connect(client_id, 
                 username=self.options['username'], password=self.options['password'], 
                 keepalive=self.options['keepalive'])
             yield self.subscribe(self.options)
@@ -187,7 +185,7 @@ class MQTTService(ClientService):
             log.error("Connecting to {broker} raised {excp!s}", 
                broker=self.options['broker'], excp=e)
         else:
-            log.info("Connected and subscribed to {broker}", broker=self.options['broker'])
+            log.info("Connected as client '{id}' and subscribed to '{broker}'", id=client_id, broker=self.options['broker'])
        
 
     @inlineCallbacks
