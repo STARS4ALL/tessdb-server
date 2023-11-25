@@ -168,7 +168,7 @@ def _make_database_uuid(connection):
 def create_or_open_database(url):
     connection, new_database = _create_database(url)
     if new_database:
-            log.warn("NEW Created new database file: {url}", url=url)
+        log.warn("NEW Created new database file: {url}", url=url)
     just_created, file_list = _create_schema(connection, SQL_SCHEMA, SQL_INITIAL_DATA_DIR, SQL_UPDATES_DATA_DIR)
     if just_created:
         for sql_file in file_list:

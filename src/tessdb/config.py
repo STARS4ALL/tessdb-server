@@ -82,7 +82,6 @@ def load_config_file(path):
     options['mqtt'] = {}
     options['mqtt']['log_level']      = parser.get("mqtt","log_level")
     options['mqtt']['protocol_log_level'] = parser.get("mqtt","protocol_log_level")
-    options['mqtt']['validation']     = parser.getboolean("mqtt","validation")
     options['mqtt']['broker']         = parser.get("mqtt","broker")
     options['mqtt']['username']       = parser.get("mqtt","username")
     options['mqtt']['password']       = parser.get("mqtt","password")

@@ -95,7 +95,6 @@ class MQTTService(ClientService):
         self.options    = options
         self.topics     = []
         self.regAllowed = False
-        self.validate   = options['validation']
         setLogLevel(namespace=NAMESPACE, levelStr=options['log_level'])
         setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=options['protocol_log_level'])
 
@@ -132,7 +131,6 @@ class MQTTService(ClientService):
 
     @inlineCallbacks
     def reloadService(self, new_options):
-        self.validate  = new_options['validation']
         setLogLevel(namespace=NAMESPACE, levelStr=new_options['log_level'])
         setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=new_options['protocol_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
@@ -281,23 +279,22 @@ class MQTTService(ClientService):
         '''
         log.info("Register message at {now}: {row}", row=row, now=now)
         self.nregister += 1
-        if self.validate:
-            try:
-                if type(row['calib']) == int:
+        try:
+            if type(row['calib']) == int:
                     row['calib'] = float(row['calib'])
-                self.validateRegister(row)
-                self.handleTimestamps(row, now)
-            except ValidationError as e:
-                log.error('Validation error in registration payload={payload!s}', payload=row)
-                log.error('{excp!s}', excp=e)
-            except KeyError as e:
-                log.error('No "calib" keyword sent in registration message={payload!s}', payload=row)
-                log.error('{excp!s}', excp=e)
-            else:
-                log.debug('Enque registration from {log_tag} for DB Writter', log_tag=row['name'])
-                row['name'] = row['name'].lower()  # Get rid of upper case TESS names
-                row['mac']  = row['mac'].upper()   # Ensures MAC address in uppercase
-                self.parent.queue['tess_register'].append(row)
+            self.validateRegister(row)
+            self.handleTimestamps(row, now)
+        except ValidationError as e:
+            log.error('Validation error in registration payload={payload!s}', payload=row)
+            log.error('{excp!s}', excp=e)
+        except KeyError as e:
+            log.error('No "calib" keyword sent in registration message={payload!s}', payload=row)
+            log.error('{excp!s}', excp=e)
+        else:
+            log.debug('Enque registration from {log_tag} for DB Writter', log_tag=row['name'])
+            row['name'] = row['name'].lower()  # Get rid of upper case TESS names
+            row['mac']  = row['mac'].upper()   # Ensures MAC address in uppercase
+            self.parent.queue['tess_register'].append(row)
 
 
     def handleTimestamps(self, row, now):

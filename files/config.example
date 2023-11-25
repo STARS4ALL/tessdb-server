@@ -52,10 +52,6 @@ tess_topic_register = STARS4ALL/register
 # Reloadable property
 tess_topics = STARS4ALL/+/reading
 
-# MQTT payload validation
-# Reloadable property
-validation = yes
-
 # Instrument White List.
 # Discards instruments readings and registrations 
 # whose name do not belong to this comma separated list
