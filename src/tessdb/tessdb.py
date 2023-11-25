@@ -19,7 +19,7 @@ from   collections import deque
 
 from twisted.logger   import Logger, LogLevel
 from twisted.internet import task
-from twisted.internet.defer   import inlineCallbacks, returnValue, DeferredQueue
+from twisted.internet.defer   import inlineCallbacks, DeferredQueue
 from twisted.internet.threads import deferToThread
 
 #--------------
