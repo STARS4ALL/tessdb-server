@@ -42,8 +42,7 @@ SQL_INITIAL_DATA_DIR = files('tessdb.dbase.sql.initial')
 try:
     SQL_UPDATES_DATA_DIR = files('tessdb.dbase.sql.updates')
 except ModuleNotFoundError:
-    SQL_UPDATES_DATA_DIR = None # Whne there are no updates
-
+    SQL_UPDATES_DATA_DIR = None # When there are no updates
 
 #--------------
 # local imports
@@ -103,14 +102,17 @@ def _create_schema(connection, schema_resource, initial_data_dir_path, updates_d
         connection.executescript(schema_resource.read_text())
         log.debug("Created data model from {url}", url=os.path.basename(schema_resource))
         # the filtering part is beacuse Python 3.9 resouce folders
-        file_list = [sql_file for sql_file in initial_data_dir_path.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()]
+        #file_list = [sql_file for sql_file in initial_data_dir_path.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()]
+        file_list = [sql_file for sql_file in initial_data_dir_path.iterdir()]
         for sql_file in file_list:
             log.debug("Populating data model from {path}", path=os.path.basename(sql_file))
             connection.executescript(sql_file.read_text())
     elif updates_data_dir is not None:
+        log.info("CUCUUUU")
         filter_func = _filter_factory(connection)
         # the filtering part is beacuse Python 3.9 resouce folders
-        file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()])
+        #file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()])
+        file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir()])
         file_list = list(filter(filter_func, file_list))
         for sql_file in file_list:
             log.info("Applying updates to data model from {path}", path=os.path.basename(sql_file))
@@ -168,19 +170,19 @@ def _make_database_uuid(connection):
 def create_or_open_database(url):
     connection, new_database = _create_database(url)
     if new_database:
-        log.warn("NEW Created new database file: {url}", url=url)
+        log.warn("Created new database file: {url}", url=url)
     just_created, file_list = _create_schema(connection, SQL_SCHEMA, SQL_INITIAL_DATA_DIR, SQL_UPDATES_DATA_DIR)
     if just_created:
         for sql_file in file_list:
-            log.warn("NEW Populated data model from {url}", url=os.path.basename(sql_file))
+            log.warn("Populated data model from {url}", url=os.path.basename(sql_file))
     else:
         for sql_file in file_list:
-            log.warn("NEW Applied updates to data model from {url}", url=s.path.basename(sql_file))
+            log.warn("Applied updates to data model from {url}", url=os.path.basename(sql_file))
     version = _read_database_version(connection)
     guid    = _make_database_uuid(connection)
-    log.info("NEW Open database: {url}, version = {version}, UUID = {uuid}", url=url, version=version, uuid=guid)
+    log.warn("Open database: {url}, version = {version}, UUID = {uuid}", url=url, version=version, uuid=guid)
     connection.commit()
-    return connection, guid
+    return connection
 
 __all__ = [
     "create_or_open_database",
