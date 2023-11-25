@@ -97,7 +97,6 @@ class MQTTService(ClientService):
         self.regAllowed = False
         setLogLevel(namespace=NAMESPACE, levelStr=options['log_level'])
         setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=options['protocol_log_level'])
-
         self.tess_heads  = [ t.split('/')[0] for t in self.options['tess_topics'] ]
         self.tess_tails  = [ t.split('/')[2] for t in self.options['tess_topics'] ]
         self.factory     = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
@@ -333,20 +332,19 @@ class MQTTService(ClientService):
         Handle actual reqadings data coming from onPublish()
         '''
         self.nreadings += 1
-        if self.validate:
-            try:
-                self.validateReadings(row)
-                self.handleTimestamps(row, now)
-            except ValidationError as e:
-                log.error('Validation error in readings payload={payload!s}', payload=row)
-            except IncorrectTimestampError as e:
-                log.error("Source timestamp unknown format {tstamp}", tstamp=row['tstamp'])
-            except Exception as e:
-                log.error('{excp!s}', excp=e)
-            else:
-                log.debug('Enqueue reading from {log_tag} for DB Writter', log_tag=row['name'])
-                row['name'] = row['name'].lower() # Get rid of upper case TESS names
-                self.parent.queue['tess_readings'].put(row)
+        try:
+            self.validateReadings(row)
+            self.handleTimestamps(row, now)
+        except ValidationError as e:
+            log.error('Validation error in readings payload={payload!s}', payload=row)
+        except IncorrectTimestampError as e:
+            log.error("Source timestamp unknown format {tstamp}", tstamp=row['tstamp'])
+        except Exception as e:
+            log.error('{excp!s}', excp=e)
+        else:
+            log.debug('Enqueue reading from {log_tag} for DB Writter', log_tag=row['name'])
+            row['name'] = row['name'].lower() # Get rid of upper case TESS names
+            self.parent.queue['tess_readings'].put(row)
 
 
     def onDisconnection(self, reason):
