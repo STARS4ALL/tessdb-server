@@ -68,7 +68,7 @@ script-files = [
     "scripts/tessdb_stop",
 ]
 
-#[tool.setuptools.package-data]
-#"tessdb.dbase.sql" = ["*.sql"]
-#"tessdb.dbase.sql.initial" = ["*.sql"]
-#"tessdb.dbase.sql.updates" = ["*.sql"]
+[tool.setuptools.package-data]
+"tessdb.dbase.sql" = ["*.sql"]
+"tessdb.dbase.sql.initial" = ["*.sql"]
+"tessdb.dbase.sql.updates" = ["*.sql"]

@@ -14,5 +14,5 @@ my*
 sftp-config.json
 .venv
 .env
-_src/tessdb/_version.py
+src/tessdb/_version.py
 

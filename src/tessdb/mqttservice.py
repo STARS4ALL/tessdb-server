@@ -250,6 +250,9 @@ class MQTTService(ClientService):
             raise ReadingTypeError('height', float, type(row['height']))
         if 'wdBm' in row and type(row['wdBm']) != int:
             raise ReadingTypeError('wdBm', int, type(row['wdBm']))
+         # new field value for readings consistency check
+        if 'hash' in row and not (type(row['hash']) == str or type(row['hash']) == unicode):
+            raise ReadingTypeError('hash', str, type(row['hash']))
 
 
     def validateRegister(self, row):
@@ -270,6 +273,7 @@ class MQTTService(ClientService):
         # optionals field values in Payload V1 format
         if 'chan' in row and not (type(row['chan']) == str or type(row['chan']) == unicode):
             raise ReadingTypeError('chan', str, type(row['chan']))
+       
 
 
     def handleRegistration(self, row, now):
