@@ -39,7 +39,7 @@ from twisted.trial import unittest
 from twisted.test  import proto_helpers
 from twisted.logger   import Logger, LogLevel
 from twisted.internet import reactor
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed
+from twisted.internet.defer import inlineCallbacks
 from twisted.internet.task import deferLater
 
 #--------------

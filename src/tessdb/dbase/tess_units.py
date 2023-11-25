@@ -33,8 +33,7 @@ import os
 # Twisted imports
 # ---------------
 
-from twisted.internet.defer import inlineCallbacks, returnValue
-from twisted.internet.threads import deferToThread
+from twisted.internet.defer import inlineCallbacks
 from twisted.logger         import Logger
 
 #--------------
@@ -105,5 +104,5 @@ class TESSUnits:
         if self._id.get(timestamp_source) is None:
             row = yield queryLatest(self.pool, timestamp_source)
             self._id[timestamp_source] = row[0][0]
-        returnValue(self._id[timestamp_source])
+        return self._id[timestamp_source]
    

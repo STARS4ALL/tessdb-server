@@ -34,9 +34,7 @@ import datetime
 # Twisted imports
 # ---------------
 
-from twisted.internet         import defer
-from twisted.internet.defer   import inlineCallbacks, returnValue
-from twisted.internet.threads import deferToThread
+from twisted.internet.defer   import inlineCallbacks
 from twisted.logger           import Logger
 
 #--------------

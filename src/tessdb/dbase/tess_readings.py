@@ -35,7 +35,7 @@ import ephem
 # Twisted imports
 # ---------------
 
-from twisted.internet.defer import inlineCallbacks, returnValue, succeed
+from twisted.internet.defer import inlineCallbacks
 from twisted.logger         import Logger
 
 #--------------
@@ -141,7 +141,7 @@ class TESSReadings:
         if not len(tess):
             log.warn("TESSReadings.update(): No TESS {log_tag} registered !", log_tag=row['name'])
             self.rejNotRegistered += 1
-            returnValue(None)
+            return None
 
         tess        = tess[0]  # Keep only the first row of result set
         tess_id     = tess[0]  # fancy aliases for columns
@@ -152,7 +152,7 @@ class TESSReadings:
         if self.authFilter and not authorised:
             log.debug("TESSReadings.update({log_tag}): not authorised", log_tag=row['name'])
             self.rejNotAuthorised += 1
-            returnValue(None)
+            return None
         
 
         row['date_id'], row['time_id'] = roundDateTime(now, self.parent.options['secs_resolution'])
