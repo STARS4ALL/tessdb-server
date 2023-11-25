@@ -72,15 +72,7 @@ def _filter_factory(connection):
     if not result:
         raise NotImplementedError(VERSION_QUERY)
     version = int(result[0])
-    def _sql_file_version(path):
-        path = os.path.basename(path)[:2]
-        try:
-            flag = int(path) > version
-        except ValueError:
-            flag = False
-        return flag
-    return _sql_file_version
-
+    return lambda path: int(os.path.basename(path)[:2]) > version
 
 # -------------------------
 # Module private functions
@@ -110,13 +102,15 @@ def _create_schema(connection, schema_resource, initial_data_dir_path, updates_d
     if not created:
         connection.executescript(schema_resource.read_text())
         log.debug("Created data model from {url}", url=os.path.basename(schema_resource))
-        file_list = [sql_file for sql_file in initial_data_dir_path.iterdir()]
+        # the filtering part is beacuse Python 3.9 resouce folders
+        file_list = [sql_file for sql_file in initial_data_dir_path.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()]
         for sql_file in file_list:
             log.debug("Populating data model from {path}", path=os.path.basename(sql_file))
             connection.executescript(sql_file.read_text())
     elif updates_data_dir is not None:
         filter_func = _filter_factory(connection)
-        file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir()])
+        # the filtering part is beacuse Python 3.9 resouce folders
+        file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()])
         file_list = list(filter(filter_func, file_list))
         for sql_file in file_list:
             log.info("Applying updates to data model from {path}", path=os.path.basename(sql_file))
