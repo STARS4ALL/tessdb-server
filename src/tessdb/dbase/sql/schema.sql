@@ -186,6 +186,7 @@ CREATE TABLE tess_readings_t
     latitude            REAL,
     height              REAL, 
     signal_strength     INTEGER,
+    hash                TEXT, -- to verify readings
 
     PRIMARY KEY (date_id, time_id, tess_id)
 );
