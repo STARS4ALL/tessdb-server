@@ -126,7 +126,6 @@ class DBaseService(Service):
         if self.options['secs_resolution'] not in self.SECS_RESOLUTION:
             raise DiscreteValueError(self.options['secs_resolution'], self.SECS_RESOLUTION)
         connection, uuid = create_or_open_database(self.path)
-        connection.commit()
         connection.close()
         super().startService()
         setLogLevel(namespace=NAMESPACE, levelStr=self.options['log_level'])
