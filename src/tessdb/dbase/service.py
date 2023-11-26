@@ -263,6 +263,7 @@ class DBaseService(Service):
                     yield self.update(row)
         except Exception as e:
             log.error('DB Writter. Unexpected exception: {excp!s}', excp=e)
+            log.failure('DB Writter. Unexpected exception detail')
         self.timeStatList.append( (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds())
         self.nrowsStatList.append(l0)
         self.later = reactor.callLater(self.T_QUEUE_POLL, self.writter)
