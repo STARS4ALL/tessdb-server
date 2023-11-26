@@ -27,6 +27,7 @@
 # System wide imports
 # -------------------
 
+import sqlite3
 
 # ---------------
 # Twisted imports
