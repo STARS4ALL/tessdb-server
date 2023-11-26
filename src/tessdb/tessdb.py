@@ -123,9 +123,8 @@ class TESSDBService(MultiService):
         self.mqttService.resetCounters()
         self.dbaseService.resetCounters()
 
-    @inlineCallbacks
     def logCounters(self):
         '''log stat counters'''
         self.mqttService.logCounters()
-        yield self.dbaseService.logCounters()
+        self.dbaseService.logCounters()
         self.resetCounters()

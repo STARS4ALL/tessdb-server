@@ -200,7 +200,7 @@ class DBaseService(Service):
             efficiency = (100 * N * self.T_QUEUE_POLL) / float(self.parent.T_STAT)
         return ((timeStats, rowsStats), efficiency, N)
 
-    @inlineCallbacks
+
     def logCounters(self):
         '''log stat counters'''
         
@@ -216,7 +216,7 @@ class DBaseService(Service):
         labelReg, resultReg = self.tess.getCounters()
 
         # Efficiency stats
-        resultEff = yield deferToThread(self.getCounters)
+        resultEff = self.getCounters()
 
         # Readings statistics
         log.info("DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
