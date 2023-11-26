@@ -9,8 +9,6 @@
 # System wide imports
 # -------------------
 
-
-import os
 import datetime
 
 # ---------------
@@ -261,8 +259,7 @@ class DBaseService(Service):
                     row = self.parent.queue['tess_filtered_readings'].popleft()
                     yield self.update(row)
         except Exception as e:
-            log.error('DB Writter. Unexpected exception: {excp!s}', excp=e)
-            log.failure('DB Writter. Unexpected exception detail')
+            log.failure('DB Writter. Unexpected exception. Stack trace follows:')
         self.timeStatList.append( (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds())
         self.nrowsStatList.append(l0)
         self.later = reactor.callLater(self.T_QUEUE_POLL, self.writter)
