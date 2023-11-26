@@ -195,7 +195,7 @@ class TESSReadings:
                 magnitude,
                 ambient_temperature,
                 sky_temperature,
-                azimith,
+                azimuth,
                 altitude,
                 longitude,
                 latitude,
