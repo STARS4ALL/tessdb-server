@@ -83,7 +83,7 @@ class UpdateUnregisteredTestCase(unittest.TestCase):
         Test insert reading with no instrument registered.
         It should not be inserted
         '''
-        now = datetime.datetime.utcnow() 
+        now = datetime.datetime.now(datetime.timezone.utc) 
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}
         yield self.db.update(row)
         self.assertEqual(self.db.tess_readings.nreadings,       1)
@@ -116,7 +116,7 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         Test insert a reading with instrument registered.
         It should be inserted
         '''
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}
         yield self.db.update(row)
         self.assertEqual(self.db.tess_readings.nreadings,       1)
@@ -133,7 +133,7 @@ class UpdateRegisteredTestCase(unittest.TestCase):
         Test fast inserting two readings with instrument registered.
         The first one should be inserted, the second one not.
         '''
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}
         yield self.db.update(row)
         row = { 'name': 'test1', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 'tstamp': now, 'tstamp_src': 'Subscriber'}

@@ -365,7 +365,7 @@ class MQTTService(ClientService):
         '''
         MQTT Publish message Handler
         '''
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         self.npublish += 1
         log.debug("payload={payload}", payload=payload)
         try:

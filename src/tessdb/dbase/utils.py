@@ -62,12 +62,12 @@ def roundDateTime(ts, secs_resol):
 
 def utcnoon():
     '''Returns the ephem Date object at today's noon'''
-    return ephem.Date(datetime.datetime.utcnow().replace(hour=12, minute=0, second=0,microsecond=0))
+    return ephem.Date(datetime.datetime.now(datetime.timezone.utc).replace(hour=12, minute=0, second=0,microsecond=0))
 
 
 def utcnow():
     '''Returns now's ephem Date object '''
-    return ephem.Date(datetime.datetime.utcnow())
+    return ephem.Date(datetime.datetime.now(datetime.timezone.utc))
 
 
 def isDaytime(sunrise, sunset, now):

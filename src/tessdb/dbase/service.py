@@ -73,15 +73,15 @@ def utcstart():
 
 def utcnoon():
     '''Returns the ephem Date object at today's noon'''
-    return ephem.Date(datetime.datetime.utcnow().replace(hour=12, minute=0, second=0,microsecond=0))
+    return ephem.Date(datetime.datetime.now(datetime.timezone.utc).replace(hour=12, minute=0, second=0,microsecond=0))
 
 def utcmidnight():
     '''Returns the ephem Date object at today's midnight'''
-    return ephem.Date(datetime.datetime.utcnow().replace(hour=0, minute=0, second=0,microsecond=0))
+    return ephem.Date(datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0,microsecond=0))
 
 def utcnow():
     '''Returns now's ephem Date object '''
-    return ephem.Date(datetime.datetime.utcnow())
+    return ephem.Date(datetime.datetime.now(datetime.timezone.utc))
 
 
 
@@ -273,7 +273,7 @@ class DBaseService(Service):
         Periodic task that takes rows from the queues
         and update them to database
         '''
-        t0 = datetime.datetime.utcnow()
+        t0 = datetime.datetime.now(datetime.timezone.utc)
         l0 = len(self.parent.queue['tess_filtered_readings']) + len(self.parent.queue['tess_register'])
         if not self.paused:
             while len(self.parent.queue['tess_register']):
@@ -282,7 +282,7 @@ class DBaseService(Service):
             while len(self.parent.queue['tess_filtered_readings']):
                 row = self.parent.queue['tess_filtered_readings'].popleft()
                 yield self.update(row)
-        self.timeStatList.append( (datetime.datetime.utcnow() - t0).total_seconds())
+        self.timeStatList.append( (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds())
         self.nrowsStatList.append(l0)
         self.later = reactor.callLater(self.T_QUEUE_POLL,self.writter)
         
