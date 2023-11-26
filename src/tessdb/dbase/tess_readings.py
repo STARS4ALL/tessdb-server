@@ -119,7 +119,7 @@ class TESSReadings:
         Takes care of optional fields
         Returns a Deferred.
         '''
-        row = to_tess_readings_dict(row)
+        row = self.to_tess_readings_dict(row)
         now = row['tstamp'] 
         self.nreadings += 1
         ret = 0
