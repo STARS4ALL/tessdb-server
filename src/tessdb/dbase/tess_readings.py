@@ -27,9 +27,6 @@
 # System wide imports
 # -------------------
 
-import datetime
-import math
-import ephem
 
 # ---------------
 # Twisted imports
@@ -43,7 +40,7 @@ from twisted.logger         import Logger
 # -------------
 
 from . import NAMESPACE
-from .utils import roundDateTime, isDaytime
+from .utils import roundDateTime
 
 from tessdb.logger import setLogLevel
 from tessdb.error import ReadingKeyError, ReadingTypeError

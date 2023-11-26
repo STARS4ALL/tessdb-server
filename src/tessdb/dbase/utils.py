@@ -11,7 +11,6 @@
 
 import os
 import datetime
-import ephem
 
 # ---------------
 # Twisted imports
@@ -58,38 +57,3 @@ def roundDateTime(ts, secs_resol):
     time_id = tsround.hour*10000 + tsround.minute*100 + tsround.second
     date_id = tsround.year*10000 + tsround.month *100 + tsround.day
     return date_id, time_id
-
-
-def utcnoon():
-    '''Returns the ephem Date object at today's noon'''
-    return ephem.Date(datetime.datetime.now(datetime.timezone.utc).replace(hour=12, minute=0, second=0,microsecond=0))
-
-
-def utcnow():
-    '''Returns now's ephem Date object '''
-    return ephem.Date(datetime.datetime.now(datetime.timezone.utc))
-
-
-def isDaytime(sunrise, sunset, now):
-    '''
-    Test if it is daytime for a given observer
-    'sunrise' and 'sunset' are timestamp strings.
-    'now' is a datetime.datetime object or timestamp string
-    '''
-    # sunrise, sunset comes from the DB and are UNICODE strings
-    # pyephem doesn't like unicode strings
-    sunrise = str(sunrise)
-    sunset = str(sunset)
-    if sunrise == NEVER_UP:
-        return False
-    if sunrise == ALWAYS_UP:
-        return True
-    sunrise = ephem.Date(sunrise)
-    sunset = ephem.Date(sunset)
-    now = ephem.Date(now)
-    # In locations near Grenwich: (prev) sunrise < (next) sunset
-    # In location far away from Greenwich: (prev) sunset < (next) sunrise
-    if sunrise < sunset:
-        return  sunrise < now  < sunset
-    else: 
-        return not (sunset < now  < sunrise)

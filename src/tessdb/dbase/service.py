@@ -62,28 +62,6 @@ def getPool(*args, **kargs):
     kargs['check_same_thread'] = False
     return adbapi.ConnectionPool("sqlite3", *args, **kargs)
 
-# ------------------------
-# Module Utility Functions
-# ------------------------
-
-
-def utcstart():
-    '''Returns the ephem Date object at the beginning of our valid time'''
-    return ephem.Date("0001/1/1 00:00:00")
-
-def utcnoon():
-    '''Returns the ephem Date object at today's noon'''
-    return ephem.Date(datetime.datetime.now(datetime.timezone.utc).replace(hour=12, minute=0, second=0,microsecond=0))
-
-def utcmidnight():
-    '''Returns the ephem Date object at today's midnight'''
-    return ephem.Date(datetime.datetime.now(datetime.timezone.utc).replace(hour=0, minute=0, second=0,microsecond=0))
-
-def utcnow():
-    '''Returns now's ephem Date object '''
-    return ephem.Date(datetime.datetime.now(datetime.timezone.utc))
-
-
 
 # --------------
 # Module Classes
