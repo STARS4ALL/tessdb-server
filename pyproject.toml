@@ -8,12 +8,11 @@ dynamic = ["version"]
 description = "A package to collect measurements published by TESS instruments into a SQlite database"
 readme = "README.md"
 requires-python = ">=3.6"
-license = {text = "GPL-3.0-or-later"}
+license = {text = "MIT"}
 authors = [
     {name = "Rafael González", email = "rafael08@ucm.es"},
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -28,8 +27,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 dependencies = [
-   "python-decouple",
-   'ephem',
    'twisted >= 16.3.0',
    'twisted-mqtt',
 ]
@@ -43,12 +40,12 @@ test = [
 Homepage = "https://github.com/astrorafael/tessdb-server"
 Repository = "https://github.com/astrorafael/tessdb-server.git"
 
-
 [project.scripts]
 tessdb = "tessdb.main:main"
 
-
 # pyproject.toml
+# Autimatically generates a _version-py file from with Git information
+# This file shold be placed in .gitignore
 [tool.setuptools_scm]
 write_to = "src/tessdb/_version.py"
 
@@ -57,7 +54,6 @@ write_to = "src/tessdb/_version.py"
 # you do NOT need to include the following line.
 namespaces = true
 where = ["src"]
-
 
 [tool.setuptools]
 script-files = [
