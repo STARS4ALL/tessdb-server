@@ -253,16 +253,19 @@ class DBaseService(Service):
         '''
         t0 = datetime.datetime.now(datetime.timezone.utc)
         l0 = len(self.parent.queue['tess_filtered_readings']) + len(self.parent.queue['tess_register'])
-        if not self.paused:
-            while len(self.parent.queue['tess_register']):
-                row = self.parent.queue['tess_register'].popleft()
-                yield self.register(row)
-            while len(self.parent.queue['tess_filtered_readings']):
-                row = self.parent.queue['tess_filtered_readings'].popleft()
-                yield self.update(row)
+        try:
+            if not self.paused:
+                while len(self.parent.queue['tess_register']):
+                    row = self.parent.queue['tess_register'].popleft()
+                    yield self.register(row)
+                while len(self.parent.queue['tess_filtered_readings']):
+                    row = self.parent.queue['tess_filtered_readings'].popleft()
+                    yield self.update(row)
+        except Exception as e:
+            log.error('DB Writter. Unexpected exception: {excp!s}', excp=e)
         self.timeStatList.append( (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds())
         self.nrowsStatList.append(l0)
-        self.later = reactor.callLater(self.T_QUEUE_POLL,self.writter)
+        self.later = reactor.callLater(self.T_QUEUE_POLL, self.writter)
         
       
     # ==============
