@@ -164,7 +164,7 @@ class TESSReadings:
     # Helper methods
     # ==============
  
-    def to_tess_readings_dict(self, row):
+    def to_tess_readings_dict(row):
         '''Adapts the dictionary decoded by the MQTT subscriber to the row being written in the database'''
         for key in OPTIONAL_FIELDS:
             row[key] = row.get(key) # create it with None if not already present
