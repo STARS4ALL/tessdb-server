@@ -49,6 +49,7 @@ from tessdb.error import ReadingKeyError, ReadingTypeError
 # Module Constants
 # ----------------
 
+OPTIONAL_FIELDS = ('az', 'alt', 'long', 'lat', 'height', 'wdBm', 'hash')
 
 # -----------------------
 # Module Global Variables
@@ -114,22 +115,11 @@ class TESSReadings:
     @inlineCallbacks
     def update(self, row):
         '''
-        Update process
-        row is a tuple with the following mandatory keywords:
-        - seq
-        - name
-        - freq
-        - mag
-        - tamb
-        - tsky
-        and the following optional keywords:
-        - az
-        - alt
-        - long
-        - lat
-        - height
+        Update tess_readings_t with a new row
+        Takes care of optional fields
         Returns a Deferred.
         '''
+        row = to_tess_readings_dict(row)
         now = row['tstamp'] 
         self.nreadings += 1
         ret = 0
@@ -139,29 +129,23 @@ class TESSReadings:
             log.warn("TESSReadings.update(): No TESS {log_tag} registered !", log_tag=row['name'])
             self.rejNotRegistered += 1
             return None
-
         tess        = tess[0]  # Keep only the first row of result set
         tess_id     = tess[0]  # fancy aliases for columns
         location_id = tess[3]
         authorised  = tess[5] == 1
 
-        # Review authorisation if this filtering is enabled
+        # Review authorisation if this filter is enabled
         if self.authFilter and not authorised:
             log.debug("TESSReadings.update({log_tag}): not authorised", log_tag=row['name'])
             self.rejNotAuthorised += 1
             return None
-        
-
         row['date_id'], row['time_id'] = roundDateTime(now, self.parent.options['secs_resolution'])
         row['instr_id'] = tess_id
         row['loc_id']   = location_id
         row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
         log.debug("TESSReadings.update({log_tag}): About to write to DB {row!s}", log_tag=row['name'], row=row)
-        n = self.which(row)
-        # Get the appropriate decoder function
-        myupdater = getattr(self, "update{0}".format(n), None)
         try:
-            yield myupdater(row)
+            yield self._update(row)
         except sqlite3.IntegrityError as e:
             # We are experiencing this error lately.
             # With the INSERT OR IGNORE this error could never happen
@@ -178,6 +162,12 @@ class TESSReadings:
     # ==============
     # Helper methods
     # ==============
+ 
+    def to_tess_readings_dict(row):
+        '''Adapts the dictionary decoded by the MQTT subscriber to the row being written in the database'''
+        for key in OPTIONAL_FIELDS:
+            row[key] = row.get(key) # create it with None if not already present
+        return row
 
     def setOptions(self, auth_filter):
         '''
@@ -185,309 +175,10 @@ class TESSReadings:
         '''
         self.authFilter     = auth_filter
 
-    def which(self, row):
-        '''Find which updateN method must be used'''
-        t = 0x00
-        incoming  = set(row.keys())
-        opt1      = set(['az','alt'])
-        opt2      = set(['lat','long','height'])
-        opt3      = set(['wdBm']) 
-        if opt1 <= incoming:
-            t |= 0x01
-        if opt2 <= incoming:
-            t |= 0x02
-        if opt3 <= incoming:
-            t |= 0x04
-        return t
 
-    def update0(self, row):
+    def _update(self, row):
         '''
-        Insert a new sample into the table. Version with:
-        - no GPS nor Accelerometer
-        - no Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
-        '''
-        return self.pool.runOperation( 
-            '''
-            INSERT INTO tess_readings_t (
-                date_id,
-                time_id,
-                tess_id,
-                location_id,
-                units_id,
-                sequence_number,
-                frequency,
-                magnitude,
-                ambient_temperature,
-                sky_temperature
-            ) VALUES (
-                :date_id,
-                :time_id,
-                :instr_id,
-                :loc_id,
-                :units_id,
-                :seq,
-                :freq,
-                :mag,
-                :tamb,
-                :tsky
-            )
-            ''', row)
-
-
-    def update1(self, row):
-        '''
-        Insert a new sample into the table. 
-        Version with:
-        - Accelerometer and no GPS
-        - no Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
-        '''
-        return self.pool.runOperation( 
-            '''
-            INSERT INTO tess_readings_t (
-                date_id,
-                time_id,
-                tess_id,
-                location_id,
-                units_id,
-                sequence_number,
-                frequency,
-                magnitude,
-                ambient_temperature,
-                sky_temperature,
-                azimith,
-                altitude
-            ) VALUES (
-                :date_id,
-                :time_id,
-                :instr_id,
-                :loc_id,
-                :units_id,
-                :seq,
-                :freq,
-                :mag,
-                :tamb,
-                :tsky,
-                :az,
-                :alt
-            )
-            ''', row)
-
-
-    def update2(self, row):
-        '''
-        Insert a new sample into the table. Version with:
-        - GPS and no Accelerometer
-        - no Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
-        '''
-        return self.pool.runOperation( 
-            '''
-            INSERT INTO tess_readings_t (
-                date_id,
-                time_id,
-                tess_id,
-                location_id,
-                units_id,
-                sequence_number,
-                frequency,
-                magnitude,
-                ambient_temperature,
-                sky_temperature,
-                longitude,
-                latitude,
-                height
-            ) VALUES (
-                :date_id,
-                :time_id,
-                :instr_id,
-                :loc_id,
-                :units_id,
-                :seq,
-                :freq,
-                :mag,
-                :tamb,
-                :tsky,
-                :long,
-                :lat,
-                :height
-            )
-            ''', row)
-
-    def update3(self, row):
-        '''
-        Insert a new sample into the table. Version with:
-        - GPS and Accelerometer
-        - no Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
-        '''
-
-        return self.pool.runOperation( 
-            '''
-            INSERT INTO tess_readings_t (
-                date_id,
-                time_id,
-                tess_id,
-                location_id,
-                units_id,
-                sequence_number,
-                frequency,
-                magnitude,
-                ambient_temperature,
-                sky_temperature,
-                azimith,
-                altitude,
-                longitude,
-                latitude,
-                height
-            ) VALUES (
-                :date_id,
-                :time_id,
-                :instr_id,
-                :loc_id,
-                :units_id,
-                :seq,
-                :freq,
-                :mag,
-                :tamb,
-                :tsky,
-                :az,
-                :alt,
-                :long,
-                :lat,
-                :height
-            )
-            ''', row)
-
-
-    def update4(self, row):
-        '''
-        Insert a new sample into the table. Version with:
-        - no GPS nor Accelerometer
-        - Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
-        '''
-        return self.pool.runOperation( 
-            '''
-            INSERT INTO tess_readings_t (
-                date_id,
-                time_id,
-                tess_id,
-                location_id,
-                units_id,
-                sequence_number,
-                frequency,
-                magnitude,
-                ambient_temperature,
-                sky_temperature,
-                signal_strength
-            ) VALUES (
-                :date_id,
-                :time_id,
-                :instr_id,
-                :loc_id,
-                :units_id,
-                :seq,
-                :freq,
-                :mag,
-                :tamb,
-                :tsky,
-                :wdBm
-            )
-            ''', row)
-
-
-    def update5(self, row):
-        '''
-        Insert a new sample into the table. 
-        Version with:
-        - Accelerometer and no GPS
-        - Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
-        '''
-        return self.pool.runOperation( 
-            '''
-            INSERT INTO tess_readings_t (
-                date_id,
-                time_id,
-                tess_id,
-                location_id,
-                units_id,
-                sequence_number,
-                frequency,
-                magnitude,
-                ambient_temperature,
-                sky_temperature,
-                azimith,
-                altitude,
-                signal_strength
-            ) VALUES (
-                :date_id,
-                :time_id,
-                :instr_id,
-                :loc_id,
-                :units_id,
-                :seq,
-                :freq,
-                :mag,
-                :tamb,
-                :tsky,
-                :az,
-                :alt,
-                :wdBm
-            )
-            ''', row)
-
-
-    def update6(self, row):
-        '''
-        Insert a new sample into the table. Version with:
-        - GPS and no Accelerometer
-        - Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
-        '''
-        return self.pool.runOperation( 
-            '''
-            INSERT INTO tess_readings_t (
-                date_id,
-                time_id,
-                tess_id,
-                location_id,
-                units_id,
-                sequence_number,
-                frequency,
-                magnitude,
-                ambient_temperature,
-                sky_temperature,
-                longitude,
-                latitude,
-                height,
-                signal_strength
-            ) VALUES (
-                :date_id,
-                :time_id,
-                :instr_id,
-                :loc_id,
-                :units_id,
-                :seq,
-                :freq,
-                :mag,
-                :tamb,
-                :tsky,
-                :long,
-                :lat,
-                :height,
-                :wdBm
-            )
-            ''', row)
-
-    def update7(self, row):
-        '''
-        Insert a new sample into the table. Version with:
-        - GPS and Accelerometer
-        - Received Signal Strength
-        'row' is a dictionary with at least the following keys shown in the VALUES clause.
+        Insert a new sample into the table.
         '''
 
         return self.pool.runOperation( 
@@ -508,7 +199,8 @@ class TESSReadings:
                 longitude,
                 latitude,
                 height,
-                signal_strength
+                signal_strength,
+                hash
             ) VALUES (
                 :date_id,
                 :time_id,
@@ -525,6 +217,7 @@ class TESSReadings:
                 :long,
                 :lat,
                 :height,
-                :wdBm
+                :wdBm,
+                :hash
             )
             ''', row)
