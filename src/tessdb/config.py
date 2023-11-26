@@ -94,8 +94,7 @@ def load_config_file(path):
 
     options['dbase'] = {}
     options['dbase']['log_level']         = parser.get("dbase","log_level")
-    options['dbase']['register_log_level'] = parser.get("dbase","register_log_level")
-    options['dbase']['type']              = parser.get("dbase","type")
+    options['dbase']['register_log_level']= parser.get("dbase","register_log_level")
     options['dbase']['connection_string'] = parser.get("dbase","connection_string")
     options['dbase']['secs_resolution']   = parser.getint("dbase","secs_resolution")
     options['dbase']['auth_filter']       = parser.getboolean("dbase","auth_filter")

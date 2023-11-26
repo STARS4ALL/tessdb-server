@@ -177,7 +177,7 @@ def create_or_open_database(url):
             log.warn("Applied updates to data model from {url}", url=os.path.basename(sql_file))
     version = _read_database_version(connection)
     guid    = _make_database_uuid(connection)
-    log.warn("Open database: {url}, version = {version}, UUID = {uuid}", url=url, version=version, uuid=guid)
+    log.warn("Open database: {url}, data model version = {version}, UUID = {uuid}", url=url, version=version, uuid=guid)
     connection.commit()
     return connection
 

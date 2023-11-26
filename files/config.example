@@ -108,11 +108,7 @@ log_level = info
 # Database configuration section
 [dbase]
 
-# Database tyoe. Currently it only supports sqlite3
-# Not reloadable property
-type = sqlite3
-
-# For SQLite, this is the full path name to the database file
+# The SQLite full path name to the database file
 # Reloadable property, but see below
 connection_string = tess.db
 

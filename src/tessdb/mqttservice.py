@@ -113,7 +113,7 @@ class MQTTService(ClientService):
     # -----------
     
     def startService(self):
-        log.info("starting MQTT Client Service")
+        log.info("Starting MQTT Client Service")
         # invoke whenConnected() inherited method
         self.whenConnected().addCallback(self.connectToBroker)
         ClientService.startService(self)

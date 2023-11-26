@@ -100,9 +100,7 @@ class DBaseService(Service):
     SECS_RESOLUTION = [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
 
     def __init__(self, path,  options, **kargs):
-        super().__init__()   
-        if options['type'] != "sqlite3":
-            raise NotImplementedError(f"Database type not implemented: {options['type']}")
+        super().__init__()
         self.path = path
         self.pool = None
         self.preferences = None

@@ -88,7 +88,7 @@ class FilterService(Service):
     # -----------
     
     def startService(self):
-        log.info("starting Filtering Service with depth = {depth}",depth=self.depth)
+        log.info("Starting Filtering Service with depth = {depth}",depth=self.depth)
         if not self.enabled:
             log.warn("actual filtering is disabled, passing all samples to the database qeeue")
         reactor.callLater(0, self.filter)

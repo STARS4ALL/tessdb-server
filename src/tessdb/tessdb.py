@@ -71,7 +71,7 @@ class TESSDBService(MultiService):
     # -----------
 
     def startService(self):
-        log.info('starting {tessdb}', tessdb=VERSION_STRING)
+        log.info('Starting TessDB {tessdb}', tessdb=VERSION_STRING)
         self.dbaseService   = self.getServiceNamed(DBaseService.NAME)
         self.filterService  = self.getServiceNamed(FilterService.NAME)
         self.mqttService    = self.getServiceNamed(MQTTService.NAME)
