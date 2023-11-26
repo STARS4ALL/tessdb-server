@@ -11,7 +11,7 @@
 
 
 import os
-import sqlite3
+#import sqlite3 force error on purpose
 import datetime
 
 # ---------------
