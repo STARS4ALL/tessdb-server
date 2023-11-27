@@ -89,6 +89,7 @@ class DBaseService(Service):
         self.tess           = TESS()
         self.tess_units     = TESSUnits()
         self.tess_readings  = TESSReadings(self)
+        self.tess_readings.setOptions(auth_filter=options['auth_filter'])
     
     #------------
     # Service API

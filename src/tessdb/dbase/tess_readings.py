@@ -72,7 +72,6 @@ class TESSReadings:
    
     def __init__(self, parent):
         '''Create the SQLite TESS Readings table'''
-
         self.parent = parent
         self.pool = None
         self.setOptions(auth_filter=True)
