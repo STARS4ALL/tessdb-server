@@ -163,16 +163,14 @@ class DBaseService(Service):
         log.info('TESS database writer paused')
         if not self.paused:
             self.paused = True
-            if self.options["close_when_pause"]:
-                self.closePool()
+            self.closePool()
         return defer.succeed(None)
 
 
     def resumeService(self):
         log.info('TESS database writer resumed')
         if self.paused:
-            if self.options["close_when_pause"]:
-                self.openPool()
+            self.openPool()
             self.paused = False
         return defer.succeed(None)
 
