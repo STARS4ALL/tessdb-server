@@ -33,7 +33,7 @@ def chop(string, sep=None):
     strips individual string items from leading and trailing blanks'''
     chopped = [ elem.strip() for elem in string.split(sep) ]
     if len(chopped) == 1 and chopped[0] == '':
-    	chopped = []
+        chopped = []
     return chopped
 
 # This allows to register photometers like SQMs, which don't have a MAC
@@ -44,9 +44,9 @@ def formatted_mac(mac):
     Otherwise properly formats it. Do not allow for invalid digits.
     '''
     try:
-    	mac_parts = mac.split(':')
-    	if len(mac_parts) != 6:
-    		return mac
+        mac_parts = mac.split(':')
+        if len(mac_parts) != 6:
+            return mac
         corrected_mac = ':'.join(f"{int(x,16):02X}" for x in mac_parts)
     except ValueError:
         raise ValueError("Invalid MAC: %s" % mac)
