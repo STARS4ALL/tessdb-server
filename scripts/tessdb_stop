@@ -1,0 +1,9 @@
+#!/bin/bash
+# This script restarts tessdb but first flushes the filter
+echo -n "flushing the daylight filter ..."
+systemctl kill -s WINCH tessdb.service
+sleep 5
+echo "done!"
+echo -n "stopping tessdb ..."
+systemctl stop tessdb.service
+echo "done!"

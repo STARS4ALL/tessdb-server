@@ -1,0 +1,3 @@
+#!/bin/bash
+# This script flushes the tessdb filter activity
+systemctl kill -s WINCH tessdb.service

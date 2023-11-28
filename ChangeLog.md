@@ -1,4 +1,8 @@
 # Change Log
+# 3.0.0
+Major sever code refactoring.
+Packaging also uses pyproject.toml.
+Included hash in readings.
 # 2.6.0
 First release as a standalone tessdb-server package. Production-ready
 

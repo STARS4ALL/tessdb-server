@@ -1,3 +1,31 @@
+NUEVO TESSDB
+============
+
+* rescribir el subpaquete service para que solo haya que importar "application" como twisted
+* Implementar Prodcuer/Consumer
+- MQTT Peoducer > Filtro (Producer/Consumer) => Database(consumer)
+- No se si hará falta el pypubsub para otros eventos relacionados
+* leer Config.ini en el main y con fichero a la antigua. Se sigu eneecsiatndo el pause/resume y reload
+* Database versioning (tabla config_t) para implementa versiones
+* En cada servicio consumer habra una Deferred queue.
+   * Si la BD se satura, pausar hacia atras, hasta que se tiren paquetes de MQTT
+* paquete dbase con subpaquetes sqlite3 y postgres
+- en sqlite3 usar el DAO que me he inventado
+- hay que hgacer escritures executemany ewn la BD para mejorar prestaciones ¿es solo sqlite3?
+  - otra cola interna para escribir de golpe con executemany
+* nueva versiond de MD para TESS-4C
+ - la tabla de hechos, añadimos columnas a pelo
+ - una nueva tabla de detalle tess4c_t con una referencia al tess_id de la tess_t
+ De esta manera los informes siguen funcionando como siempre y se podar sacar info nueva
+ con queries espèciales
+ * comandos al subdirectorio scripts en lugar de /usr/local/bin
+* Calyx
+- ver que version de python3 tiene
+- instalar un venv de prieba y alli dentro twisted. A ver si nos llevamos sorpresas con la ultima version
+
+
+
+
 Prioridad Alta
 ==============
 

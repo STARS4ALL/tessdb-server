@@ -1,0 +1,15 @@
+[Unit]
+Description=TESS Quality Sky Meter database service
+Documentation=https://github.com/STARS4ALL/tessdb-server
+
+[Service]
+Type=simple
+User=root
+KillMode=process
+ExecStart=tessdb --config /etc/tessdb/config --log-file /var/log/tessdb.log
+ExecReload=/bin/kill -s HUP -- $MAINPID
+EnvironmentFile=/home/pi/repos/tessdb-server/tessdb.env
+WorkingDirectory=/home/pi/repos/tessdb-server
+
+[Install]
+WantedBy=multi-user.target

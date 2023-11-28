@@ -1,4 +1,0 @@
-include versioneer.py
-include tessdb/_version.py
-include README.md
-recursive-include files *
