@@ -38,7 +38,7 @@ from tessdb.service.relopausable import Service
 
 from tessdb.error import ValidationError, ReadingKeyError, ReadingTypeError, IncorrectTimestampError
 from tessdb.logger import setLogLevel
-from tessdb.utils  import chop
+from tessdb.utils  import chop, formatted_mac
 
 # ----------------
 # Module constants
@@ -286,6 +286,7 @@ class MQTTService(ClientService):
             if type(row['calib']) == int:
                     row['calib'] = float(row['calib'])
             self.validateRegister(row)
+            row['mac'] = formatted_mac(row['mac'])
             self.handleTimestamps(row, now)
         except ValidationError as e:
             log.error('Validation error in registration payload={payload!s}', payload=row)
@@ -293,6 +294,8 @@ class MQTTService(ClientService):
         except KeyError as e:
             log.error('No "calib" keyword sent in registration message={payload!s}', payload=row)
             log.error('{excp!s}', excp=e)
+        except ValueError as e:
+            log.error('{excp!s} in registration message={payload!s}', payload=row, excp=e)
         else:
             log.debug('Enque registration from {log_tag} for DB Writter', log_tag=row['name'])
             row['name'] = row['name'].lower()  # Get rid of upper case TESS names
