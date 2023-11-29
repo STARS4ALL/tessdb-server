@@ -6,6 +6,15 @@ BEGIN TRANSACTION;
 -- Schema version upgrade
 -- ----------------------
 
+DROP VIEW IF EXISTS tess_v;
+
+-- --------------------------------------------------------------------------------
+-- New observer table is a mix-in from indiduals and organizations in a flat table
+-- Versioned attributed are for individuals only (they may change organiztaions) 
+-- and include:
+--   1) affiliation, 2) acronym, 3) email, 4) website_url
+-----------------------------------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS observer_t
 (
     observer_id     INTEGER,
@@ -19,23 +28,159 @@ CREATE TABLE IF NOT EXISTS observer_t
     valid_until     TEXT NOT NULL,    -- versioning attributes, end  timestamp, ISO8601
     valid_state     TEXT NOT NULL,    -- versioning attributes,state either 'Current' or 'Expired'
  
-    UNIQUE(name,valid_since,valid_until)
-
+    UNIQUE(name,valid_since,valid_until),
     PRIMARY KEY(observer_id)
 );
 
-INSERT OR IGNORE INTO observer_t (observer_id, name, type, valid_since, valid_umtil, valid_state)
-VALUES (-1, 'Unknown', 'Organization', '2000-01-01T00:00:00', '2999-12-31T23:59:59', 'Current')
+INSERT OR IGNORE INTO observer_t (observer_id, name, type, valid_since, valid_until, valid_state)
+VALUES (-1, 'Unknown', 'Organization', '2000-01-01T00:00:00', '2999-12-31T23:59:59', 'Current');
 
+
+--------------------------------------------------------------------------------------------
+-- SLIGHTLY MODIFIED DATE TABLE, WITH NOT NULLS
 -- As per https://sqlite.org/lang_altertable.html
 --    1. Create new table
 --    2. Copy data
 --    3. Drop old table
 --    4. Rename new into old
+--------------------------------------------------------------------------------------------
+
+
+CREATE TABLE IF NOT EXISTS date_new_t 
+(
+    date_id        INTEGER NOT NULL, 
+    sql_date       TEXT    NOT NULL, 
+    date           TEXT    NOT NULL,
+    day            INTEGER NOT NULL,
+    day_year       INTEGER NOT NULL,
+    julian_day     REAL    NOT NULL,
+    weekday        TEXT    NOT NULL,
+    weekday_abbr   TEXT    NOT NULL,
+    weekday_num    INTEGER NOT NULL,
+    month_num      INTEGER NOT NULL,
+    month          TEXT    NOT NULL,
+    month_abbr     TEXT    NOT NULL,
+    year           INTEGER NOT NULL,
+    PRIMARY KEY(date_id)
+);
+
+INSERT OR IGNORE INTO date_new_t(date_id,sql_date,date,day,day_year,julian_day,weekday,weekday_abbr,weekday_num,
+    month_num,month,month_abbr,year)
+SELECT date_id,sql_date,date,day,day_year,julian_day,weekday,weekday_abbr,weekday_num,month_num,
+    month,month_abbr,year
+FROM date_t;
+
+DROP TABLE IF EXISTS date_t;
+
+ALTER TABLE date_new_t RENAME TO date_t;
+
+
+--------------------------------------------------------------------------------------------
+-- SLIGHTLY MODIFIED TIME TABLE, WITH NOT NULLS
+-- As per https://sqlite.org/lang_altertable.html
+--    1. Create new table
+--    2. Copy data
+--    3. Drop old table
+--    4. Rename new into old
+--------------------------------------------------------------------------------------------
+
+
+CREATE TABLE IF NOT EXISTS time_new_t
+(
+    time_id        INTEGER NOT NULL, 
+    time           TEXT    NOT NULL,
+    hour           INTEGER NOT NULL,
+    minute         INTEGER NOT NULL,
+    second         INTEGER NOT NULL,
+    day_fraction   REAL    NOT NULL,
+    PRIMARY KEY(time_id)
+);
+
+INSERT OR IGNORE INTO time_new_t(time_id,hour,date,minute,second,day_fraction)
+SELECT time_id,hour,date,minute,second,day_fraction
+FROM time_t;
+
+DROP TABLE IF EXISTS time_t;
+
+ALTER TABLE time_new_t RENAME TO time_t;
+
+
+--------------------------------------------------------------------------------------------
+-- SLIGHTLY UNITS TABLE, WITH NOT NULLS
+-- As per https://sqlite.org/lang_altertable.html
+--    1. Create new table
+--    2. Copy data
+--    3. Drop old table
+--    4. Rename new into old
+--------------------------------------------------------------------------------------------
+
+
+CREATE TABLE IF NOT EXISTS tess_units_new_t
+(
+    units_id          INTEGER NOT NULL, 
+    timestamp_source  TEXT    NOT NULL,
+    reading_source    TEXT    NOT NULL,
+    PRIMARY KEY(units_id)
+);
+
+INSERT OR IGNORE INTO tess_units_new_t(time_id,hour,date,minute,second,day_fraction)
+SELECT time_id,hour,date,minute,second,day_fraction
+FROM tess_units_t;
+
+DROP TABLE IF EXISTS tess_units_t;
+
+ALTER TABLE time_new_t RENAME TO tess_units_t;
+
+
+--------------------------------------------------------------------------------------------
+-- NEW LOCATION TABLE
+-- As per https://sqlite.org/lang_altertable.html
+--    1. Create new table
+--    2. Copy data
+--    3. Drop old table
+--    4. Rename new into old
+--------------------------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS location_new_t
+(
+    location_id     INTEGER NOT NULL,  
+    longitude       REAL,          -- in floating point degrees
+    latitude        REAL,          -- in floating point degrees
+    elevation       REAL,          -- meters above sea level
+    place           TEXT NOT NULL,
+    town            TEXT NOT NULL, -- village, town, city, etc.
+    sub_region      TEXT NOT NULL, -- province, etc.
+    region          TEXT NOT NULL, -- federal state, etc
+    country         TEXT NOT NULL,
+    timezone        TEXT NOT NULL,
+
+    UNIQUE(longitude, latitude), -- The must be unique but they can be NULL
+    PRIMARY KEY(location_id)
+);
+
+INSERT OR IGNORE INTO location_new_t (location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone)
+VALUES (-1,NULL,NULL,NULL,'Unknown','Unknown','Unknown','Unknown','Unknown','Etc/UTC');
+
+INSERT OR IGNORE INTO location_new_t(location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone)
+SELECT location_id,longitude,latitude,elevation,site,location,province,state,country,timezone
+FROM location_t;
+
+DROP TABLE IF EXISTS location_t;
+
+ALTER TABLE location_new_t RENAME TO location_t;
+
+--------------------------------------------------------------------------------------------
+-- NEW TESS PHOTOMETER TABLE
+-- As per https://sqlite.org/lang_altertable.html
+--    1. Create new table
+--    2. Copy data
+--    3. Drop old table
+--    4. Rename new into old
+--------------------------------------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS tess_new_t
 (
-    tess_id       INTEGER PRIMARY KEY AUTOINCREMENT,
+    tess_id       INTEGER,
     mac_address   TEXT    NOT NULL,                   -- Device MAC address
     valid_since   TEXT    NOT NULL,                   -- versioning attributes, start timestamp, ISO8601
     valid_until   TEXT    NOT NULL,                   -- versioning attributes, end  timestamp, ISO8601
@@ -54,12 +199,13 @@ CREATE TABLE IF NOT EXISTS tess_new_t
     zp2           REAL,                               -- Zero Point 2
     filter2       TEXT,                               -- Filter 2 name (i.e. UV/IR-740, R, G, B)
     zp3           REAL ,                              -- Zero Point 3
-    filter4       TEXT,                               -- Filter 3 name (i.e. UV/IR-740, R, G, B)
+    filter3       TEXT,                               -- Filter 3 name (i.e. UV/IR-740, R, G, B)
     zp4           REAL,                               -- Zero Point 4
     filter4       TEXT,                               -- Filter 4 name (i.e. UV/IR-740, R, G, B)
     location_id   INTEGER NOT NULL DEFAULT -1,        -- Current location, defaults to unknown location
     observer_id   INTEGER NOT NULL DEFAULT -1,        -- Current observer, defaults to unknown observer
-    FOREIGN KEY(location_id)    REFERENCES location_t(location_id)
+    PRIMARY KEY(location_id),
+    FOREIGN KEY(location_id)    REFERENCES location_t(location_id),
     FOREIGN KEY(observer_id)    REFERENCES observer_t(observer_id)
 );
 
@@ -69,11 +215,10 @@ SELECT tess_id,mac_address,valid_since,valid_until,valid_state,authorised,regist
 	firmware,cover_offset,fov,azimuth,altitude,1,zero_point,filter,location_id,-1
 FROM tess_t;
 
-DROP VIEW IF EXISTS tess_v;
+
 DROP TABLE IF EXISTS tess_t;
 
 ALTER TABLE tess_new_t RENAME TO tess_t;
-
 
 CREATE VIEW IF NOT EXISTS tess_v AS SELECT
     tess_t.tess_id,
@@ -99,25 +244,44 @@ CREATE VIEW IF NOT EXISTS tess_v AS SELECT
     tess_t.filter3,
     tess_t.zp4,
     tess_t.filter4,
-
-    location_t.contact_name,
-    location_t.organization,
-    location_t.contact_email,
-    location_t.site,
     location_t.longitude,
     location_t.latitude,
     location_t.elevation,
-    location_t.zipcode,
-    location_t.location,
-    location_t.province,
+    location_t.place,
+    location_t.town,
+    location_t.sub_region,
+    location_t.region,
     location_t.country,
-    location_t.timezone
+    location_t.timezone,
+    observer_t.name,
+    observer_t.type,
+    observer_t.affiliation,
+    observer_t.acronym
 FROM tess_t 
 JOIN location_t    USING (location_id)
 JOIN observer_t    USING (observer_id)
 JOIN name_to_mac_t USING (mac_address)
 WHERE name_to_mac_t.valid_state == "Current";
 
+
+-------------------------
+-- The main 'Facts' table
+-------------------------
+
+-- We are adding more columns and renaming old columns
+
+ALTER TABLE tess_readings_t RENAME COLUMN frequency TO freq1;
+ALTER TABLE tess_readings_t RENAME COLUMN magnitude TO mag1;
+ALTER TABLE tess_readings_t RENAME COLUMN height TO elevation;
+
+ALTER TABLE tess_readings_t ADD COLUMN observer_id INTEGER NOT NULL DEFAULT -1 REFERENCES observer_t(observer_id);
+
+ALTER TABLE tess_readings_t ADD COLUMN freq2 REAL;
+ALTER TABLE tess_readings_t ADD COLUMN mag2  REAL;
+ALTER TABLE tess_readings_t ADD COLUMN freq3 REAL;
+ALTER TABLE tess_readings_t ADD COLUMN mag3  REAL;
+ALTER TABLE tess_readings_t ADD COLUMN freq4 REAL;
+ALTER TABLE tess_readings_t ADD COLUMN mag4  REAL;
 
 INSERT OR REPLACE INTO config_t(section, property, value) 
 VALUES ('database', 'version', '03');
