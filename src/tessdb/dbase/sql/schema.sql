@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS location_t
     PRIMARY KEY(location_id)
 );
 
-INSERT OR IGNORE INTO location_new_t (location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone)
+INSERT OR IGNORE INTO location_t (location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone)
 VALUES (-1,NULL,NULL,NULL,'Unknown','Unknown','Unknown','Unknown','Unknown','Etc/UTC');
 
 -- ------------------
