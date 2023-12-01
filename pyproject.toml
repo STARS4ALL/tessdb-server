@@ -62,6 +62,7 @@ script-files = [
     "scripts/tessdb_restart",
     "scripts/tessdb_resume",
     "scripts/tessdb_stop",
+    "scripts/fast-apply-sql",
 ]
 
 [tool.setuptools.package-data]

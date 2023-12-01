@@ -72,6 +72,10 @@ CREATE TABLE IF NOT EXISTS location_t
     country         TEXT NOT NULL,
     timezone        TEXT NOT NULL,
 
+    contact_name    TEXT,          -- Deprecated. Now, part of observer_t table
+    contact_email   TEXT,          -- Deprecated. Now, part of observer_t table
+    organization    TEXT,          -- Deprecated. Now, part of observer_t table
+
     UNIQUE(longitude, latitude), -- The must be unique but they can be NULL
     PRIMARY KEY(location_id)
 );
@@ -229,27 +233,49 @@ CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);
 -- The main 'Facts' table
 -------------------------
 
+ALTER TABLE tess_readings_t ADD COLUMN observer_id INTEGER NOT NULL DEFAULT -1 REFERENCES observer_t(observer_id);
+
+ALTER TABLE tess_readings_t ADD COLUMN freq2 REAL;
+ALTER TABLE tess_readings_t ADD COLUMN mag2  REAL;
+ALTER TABLE tess_readings_t ADD COLUMN freq3 REAL;
+ALTER TABLE tess_readings_t ADD COLUMN mag3  REAL;
+ALTER TABLE tess_readings_t ADD COLUMN freq4 REAL;
+ALTER TABLE tess_readings_t ADD COLUMN mag4  REAL;
+
 CREATE TABLE tess_readings_t
 (
-    date_id             INTEGER NOT NULL REFERENCES date_t(date_id), 
-    time_id             INTEGER NOT NULL REFERENCES time_t(time_id), 
-    tess_id             INTEGER NOT NULL REFERENCES tess_t(tess_id),
-    location_id         INTEGER NOT NULL REFERENCES location_t(location_id),
-    units_id            INTEGER NOT NULL REFERENCES tess_units_t(units_id),
+    date_id             INTEGER NOT NULL, 
+    time_id             INTEGER NOT NULL, 
+    tess_id             INTEGER NOT NULL,
+    location_id         INTEGER NOT NULL DEFAULT -1,
+    observer_id         INTEGER NOT NULL DEFAULT -1,
+    units_id            INTEGER NOT NULL,
     sequence_number     INTEGER,
-    frequency           REAL,
-    magnitude           REAL,
-    ambient_temperature REAL,
+    freq1               REAL, -- This should be NOT NULL. However, it is a pain to migrate this table
+    mag1                REAL, -- This should be NOT NULL. However, it is a pain to migrate this table
+    freq2               REAL,
+    mag2                REAL,
+    freq3               REAL,
+    mag3                REAL,
+    freq4               REAL,
+    mag4                REAL,
+    box_temperature     REAL,
     sky_temperature     REAL,
     azimuth             REAL,
     altitude            REAL,
     longitude           REAL,
     latitude            REAL,
-    height              REAL, 
+    elevation           REAL, 
     signal_strength     INTEGER,
     hash                TEXT, -- to verify readings
 
-    PRIMARY KEY (date_id, time_id, tess_id)
+    PRIMARY KEY (date_id, time_id, tess_id),
+    FOREIGN KEY(date_id) REFERENCES date_t(date_id),
+    FOREIGN KEY(time_id) REFERENCES time_t(time_id),
+    FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),
+    FOREIGN KEY(location_id) REFERENCES location_t(location_id),
+    FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id),
+    FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id),
 );
 
 COMMIT;

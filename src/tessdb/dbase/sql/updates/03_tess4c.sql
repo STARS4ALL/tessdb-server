@@ -1,4 +1,3 @@
-
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
 
@@ -6,7 +5,7 @@ BEGIN TRANSACTION;
 -- Schema version upgrade
 -- ----------------------
 
-DROP VIEW IF EXISTS tess_v;
+DROP VIEW tess_v;
 
 -- --------------------------------------------------------------------------------
 -- New observer table is a mix-in from indiduals and organizations in a flat table
@@ -15,7 +14,7 @@ DROP VIEW IF EXISTS tess_v;
 --   1) affiliation, 2) acronym, 3) email, 4) website_url
 -----------------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS observer_t
+CREATE TABLE observer_t
 (
     observer_id     INTEGER,
     type            TEXT NOT NULL,    -- Observer category: 'Individual' or 'Organization'
@@ -32,7 +31,7 @@ CREATE TABLE IF NOT EXISTS observer_t
     PRIMARY KEY(observer_id)
 );
 
-INSERT OR IGNORE INTO observer_t (observer_id, name, type, valid_since, valid_until, valid_state)
+INSERT INTO observer_t (observer_id, name, type, valid_since, valid_until, valid_state)
 VALUES (-1, 'Unknown', 'Organization', '2000-01-01T00:00:00', '2999-12-31T23:59:59', 'Current');
 
 
@@ -64,16 +63,9 @@ CREATE TABLE IF NOT EXISTS date_new_t
     PRIMARY KEY(date_id)
 );
 
-INSERT OR IGNORE INTO date_new_t(date_id,sql_date,date,day,day_year,julian_day,weekday,weekday_abbr,weekday_num,
-    month_num,month,month_abbr,year)
-SELECT date_id,sql_date,date,day,day_year,julian_day,weekday,weekday_abbr,weekday_num,month_num,
-    month,month_abbr,year
-FROM date_t;
-
-DROP TABLE IF EXISTS date_t;
-
+INSERT INTO date_new_t SELECT * FROM date_t;
+DROP TABLE date_t;
 ALTER TABLE date_new_t RENAME TO date_t;
-
 
 --------------------------------------------------------------------------------------------
 -- SLIGHTLY MODIFIED TIME TABLE, WITH NOT NULLS
@@ -85,7 +77,7 @@ ALTER TABLE date_new_t RENAME TO date_t;
 --------------------------------------------------------------------------------------------
 
 
-CREATE TABLE IF NOT EXISTS time_new_t
+CREATE TABLE time_new_t
 (
     time_id        INTEGER NOT NULL, 
     time           TEXT    NOT NULL,
@@ -96,14 +88,9 @@ CREATE TABLE IF NOT EXISTS time_new_t
     PRIMARY KEY(time_id)
 );
 
-INSERT OR IGNORE INTO time_new_t(time_id,hour,date,minute,second,day_fraction)
-SELECT time_id,hour,date,minute,second,day_fraction
-FROM time_t;
-
-DROP TABLE IF EXISTS time_t;
-
+INSERT INTO time_new_t SELECT * FROM time_t;
+DROP TABLE time_t;
 ALTER TABLE time_new_t RENAME TO time_t;
-
 
 --------------------------------------------------------------------------------------------
 -- SLIGHTLY UNITS TABLE, WITH NOT NULLS
@@ -115,7 +102,7 @@ ALTER TABLE time_new_t RENAME TO time_t;
 --------------------------------------------------------------------------------------------
 
 
-CREATE TABLE IF NOT EXISTS tess_units_new_t
+CREATE TABLE tess_units_new_t
 (
     units_id          INTEGER NOT NULL, 
     timestamp_source  TEXT    NOT NULL,
@@ -123,14 +110,9 @@ CREATE TABLE IF NOT EXISTS tess_units_new_t
     PRIMARY KEY(units_id)
 );
 
-INSERT OR IGNORE INTO tess_units_new_t(time_id,hour,date,minute,second,day_fraction)
-SELECT time_id,hour,date,minute,second,day_fraction
-FROM tess_units_t;
-
+INSERT INTO tess_units_new_t SELECT * FROM tess_units_t;
 DROP TABLE IF EXISTS tess_units_t;
-
-ALTER TABLE time_new_t RENAME TO tess_units_t;
-
+ALTER TABLE tess_units_new_t RENAME TO tess_units_t;
 
 --------------------------------------------------------------------------------------------
 -- NEW LOCATION TABLE
@@ -141,7 +123,7 @@ ALTER TABLE time_new_t RENAME TO tess_units_t;
 --    4. Rename new into old
 --------------------------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS location_new_t
+CREATE TABLE  location_new_t
 (
     location_id     INTEGER NOT NULL,  
     longitude       REAL,          -- in floating point degrees
@@ -154,19 +136,20 @@ CREATE TABLE IF NOT EXISTS location_new_t
     country         TEXT NOT NULL,
     timezone        TEXT NOT NULL,
 
+    contact_name    TEXT,          -- Deprecated. Now, part of observer_t table
+    contact_email   TEXT,          -- Deprecated. Now, part of observer_t table
+    organization    TEXT,          -- Deprecated. Now, part of observer_t table
+
     UNIQUE(longitude, latitude), -- The must be unique but they can be NULL
     PRIMARY KEY(location_id)
 );
 
-INSERT OR IGNORE INTO location_new_t (location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone)
-VALUES (-1,NULL,NULL,NULL,'Unknown','Unknown','Unknown','Unknown','Unknown','Etc/UTC');
-
-INSERT OR IGNORE INTO location_new_t(location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone)
-SELECT location_id,longitude,latitude,elevation,site,location,province,state,country,timezone
+INSERT INTO location_new_t(location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone,
+    contact_name,contact_email,organization)
+SELECT location_id,longitude,latitude,elevation,site,location,province,state,country,timezone,contact_name,contact_email,organization
 FROM location_t;
 
-DROP TABLE IF EXISTS location_t;
-
+DROP TABLE  location_t;
 ALTER TABLE location_new_t RENAME TO location_t;
 
 --------------------------------------------------------------------------------------------
@@ -204,23 +187,24 @@ CREATE TABLE IF NOT EXISTS tess_new_t
     filter4       TEXT,                               -- Filter 4 name (i.e. UV/IR-740, R, G, B)
     location_id   INTEGER NOT NULL DEFAULT -1,        -- Current location, defaults to unknown location
     observer_id   INTEGER NOT NULL DEFAULT -1,        -- Current observer, defaults to unknown observer
-    PRIMARY KEY(location_id),
+    PRIMARY KEY(tess_id),
     FOREIGN KEY(location_id)    REFERENCES location_t(location_id),
     FOREIGN KEY(observer_id)    REFERENCES observer_t(observer_id)
 );
 
-INSERT OR IGNORE INTO tess_new_t(tess_id,mac_address,valid_since,valid_until,valid_state,authorised,registered,model,
+INSERT INTO tess_new_t(tess_id,mac_address,valid_since,valid_until,valid_state,authorised,registered,model,
 	firmware,cover_offset,fov,azimuth,altitude,nchannels,zp1,filter1,location_id,observer_id)
-SELECT tess_id,mac_address,valid_since,valid_until,valid_state,authorised,registered,model,
-	firmware,cover_offset,fov,azimuth,altitude,1,zero_point,filter,location_id,-1
-FROM tess_t;
+    SELECT tess_id,mac_address,valid_since,valid_until,valid_state,authorised,registered,model,
+    	firmware,cover_offset,fov,azimuth,altitude,1,zero_point,filter,location_id,-1
+    FROM tess_t;
 
-
-DROP TABLE IF EXISTS tess_t;
-
+DROP INDEX tess_mac_i;
+DROP TABLE tess_t;
 ALTER TABLE tess_new_t RENAME TO tess_t;
+CREATE INDEX tess_mac_i ON tess_t(mac_address);
 
-CREATE VIEW IF NOT EXISTS tess_v AS SELECT
+
+CREATE VIEW tess_v AS SELECT
     tess_t.tess_id,
     tess_t.mac_address,
     name_to_mac_t.name,
@@ -273,9 +257,8 @@ WHERE name_to_mac_t.valid_state == "Current";
 ALTER TABLE tess_readings_t RENAME COLUMN frequency TO freq1;
 ALTER TABLE tess_readings_t RENAME COLUMN magnitude TO mag1;
 ALTER TABLE tess_readings_t RENAME COLUMN height TO elevation;
-
+ALTER TABLE tess_readings_t RENAME COLUMN ambient_temperature TO box_temperature;
 ALTER TABLE tess_readings_t ADD COLUMN observer_id INTEGER NOT NULL DEFAULT -1 REFERENCES observer_t(observer_id);
-
 ALTER TABLE tess_readings_t ADD COLUMN freq2 REAL;
 ALTER TABLE tess_readings_t ADD COLUMN mag2  REAL;
 ALTER TABLE tess_readings_t ADD COLUMN freq3 REAL;
