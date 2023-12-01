@@ -13,6 +13,8 @@ import os
 import os.path
 import uuid
 import sqlite3
+import shutil
+import subprocess
 
 from importlib.resources import files
 
@@ -77,6 +79,21 @@ def _filter_factory(connection):
 # Module private functions
 # -------------------------
 
+def _execute_script(dbase_path, sql_path_obj):
+    log.info("Applying updates to data model from {path}", path=sql_path_obj)
+    try:
+        connection = sqlite3.connect(dbase_path)
+        connection.executescript(sql_path_obj.read_text())
+    except sqlite3.OperationalError as e:
+        connection.close()
+        log.error("Error using the Python API. Trying with sqlite3 CLI")
+        sqlite_cli = shutil.which("sqlite3");
+        output = subprocess.check_call([sqlite_cli, dbase_path, "-init", sql_path_obj])
+    else:
+        connection.close()
+      
+
+
 def _create_database(dbase_path):
     '''Creates a Database file if not exists and returns a connection'''
     new_database = False
@@ -88,11 +105,14 @@ def _create_database(dbase_path):
         with open(dbase_path, 'w') as f:
             pass
         new_database = True
-    return sqlite3.connect(dbase_path), new_database
+    sqlite3.connect(dbase_path).close()
+    return new_database
 
 
-def _create_schema(connection, schema_resource, initial_data_dir_path, updates_data_dir, query=VERSION_QUERY):
+
+def _create_schema(dbase_path, schema_resource, initial_data_dir_path, updates_data_dir, query=VERSION_QUERY):
     created = True
+    connection = sqlite3.connect(dbase_path)
     cursor = connection.cursor()
     try:
         cursor.execute(query)
@@ -111,12 +131,11 @@ def _create_schema(connection, schema_resource, initial_data_dir_path, updates_d
         # the filtering part is beacuse Python 3.9 resource folders cannot exists without __init__.py
         file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir() if not sql_file.name.startswith('__') and not sql_file.is_dir()])
         file_list = list(filter(filter_func, file_list))
+        connection.close()
         for sql_file in file_list:
-            log.info("Applying updates to data model from {path}", path=os.path.basename(sql_file))
-            connection.executescript(sql_file.read_text())
+            _execute_script(dbase_path, sql_file)
     else:
         file_list = list()
-    connection.commit()
     return not created, file_list
 
 # -------------------------
@@ -165,16 +184,17 @@ def _make_database_uuid(connection):
 # ----------------
 
 def create_or_open_database(url):
-    connection, new_database = _create_database(url)
+    new_database = _create_database(url)
     if new_database:
         log.warn("Created new database file: {url}", url=url)
-    just_created, file_list = _create_schema(connection, SQL_SCHEMA, SQL_INITIAL_DATA_DIR, SQL_UPDATES_DATA_DIR)
+    just_created, file_list = _create_schema(url, SQL_SCHEMA, SQL_INITIAL_DATA_DIR, SQL_UPDATES_DATA_DIR)
     if just_created:
         for sql_file in file_list:
             log.warn("Populated data model from {url}", url=os.path.basename(sql_file))
     else:
         for sql_file in file_list:
             log.warn("Applied updates to data model from {url}", url=os.path.basename(sql_file))
+    connection = sqlite3.connect(url)
     version = _read_database_version(connection)
     guid    = _make_database_uuid(connection)
     log.warn("Open database: {url}, data model version = {version}, UUID = {uuid}", url=url, version=version, uuid=guid)

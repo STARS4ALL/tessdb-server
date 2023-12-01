@@ -2,6 +2,8 @@
 --          TESSDB DATA MODEL
 ------------------------------------------------------------
 
+BEGIN TRANSACTION;
+
 -- --------------------------------------------------------------
 -- Miscelaneous configuration not found in the configuration file
 -- --------------------------------------------------------------
@@ -155,7 +157,7 @@ CREATE TABLE IF NOT EXISTS tess_t
     filter4       TEXT,                               -- Filter 4 name (i.e. UV/IR-740, R, G, B)
     location_id   INTEGER NOT NULL DEFAULT -1,        -- Current location, defaults to unknown location
     observer_id   INTEGER NOT NULL DEFAULT -1,        -- Current observer, defaults to unknown observer
-    PRIMARY KEY(location_id),
+    PRIMARY KEY(tess_id),
     FOREIGN KEY(location_id) REFERENCES location_t(location_id),
     FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id)
 );
@@ -249,3 +251,5 @@ CREATE TABLE tess_readings_t
 
     PRIMARY KEY (date_id, time_id, tess_id)
 );
+
+COMMIT;
