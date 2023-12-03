@@ -203,6 +203,30 @@ DROP TABLE tess_t;
 ALTER TABLE tess_new_t RENAME TO tess_t;
 CREATE INDEX tess_mac_i ON tess_t(mac_address);
 
+-- -----------------------------
+-- The name to MAC mapping table
+-- -----------------------------
+
+CREATE TABLE IF NOT EXISTS name_to_mac_new_t
+(
+    name          TEXT NOT NULL,
+    mac_address   TEXT NOT NULL REFERENCES tess_t(mac_adddres), 
+    valid_since   TIMESTAMP NOT NULL,  -- start date when the name,mac association was valid
+    valid_until   TIMESTAMP NOT NULL,  -- end date when the name,mac association was valid
+    valid_state   TEXT NOT NULL        -- either 'Current' or 'Expired'
+);
+
+INSERT INTO name_to_mac_new_t SELECT * FROM name_to_mac_t;
+DROP INDEX IF EXISTS mac_to_name_i;
+DROP INDEX IF EXISTS name_to_mac_i;
+DROP TABLE name_to_mac_t;
+ALTER TABLE name_to_mac_new_t RENAME TO name_to_mac_t;
+CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);
+CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);
+
+-- -----------------------------
+-- The TESS view
+-- -----------------------------
 
 CREATE VIEW tess_v AS SELECT
     tess_t.tess_id,
@@ -246,28 +270,6 @@ JOIN location_t    USING (location_id)
 JOIN observer_t    USING (observer_id)
 JOIN name_to_mac_t USING (mac_address)
 WHERE name_to_mac_t.valid_state == "Current";
-
--- -----------------------------
--- The name to MAC mapping table
--- -----------------------------
-
-CREATE TABLE IF NOT EXISTS name_to_mac_new_t
-(
-    name          TEXT NOT NULL,
-    mac_address   TEXT NOT NULL REFERENCES tess_t(mac_adddres), 
-    valid_since   TIMESTAMP NOT NULL,  -- start date when the name,mac association was valid
-    valid_until   TIMESTAMP NOT NULL,  -- end date when the name,mac association was valid
-    valid_state   TEXT NOT NULL        -- either 'Current' or 'Expired'
-);
-
-INSERT INTO name_to_mac_new_t SELECT * FROM name_to_mac_t;
-DROP INDEX IF EXISTS mac_to_name_i;
-DROP INDEX IF EXISTS name_to_mac_i;
-DROP TABLE name_to_mac_t;
-ALTER TABLE name_to_mac_new_t RENAME TO name_to_mac_t;
-CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);
-CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);
-
 
 -------------------------
 -- The main 'Facts' table

@@ -163,16 +163,14 @@ class DBaseService(Service):
         log.info('TESS database writer paused')
         if not self.paused:
             self.paused = True
-            if self.options["close_when_pause"]:
-                self.closePool()
+            self.closePool()
         return defer.succeed(None)
 
 
     def resumeService(self):
         log.info('TESS database writer resumed')
         if self.paused:
-            if self.options["close_when_pause"]:
-                self.openPool()
+            self.openPool()
             self.paused = False
         return defer.succeed(None)
 
@@ -273,16 +271,13 @@ class DBaseService(Service):
         # setup the connection pool for asynchronouws adbapi
         pool  = self.getPoolFunc(self.path)
         self.pool = pool
-        self.tess.openPool(pool)
-        self.tess_units.openPool(pool)
-        self.tess_readings.openPool(pool)
+        self.tess.setPool(pool)
+        self.tess_units.setPool(pool)
+        self.tess_readings.setPool(pool)
         log.debug("Opened DB Connection Pool to {conn!s}", conn=self.path)
 
 
     def closePool(self):
         '''setup the connection pool for asynchronouws adbapi'''
         self.pool.close()
-        self.tess.closePool()
-        self.tess_units.closePool()
-        self.tess_readings.closePool()
         log.debug("Closed DB Connection Pool to {conn!s}", conn=self.path)

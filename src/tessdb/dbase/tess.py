@@ -131,11 +131,8 @@ class TESS:
     # OPERATIONAL API
     # ===============
 
-    def openPool(self, pool):
-         self.pool = pool
-         
-    def closePool(self):
-        self.pool = None
+    def setPool(self, pool):
+        self.pool = pool
 
     # ----------------------------
     # Instrument registration (NEW)

@@ -168,6 +168,28 @@ CREATE TABLE IF NOT EXISTS tess_t
 
 CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);
 
+-----------------------------------------------------
+-- Names to MACs mapping
+-- In the end it is unfortunate that users may change 
+-- instrument names and the messages only carry names
+-----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS name_to_mac_t
+(
+    name          TEXT NOT NULL,
+    mac_address   TEXT NOT NULL REFERENCES tess_t(mac_adddres), 
+    valid_since   TIMESTAMP NOT NULL,  -- start date when the name,mac association was valid
+    valid_until   TIMESTAMP NOT NULL,  -- end date when the name,mac association was valid
+    valid_state   TEXT NOT NULL        -- either 'Current' or 'Expired'
+);
+
+CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);
+CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);
+
+-----------------------------------------------------
+-- The TESS-W integrated View
+-----------------------------------------------------
+
 CREATE VIEW IF NOT EXISTS tess_v AS SELECT
     tess_t.tess_id,
     tess_t.mac_address,
@@ -211,36 +233,10 @@ JOIN observer_t    USING (observer_id)
 JOIN name_to_mac_t USING (mac_address)
 WHERE name_to_mac_t.valid_state == "Current";
 
------------------------------------------------------
--- Names to MACs mapping
--- In the end it is unfortunate that users may change 
--- instrument names and the messages only carry names
------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS name_to_mac_t
-(
-    name          TEXT NOT NULL,
-    mac_address   TEXT NOT NULL REFERENCES tess_t(mac_adddres), 
-    valid_since   TIMESTAMP NOT NULL,  -- start date when the name,mac association was valid
-    valid_until   TIMESTAMP NOT NULL,  -- end date when the name,mac association was valid
-    valid_state   TEXT NOT NULL        -- either 'Current' or 'Expired'
-);
-
-CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);
-CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);
 
 -------------------------
 -- The main 'Facts' table
 -------------------------
-
-ALTER TABLE tess_readings_t ADD COLUMN observer_id INTEGER NOT NULL DEFAULT -1 REFERENCES observer_t(observer_id);
-
-ALTER TABLE tess_readings_t ADD COLUMN freq2 REAL;
-ALTER TABLE tess_readings_t ADD COLUMN mag2  REAL;
-ALTER TABLE tess_readings_t ADD COLUMN freq3 REAL;
-ALTER TABLE tess_readings_t ADD COLUMN mag3  REAL;
-ALTER TABLE tess_readings_t ADD COLUMN freq4 REAL;
-ALTER TABLE tess_readings_t ADD COLUMN mag4  REAL;
 
 CREATE TABLE tess_readings_t
 (
@@ -275,7 +271,7 @@ CREATE TABLE tess_readings_t
     FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),
     FOREIGN KEY(location_id) REFERENCES location_t(location_id),
     FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id),
-    FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id),
+    FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
 );
 
 COMMIT;

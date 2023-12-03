@@ -80,11 +80,8 @@ class TESSUnits:
     # OPERATIONAL API
     # ===============
 
-    def openPool(self, pool):
-         self.pool = pool
-
-    def closePool(self):
-        self.pool = None
+    def setPool(self, pool):
+        self.pool = pool
 
     @inlineCallbacks
     def latest(self, timestamp_source="Subscriber", reading_source="Direct"):
