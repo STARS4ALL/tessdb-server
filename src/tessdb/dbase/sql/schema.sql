@@ -103,9 +103,9 @@ CREATE TABLE IF NOT EXISTS observer_t
     acronym         TEXT,             -- Organization acronym (i.e. AAM). Also may be applied to affiliation
     website_url     TEXT,             -- Individual / Organization Web page
     email           TEXT,             -- Individual / Organization contact email
-    valid_since     TEXT NOT NULL,    -- versioning attributes, start timestamp, ISO8601
-    valid_until     TEXT NOT NULL,    -- versioning attributes, end  timestamp, ISO8601
-    valid_state     TEXT NOT NULL,    -- versioning attributes,state either 'Current' or 'Expired'
+    valid_since     TIMESTAMP NOT NULL,  -- versioning attributes, start timestamp, ISO8601
+    valid_until     TIMESTAMP NOT NULL,  -- versioning attributes, end  timestamp, ISO8601
+    valid_state     TEXT NOT NULL,       -- versioning attributes,state either 'Current' or 'Expired'
  
     UNIQUE(name,valid_since,valid_until),
     PRIMARY KEY(observer_id)
@@ -139,8 +139,8 @@ CREATE TABLE IF NOT EXISTS tess_t
 (
     tess_id       INTEGER,
     mac_address   TEXT    NOT NULL,                   -- Device MAC address
-    valid_since   TEXT    NOT NULL,                   -- versioning attributes, start timestamp, ISO8601
-    valid_until   TEXT    NOT NULL,                   -- versioning attributes, end  timestamp, ISO8601
+    valid_since   TIMESTAMP NOT NULL,                   -- versioning attributes, start timestamp, ISO8601
+    valid_until   TIMESTAMP NOT NULL,                   -- versioning attributes, end  timestamp, ISO8601
     valid_state   TEXT    NOT NULL,                   -- versioning attributes,state either 'Current' or 'Expired'
     model         TEXT    NOT NULL,                   -- Either 'TESS-W', 'TESS4C'
     firmware      TEXT    NOT NULL DEFAULT 'Umknown', -- Firmware version string.
@@ -221,9 +221,9 @@ CREATE TABLE IF NOT EXISTS name_to_mac_t
 (
     name          TEXT NOT NULL,
     mac_address   TEXT NOT NULL REFERENCES tess_t(mac_adddres), 
-    valid_since   TEXT NOT NULL,
-    valid_until   TEXT NOT NULL,
-    valid_state   TEXT NOT NULL 
+    valid_since   TIMESTAMP NOT NULL,  -- start date when the name,mac association was valid
+    valid_until   TIMESTAMP NOT NULL,  -- end date when the name,mac association was valid
+    valid_state   TEXT NOT NULL        -- either 'Current' or 'Expired'
 );
 
 CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);
