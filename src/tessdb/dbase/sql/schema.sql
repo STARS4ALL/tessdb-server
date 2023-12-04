@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS tess_t
     valid_until   TIMESTAMP NOT NULL,                   -- versioning attributes, end  timestamp, ISO8601
     valid_state   TEXT    NOT NULL,                   -- versioning attributes,state either 'Current' or 'Expired'
     model         TEXT    NOT NULL,                   -- Either 'TESS-W', 'TESS4C'
-    firmware      TEXT    NOT NULL DEFAULT 'Umknown', -- Firmware version string.
+    firmware      TEXT    NOT NULL DEFAULT 'Unknown', -- Firmware version string.
     authorised    INTEGER NOT NULL,                   -- Flag 1 = Authorised, 0 not authorised
     registered    TEXT    NOT NULL DEFAULT 'Unknown', -- Either 'Manual' or 'Auto'
     cover_offset  REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
@@ -246,9 +246,9 @@ CREATE TABLE tess_readings_t
     location_id         INTEGER NOT NULL DEFAULT -1,
     observer_id         INTEGER NOT NULL DEFAULT -1,
     units_id            INTEGER NOT NULL,
-    sequence_number     INTEGER,
-    freq1               REAL, -- This should be NOT NULL. However, it is a pain to migrate this table
-    mag1                REAL, -- This should be NOT NULL. However, it is a pain to migrate this table
+    sequence_number     INTEGER,          -- This should be NOT NULL. However, it is a pain to migrate this table
+    freq1               REAL,             -- This should be NOT NULL. However, it is a pain to migrate this table
+    mag1                REAL,             -- This should be NOT NULL. However, it is a pain to migrate this table
     freq2               REAL,
     mag2                REAL,
     freq3               REAL,

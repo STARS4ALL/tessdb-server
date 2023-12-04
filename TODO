@@ -1,3 +1,25 @@
+
+{'freq': 106888.8, 'mag': 7.53, 'zp': 20.14}, 'F4': {'freq': 106888.8, 'mag': 7.65, 'zp': 20.04}, 'tamb': 36.62, 'tsky': 9.22}
+2023-12-04T12:54:02+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars705', 'seq': 10356, 'wdBm': -63, 'ain': 0, 'F1': {'freq': 106888.8, 'mag': 7.68, 'zp': 20.25}, 'F2': {'freq': 106888.8, 'mag': 7.64, 'zp': 20.25}, 'F3': {'freq': 106888.8, 'mag': 7.64, 'zp': 20.25}, 'F4': {'freq': 106888.8, 'mag': 7.64, 'zp': 20.25}, 'tamb': 35.67, 'tsky': 4.92}
+2023-12-04T12:54:17+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars856', 'seq': 199, 'wdBm': -41, 'ain': 310, 'F1': {'freq': 106888.8, 'mag': 7.43, 'zp': 20.0}, 'F2': {'freq': 106888.8, 'mag': 7.43, 'zp': 20.04}, 'F3': {'freq': 106888.8, 'mag': 7.69, 'zp': 20.08}, 'F4': {'freq': 106888.8, 'mag': 7.29, 'zp': 19.9}, 'tamb': 32.55, 'tsky': 0.13}
+2023-12-04T12:54:25+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars855', 'seq': 202, 'wdBm': -68, 'ain': 293, 'F1': {'freq': 106888.8, 'mag': 7.47, 'zp': 20.04}, 'F2': {'freq': 106888.8, 'mag': 7.34, 'zp': 19.95}, 'F3': {'freq': 106888.8, 'mag': 7.57, 'zp': 20.18}, 'F4': {'freq': 106888.8, 'mag': 7.63, 'zp': 20.02}, 'tamb': 36.94, 'tsky': 8.92}
+2023-12-04T12:54:26+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars854', 'seq': 189, 'wdBm': -84, 'ain': 312, 'F1': {'freq': 1716.6, 'mag': 11.94, 'zp': 20.03}, 'F2': {'freq': 4110.0, 'mag': 11.02, 'zp': 20.04}, 'F3': {'freq': 486.9, 'mag': 13.19, 'zp': 19.9}, 'F4': {'freq': 138.3, 'mag': 14.43, 'zp': 19.8}, 'tamb': 26.56, 'tsky': 24.86}
+2023-12-04T12:54:26+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars703', 'seq': 89, 'wdBm': -75, 'F1': {'freq': 94037.02, 'mag': 7.75, 'zp': 20.18}, 'F2': {'freq': 90000.0, 'mag': 7.89, 'zp': 20.28}, 'F3': {'freq': 90000.0, 'mag': 7.99, 'zp': 20.38}, 'F4': {'freq': 90000.0, 'mag': 7.65, 'zp': 20.04}}
+
+
+
+# make the database connection with detect_types 
+connection = sqlite3.connect('StudentAssignment.db',
+                             detect_types=sqlite3.PARSE_DECLTYPES |
+                             sqlite3.PARSE_COLNAMES)
+
+feat/tess4c
+===========
+
+Hay que hacer un flattening de la estructira JSON para el multicanal y convertirla en freq1, mag1, zp1, etc....
+Y tambien para el monocanal
+
+
 NUEVO TESSDB
 ============
 
@@ -5,23 +27,9 @@ NUEVO TESSDB
 * Implementar Prodcuer/Consumer
 - MQTT Peoducer > Filtro (Producer/Consumer) => Database(consumer)
 - No se si hará falta el pypubsub para otros eventos relacionados
-* leer Config.ini en el main y con fichero a la antigua. Se sigu eneecsiatndo el pause/resume y reload
-* Database versioning (tabla config_t) para implementa versiones
 * En cada servicio consumer habra una Deferred queue.
    * Si la BD se satura, pausar hacia atras, hasta que se tiren paquetes de MQTT
-* paquete dbase con subpaquetes sqlite3 y postgres
-- en sqlite3 usar el DAO que me he inventado
-- hay que hgacer escritures executemany ewn la BD para mejorar prestaciones ¿es solo sqlite3?
-  - otra cola interna para escribir de golpe con executemany
-* nueva versiond de MD para TESS-4C
- - la tabla de hechos, añadimos columnas a pelo
- - una nueva tabla de detalle tess4c_t con una referencia al tess_id de la tess_t
- De esta manera los informes siguen funcionando como siempre y se podar sacar info nueva
- con queries espèciales
- * comandos al subdirectorio scripts en lugar de /usr/local/bin
-* Calyx
-- ver que version de python3 tiene
-- instalar un venv de prieba y alli dentro twisted. A ver si nos llevamos sorpresas con la ultima version
+
 
 
 
@@ -29,24 +37,6 @@ NUEVO TESSDB
 Prioridad Alta
 ==============
 
-
-Prioridad media
-===============
-
-1) Nueva tabla observer_t, con atributos gestionados de email y organization
-
-CREATE TABLE IF NOT EXISTS observer_t
-(
-  observer_id  INTEGER PRIMARY KEY,
-  name         TEXT NOT NULL, -- Family name
-  nickname     TEXT,          -- nickname (i,e. nick in epicollect5)
-  organization TEXT,          -- i.e. AstroHenares
-  email        TEXT           -- contact e-mail 
-  valid_since  TEXT  DEFAULT (strftime('%Y-%m-%dT%H:%M:%S','now')), -- timestamp since organization value is valid
-  valid_until  TEXT  DEFAULT '2999-12-31T23:59:59', 
-  valid_state  TEXT  DEFAULT 'Current'
-  -- Alternate key would be PRIMARY KEY (name)
-);
 
 
 Prioridad baja
@@ -67,7 +57,7 @@ y nuevas asociaciones
 - Tambien se puede calcular el epriodo de envío por día y fijándonos en  3 números de secuencia consecutivos
 
 
-*) Tess muticanal
+*) Tess multicanal
 
 La estrategia para soportar e TESS multicanal implicara muy pocos cambios en el modelo de datos:
 - Cada fila de la tabla tess_t indicará un canal
@@ -80,13 +70,4 @@ La estrategia para soportar e TESS multicanal implicara muy pocos cambios en el 
     Pitch = Altura
     Roll  = Inclinacion lateral Este-Oeste
 
-*) Estudiar si merece la pena poner nuevas constraints UNIQUE NOT NULL a tess_t.name y tess_t.mac_address
 *) Embeber servidor web de twisted.
-
-NOTE
-====
-
-He averiguado que los descartes son por el 'retained' flag
-
-ADDENDUM
-========

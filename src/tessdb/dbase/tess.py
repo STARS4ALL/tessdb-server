@@ -226,7 +226,7 @@ class TESS:
             cursor.execute(
                 '''
                 UPDATE tess_t SET valid_until = :eff_date, valid_state = :valid_expired
-                WHERE mac_address == :mac AND valid_state == :valid_current
+                WHERE mac_address = :mac AND valid_state = :valid_current
                 ''', row)
             cursor.execute(
                 '''
@@ -238,7 +238,8 @@ class TESS:
                     valid_state,
                     authorised,
                     registered,
-                    location_id
+                    location_id,
+                    observer_id,
                 ) VALUES (
                     :mac,
                     :calib,
@@ -247,7 +248,8 @@ class TESS:
                     :valid_current,
                     :authorised,
                     :registered,
-                    :location
+                    :location,
+                    :observer
                 )
                 ''',  row)
         return self.pool.runInteraction( _updateCalibration, row )
@@ -267,6 +269,7 @@ class TESS:
             row['location']   = photometer[3] # carries over the location id
             row['authorised'] = photometer[5] # carries over the authorised flag
             row['registered'] = photometer[6] # carries over the registration method
+            row['observer']   = photometer[7] # carries over the observer id
             yield self.updateCalibration(row)
             self.nZPChange += 1
             log2.info("{log_tag} changed instrument calibration data from {old} to {calib} (MAC = {mac})", log_tag=row['name'], old=photometer[2], calib=row['calib'], mac=row['mac'])
@@ -284,8 +287,8 @@ class TESS:
             '''
             SELECT mac_address, name
             FROM name_to_mac_t 
-            WHERE mac_address == :mac
-            AND  valid_state == :valid_current 
+            WHERE mac_address = :mac
+            AND  valid_state = :valid_current 
             ''', row)
 
     def lookupName(self, row):
@@ -298,8 +301,8 @@ class TESS:
             '''
             SELECT name, mac_address
             FROM name_to_mac_t 
-            WHERE name == :name
-            AND valid_state == :valid_current 
+            WHERE name = :name
+            AND valid_state = :valid_current 
             ''', row)
 
     def findPhotometerByName(self, row):
@@ -308,25 +311,16 @@ class TESS:
         Caches result if possible
         Returns a Deferred.
         '''
-
-        # 2020-10-05: We suspect that cache nahdling is responsible for lots of false ZP changes
-        # so we disable it
-
-        #if row['name'] in self._cache.keys():
-        #    return defer.succeed(self._cache.get(row['name']))
-
         row['valid_current'] = CURRENT # needed when called by tess_readings.
         d = self.pool.runQuery(
             '''
-            SELECT i.tess_id, i.mac_address, i.zero_point, i.location_id, i.filter, i.authorised, i.registered 
+            SELECT i.tess_id, i.mac_address, i.zero_point, i.location_id, i.filter, i.authorised, i.registered, i.observer_id 
             FROM tess_t        AS i
             JOIN name_to_mac_t AS m USING (mac_address)
-            WHERE m.name        == :name
-            AND   m.valid_state == :valid_current
-            AND   i.valid_state == :valid_current
+            WHERE m.name        = :name
+            AND   m.valid_state = :valid_current
+            AND   i.valid_state = :valid_current
             ''', row)
-
-        #d.addCallback(self.updateCache, row['name'])
         return d
 
     def addBrandNewTess(self, row):

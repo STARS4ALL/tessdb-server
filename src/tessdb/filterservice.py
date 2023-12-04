@@ -59,7 +59,6 @@ NAMESPACE = 'filtr'
 log  = Logger(namespace=NAMESPACE)
 
 
-
 class FilterService(Service):
 
     NAME = 'FilterService'

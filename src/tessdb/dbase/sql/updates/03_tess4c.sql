@@ -169,7 +169,7 @@ CREATE TABLE IF NOT EXISTS tess_new_t
     valid_until   TIMESTAMP NOT NULL,                 -- versioning attributes, end  timestamp, ISO8601
     valid_state   TEXT    NOT NULL,                   -- versioning attributes,state either 'Current' or 'Expired'
     model         TEXT    NOT NULL,                   -- Either 'TESS-W', 'TESS4C'
-    firmware      TEXT    NOT NULL DEFAULT 'Umknown', -- Firmware version string.
+    firmware      TEXT    NOT NULL DEFAULT 'Unknown', -- Firmware version string.
     authorised    INTEGER NOT NULL,                   -- Flag 1 = Authorised, 0 not authorised
     registered    TEXT    NOT NULL DEFAULT 'Unknown', -- Either 'Manual' or 'Auto'
     cover_offset  REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
