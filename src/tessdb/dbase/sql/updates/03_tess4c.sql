@@ -271,23 +271,56 @@ JOIN observer_t    USING (observer_id)
 JOIN name_to_mac_t USING (mac_address)
 WHERE name_to_mac_t.valid_state == "Current";
 
--------------------------
--- The main 'Facts' table
--------------------------
+---------------------------
+-- The TESS-W 'Facts' table
+---------------------------
 
--- We are adding more columns and renaming old columns
+-- We are adding more columns and renaming some old columns
 
-ALTER TABLE tess_readings_t RENAME COLUMN frequency TO freq1;
-ALTER TABLE tess_readings_t RENAME COLUMN magnitude TO mag1;
 ALTER TABLE tess_readings_t RENAME COLUMN height TO elevation;
 ALTER TABLE tess_readings_t RENAME COLUMN ambient_temperature TO box_temperature;
 ALTER TABLE tess_readings_t ADD COLUMN observer_id INTEGER NOT NULL DEFAULT -1 REFERENCES observer_t(observer_id);
-ALTER TABLE tess_readings_t ADD COLUMN freq2 REAL;
-ALTER TABLE tess_readings_t ADD COLUMN mag2  REAL;
-ALTER TABLE tess_readings_t ADD COLUMN freq3 REAL;
-ALTER TABLE tess_readings_t ADD COLUMN mag3  REAL;
-ALTER TABLE tess_readings_t ADD COLUMN freq4 REAL;
-ALTER TABLE tess_readings_t ADD COLUMN mag4  REAL;
+
+---------------------------
+-- The TESS4C 'Facts' table
+---------------------------
+
+CREATE TABLE tess_readings4c_t
+(
+    date_id         INTEGER NOT NULL, 
+    time_id         INTEGER NOT NULL, 
+    tess_id         INTEGER NOT NULL,
+    location_id     INTEGER NOT NULL DEFAULT -1,
+    observer_id     INTEGER NOT NULL DEFAULT -1,
+    units_id        INTEGER NOT NULL,
+    sequence_number INTEGER,  -- This should be NOT NULL. However, it is a pain to migrate this table
+    freq1           REAL,     -- This should be NOT NULL. However, it is a pain to migrate this table
+    mag1            REAL,     -- This should be NOT NULL. However, it is a pain to migrate this table
+    freq2           REAL,
+    mag2            REAL,
+    freq3           REAL,
+    mag3            REAL,
+    freq4           REAL,
+    mag4            REAL,
+    box_temperature REAL,
+    sky_temperature REAL,
+    azimuth         REAL,   -- decimal degrees
+    altitude        REAL,   -- decimal degrees
+    longitude       REAL,   -- decimal degrees
+    latitude        REAL,   -- decimal degrees
+    elevation       REAL,   -- meters above sea level
+    signal_strength INTEGER,
+    hash            TEXT,   -- to verify readings
+
+    PRIMARY KEY (date_id, time_id, tess_id),
+    FOREIGN KEY(date_id) REFERENCES date_t(date_id),
+    FOREIGN KEY(time_id) REFERENCES time_t(time_id),
+    FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),
+    FOREIGN KEY(location_id) REFERENCES location_t(location_id),
+    FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id),
+    FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
+);
+
 
 INSERT OR REPLACE INTO config_t(section, property, value) 
 VALUES ('database', 'version', '03');

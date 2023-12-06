@@ -277,7 +277,7 @@ class MQTTService(ClientService):
 
     def _validateCommonMandatory(self, row):
         '''Common mandatory readings fields for both TESS-W and TESS4C'''
-         if not( type(row['name']) == str):
+        if not( type(row['name']) == str):
             raise ReadingTypeError('name', str, type(row['name']))
         if type(row['seq']) != int:
             raise ReadingTypeError('seq', int, type(row['seq']))

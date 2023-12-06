@@ -153,40 +153,40 @@ class FilterService(Service):
         if len(fifo) < self.depth//2:   # Avoid loosing the past half window when initializing the filter
             log.debug("{log_tag}: Writting and refilling the fifo with seq = {seq}, mag = {mag}, freq = {freq}",  
                 seq=new_sample['seq'], 
-                mag=new_sample['mag'], 
-                freq=new_sample['freq'], 
+                mag=new_sample['mag1'], 
+                freq=new_sample['freq1'], 
                 log_tag=new_sample['name'])
-            if not self.isSequenceInvalid([ item['mag'] for item in fifo ]):
+            if not self.isSequenceInvalid([ item['mag1'] for item in fifo ]):
                 chosen_sample = fifo[-1]
                 self.parent.queue['tess_filtered_readings'].append(chosen_sample)
             else:
                 log.debug("discarding {log_tag} sample with seq = {seq}, mag = {mag}, freq = {freq}",  
                 seq=new_sample['seq'], 
-                mag=new_sample['mag'], 
-                freq=new_sample['freq'], 
+                mag=new_sample['mag1'], 
+                freq=new_sample['freq1'], 
                 log_tag=new_sample['name'])
         elif len(fifo) < self.depth:
             log.debug("{log_tag}: Simply refilling the fifo with seq = {seq}, mag = {mag}, freq = {freq}",  
                 seq=new_sample['seq'], 
-                mag=new_sample['mag'], 
-                freq=new_sample['freq'], 
+                mag=new_sample['mag1'], 
+                freq=new_sample['freq1'], 
                 log_tag=new_sample['name'])
         else:
             chosen_sample = fifo[self.depth//2]
             seqList  = [ item['seq'] for item in fifo ]
-            magList  = [ item['mag'] for item in fifo ]
+            magList  = [ item['mag1'] for item in fifo ]
             log.debug("{log_tag}: seqList = {s}. magList = {m}", s=seqList, m=magList, log_tag=new_sample['name'])
             if self.isSequenceMonotonic(seqList) and self.isSequenceInvalid(magList): 
                 log.debug("discarding {log_tag} sample with seq = {seq}, mag = {mag}, freq = {freq}",  
-                    mag=chosen_sample['mag'], 
+                    mag=chosen_sample['mag1'], 
                     seq=chosen_sample['seq'], 
-                    freq=chosen_sample['freq'], 
+                    freq=chosen_sample['freq1'], 
                     log_tag=chosen_sample['name'])
             else:
                 log.debug("accepting {log_tag} sample with seq = {seq}, mag = {mag}, freq = {freq}",  
                     seq=chosen_sample['seq'], 
-                    mag=chosen_sample['mag'], 
-                    freq=chosen_sample['freq'], 
+                    mag=chosen_sample['mag1'], 
+                    freq=chosen_sample['freq1'], 
                     log_tag=chosen_sample['name'])
                 self.parent.queue['tess_filtered_readings'].append(chosen_sample)
 
@@ -210,8 +210,8 @@ class FilterService(Service):
             new_sample = yield self.parent.queue['tess_readings'].get()
             log.debug("got a new sample from {log_tag} with seq = {seq}, mag = {mag}, freq = {freq}",  
                 seq=new_sample['seq'], 
-                mag=new_sample['mag'], 
-                freq=new_sample['freq'], 
+                mag=new_sample['mag1'], 
+                freq=new_sample['freq1'], 
                 log_tag=new_sample['name'])
             if self.enabled:
                 self.doFilter(new_sample)

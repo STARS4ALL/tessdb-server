@@ -50,11 +50,51 @@ from tessdb.error import ReadingKeyError, ReadingTypeError
 # Module Constants
 # ----------------
 
-JSON_OPTIONAL_FIELDS = ('freq2', 'mag2', 'freq3', 'mag3', 'freq4', 'mag4', 'az', 'alt', 'long', 'lat', 'height', 'wdBm', 'hash')
-
-
 INSERT_READING_SQL = '''
     INSERT INTO tess_readings_t (
+        date_id,
+        time_id,
+        tess_id,
+        location_id,
+        observer_id,
+        units_id,
+        sequence_number,
+        frequency,               
+        magnitude,              
+        box_temperature,    
+        sky_temperature,    
+        azimuth,            
+        altitude,           
+        longitude,          
+        latitude,           
+        elevation,           
+        signal_strength,     
+        hash       
+    ) VALUES (
+        :date_id,
+        :time_id,
+        :tess_id,
+        :location_id,
+        :observer_id,
+        :units_id,
+        :seq,
+        :freq1,               
+        :mag1,                        
+        :box_temperature,    
+        :sky_temperature,    
+        :az,            
+        :alt,           
+        :long,          
+        :lat,           
+        :height,           
+        :wdBm,     
+        :hash
+    )
+'''
+
+
+INSERT_READING4C_SQL = '''
+    INSERT INTO tess_readings4c_t (
         date_id,
         time_id,
         tess_id,
@@ -106,7 +146,6 @@ INSERT_READING_SQL = '''
         :hash
     )
 '''
-
 # -----------------------
 # Module Global Variables
 # -----------------------
@@ -133,7 +172,9 @@ class TESSReadings:
         self.pool = None
         self.setOptions(auth_filter=True)
         self.resetCounters()
-        self._readingsBuffer = list()
+        # Internal buffers to do Block Writes
+        self._rows1C = list()
+        self._rows4C = list()
 
     # -------------
     # log stats API
@@ -174,7 +215,29 @@ class TESSReadings:
         Takes care of optional fields
         Returns a Deferred.
         '''
-        row = self.to_tess_readings_dict(row)
+        self._updateCommon(row)
+        self._rows1C.append(row)
+        if len(self._rows1C) >= self.BUFFER_SIZE:
+            yield self.flush(self._rows1C, INSERT_READING_SQL)
+
+    @inlineCallbacks
+    def update4C(self, row):
+        '''
+        Update tess_readings_t with a new row
+        Takes care of optional fields
+        Returns a Deferred.
+        '''
+        self._updateCommon(row)
+        self._rows4C.append(row)
+        if len(self._rows4C) >= self.BUFFER_SIZE:
+            yield self.flush(self._rows4C, INSERT_READING4C_SQL)
+           
+    # ==============
+    # Helper methods
+    # ==============
+ 
+    @inlineCallbacks
+    def _updateCommon(self, row):
         now = row['tstamp'] 
         self.nreadings += 1
         tess = yield self.parent.tess.findPhotometerByName(row)
@@ -198,20 +261,6 @@ class TESSReadings:
         row['location_id'] = location_id
         row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
         log.debug("TESSReadings.update({log_tag}): About to write to DB {row!s}", log_tag=row['name'], row=row)
-        self._readingsBuffer.append(row)
-        if len(self._readingsBuffer) == self.BUFFER_SIZE:
-            yield self.flush()
-
-
-    # ==============
-    # Helper methods
-    # ==============
- 
-    def to_tess_readings_dict(self, row):
-        '''Adapts the dictionary decoded by the MQTT subscriber to the row being written in the database'''
-        for key in JSON_OPTIONAL_FIELDS:
-            row[key] = row.get(key) # create it with None if not already present
-        return row
 
     def setOptions(self, auth_filter):
         '''
@@ -220,41 +269,40 @@ class TESSReadings:
         self.authFilter = auth_filter
 
 
-    def database_write(self, rows):
+    def database_write(self, rows, sql):
         '''
-        Append rowr in the readings table where rows may be 
+        Append row in one of the readings table where rows may be 
         - a single row (a dict) or 
         - a sequence of rows (sequence or tuple of dicts)
         Returns a Deferred
         '''
-        def _database_write(txn, rows):
-            log.debug("{sql} <= {rows}", sql=INSERT_READINGS_SQL, data=rows)
+        def _database_write(txn):
+            log.debug("{sql} <= {rows}", sql=sql, rows=rows)
             if type(rows) in (list, tuple):
-                txn.executemany(insert_sql, rows)
+                txn.executemany(sql, rows)
             else:
-                txn.execute(insert_sql, rows)
-        return self._pool.runInteraction( _database_write, rows)
+                txn.execute(sql, rows)
+        return self._pool.runInteraction( _database_write)
 
 
     @inlineCallbacks
-    def flush(self):
+    def flush(self, rows, sql):
         try:
-            yield self.database_write(self._readingsBuffer)
+            yield self.database_write(rows)
         except sqlite3.IntegrityError as e:
             log.warn("SQL Integrity error in block write. Looping one by one ...")
-            for row in self._readingsBuffer:
+            for row in rows:
                 try:
-                    yield self.database_write(row)
+                    yield self.database_write(row, sql)
                 except sqlite3.IntegrityError as e:
                     log.error("Discarding row by SQL Integrity error: {row}", row=row)
                     self.rejDuplicate += 1
         except Exception as e:
             log.error("TESSReadings.update(): exception {excp!s}. Looping one by one ...", excp=e)
-            for row in self._readingsBuffer:
+            for row in rows:
                 try:
-                    yield self.database_write(row)
+                    yield self.database_write(row, sql)
                 except Exception as e:
                     log.error("Discarding row by other SQL error: {row}", row=row)
                     self.rejOther += 1
-        self._readingsBuffer = list() # empties buffer
-
+        rows = list()

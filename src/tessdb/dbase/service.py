@@ -255,7 +255,10 @@ class DBaseService(Service):
                     yield self.register(row)
                 while len(self.parent.queue['tess_filtered_readings']):
                     row = self.parent.queue['tess_filtered_readings'].popleft()
-                    yield self.update(row)
+                    if self.isTess4C(row):
+                        yield self.update4C(row)
+                    else:
+                        yield self.update(row)
         except Exception as e:
             log.failure('DB Writter. Unexpected exception. Stack trace follows:')
         self.timeStatList.append( (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds())
@@ -281,3 +284,7 @@ class DBaseService(Service):
         '''setup the connection pool for asynchronouws adbapi'''
         self.pool.close()
         log.debug("Closed DB Connection Pool to {conn!s}", conn=self.path)
+
+
+    def isTess4C(self, row):
+        return 'freq4' in row
