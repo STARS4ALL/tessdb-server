@@ -28,10 +28,10 @@ from ._version             import __version__
 from .config               import load_config_file
 from .service.relopausable import Service, MultiService, Application
 from .logger               import startLogging
-from .tessdb               import TESSDBService
+from .root.service         import TESSDBService
 from .dbase.service        import DBaseService
-from .mqttservice          import MQTTService
-from .filterservice        import FilterService 
+from .mqtt.service         import MQTTService
+from .filter.service       import FilterService 
 
 # ----------------
 # Module constants

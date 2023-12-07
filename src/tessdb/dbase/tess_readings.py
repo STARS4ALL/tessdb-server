@@ -217,10 +217,10 @@ class TESSReadings:
         '''
         ok = yield self._updateCommon(row)
         if ok:
-            log.info("Appending {name} reading for DB Write",row['name'])
+            log.debug("Appending {name} reading for DB Write", name=row['name'])
             self._rows1C.append(row)
             if len(self._rows1C) >= self.BUFFER_SIZE:
-                log.info("Flushing TESSW queue with {len} items",len(self._rows1C))
+                log.info("Flushing TESSW queue with {len} items", len=len(self._rows1C))
                 yield self.flush(self._rows1C, INSERT_READING_SQL)
 
     @inlineCallbacks
@@ -232,10 +232,10 @@ class TESSReadings:
         '''
         ok = yield self._updateCommon(row)
         if ok:
-            log.info("Appending {name} reading for DB Write",row['name'])
+            log.debug("Appending {name} reading for DB Write", name=row['name'])
             self._rows4C.append(row)
             if len(self._rows4C) >= self.BUFFER_SIZE:
-                log.info("Flushing TESS4C queue with {len} items",len(self._rows1C))
+                log.info("Flushing TESS4C queue with {len} items", len=len(self._rows1C))
                 yield self.flush(self._rows4C, INSERT_READING4C_SQL)
            
     # ==============

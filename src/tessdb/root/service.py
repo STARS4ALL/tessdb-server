@@ -28,11 +28,11 @@ from twisted.internet.threads import deferToThread
 
 from tessdb.service.relopausable import MultiService
 
-from tessdb.config        import VERSION_STRING, load_config_file
-from tessdb.mqttservice   import MQTTService
-from tessdb.filterservice import FilterService
-from tessdb.dbase.service import DBaseService
-from tessdb.logger        import setLogLevel, setLogTags
+from tessdb.config         import VERSION_STRING, load_config_file
+from tessdb.mqtt.service   import MQTTService
+from tessdb.filter.service import FilterService
+from tessdb.dbase.service  import DBaseService
+from tessdb.logger         import setLogLevel, setLogTags
 
 # ----------------
 # Module constants
