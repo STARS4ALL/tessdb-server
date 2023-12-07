@@ -24,20 +24,6 @@ from twisted.logger   import Logger
 
 from . import NAMESPACE
 
-# ----------------
-# Module Constants
-# ----------------
-
-UNKNOWN       = 'Unknown'
-START_TIME    = "2016-01-01T00:00:00"
-INFINITE_TIME = "2999-12-31T23:59:59"
-EXPIRED       = "Expired"
-CURRENT       = "Current"
-TSTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
-# For sunset/sunrise in circumpolar sites
-NEVER_UP      = "Never Up"
-ALWAYS_UP     = "Always Up"
-
 # -----------------------
 # Module Global Variables
 # -----------------------

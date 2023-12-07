@@ -40,8 +40,7 @@ from twisted.logger         import Logger
 # local imports
 # -------------
 
-from . import NAMESPACE
-from .utils import START_TIME, INFINITE_TIME, CURRENT
+from . import NAMESPACE, INFINITE_TIME, CURRENT
 
 # ----------------
 # Module Constants

@@ -103,7 +103,7 @@ class DBaseService(Service):
         super().startService()
         setLogLevel(namespace=NAMESPACE, levelStr=self.options['log_level'])
         setLogLevel(namespace='registry', levelStr=self.options['register_log_level'])
-      
+        self.tess_readings.setOptions(auth_filter=self.options['auth_filter'])
         # setup the connection pool for asynchronouws adbapi
         self.openPool()
         self.startTasks()

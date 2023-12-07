@@ -219,166 +219,6 @@ class MQTTService(ClientService):
             log.info("no need to subscribe")
         self.topics = topics
 
-    def isTESS4CPayload(self, row):
-        result = False
-        contents = row.get('F4')
-        if contents is not None:
-            result = True
-        return result 
-    
-    def flattenTESS4C(self, row):
-        '''Flatten the JSON structure for further processing'''
-        for i, filt in enumerate(self.TESS4C_FILTER_KEYS):
-            for key, value in row[filt].items():
-                row[f"{key}{i}"] = value
-        for filt in self.TESS4C_FILTER_KEYS:
-            del row[fil]
-        return row
-
-    def _validateTESS4CMandatoryRegister(self, row):
-        mandatory = set(['band', 'calib'])
-        for filt in self.TESS4C_FILTER_KEYS:
-            incoming = set(filt.keys)
-            if mandatory <= incoming:
-                raise ReadingKeyError(mandatory - incoming)
-            if type(filt['band']) != str:
-                raise ReadingTypeError('band', str, type(filt['band']))
-            if type(filt['calib']) != float:
-                raise ReadingTypeError('calib', float, type(filt['float']))
-
-    def _validateTESS4CMandatoryReadings(self, row):
-        mandatory = set(['freq', 'mag', 'zp'])
-        for filt in self.TESS4C_FILTER_KEYS:
-            incoming = set(filt.keys)
-            if not mandatory <= incoming:
-                raise ReadingKeyError(mandatory - incoming)
-            if type(filt['freq']) != float:
-                raise ReadingTypeError('freq', float, type(filt['freq']))
-            if type(filt['mag']) != float:
-                raise ReadingTypeError('mag', float, type(filt['mag']))
-          
-    def _validateCommonOptionals(self, row):
-        '''Common optionals fro TESS-W and TESS4C'''
-        if 'az' in row and type(row['az']) != float:
-            raise ReadingTypeError('az', float, type(row['az']))
-        if 'alt' in row and type(row['alt']) != float:
-            raise ReadingTypeError('alt', float, type(row['alt']))
-        if 'long' in row and type(row['long']) != float:
-            raise ReadingTypeError('long', float, type(row['long']))
-        if 'lat' in row and type(row['lat']) != float:
-            raise ReadingTypeError('lat', float, type(row['lat']))
-        if 'height' in row and type(row['height']) != float:
-            raise ReadingTypeError('height', float, type(row['height']))
-        if 'wdBm' in row and type(row['wdBm']) != int:
-            raise ReadingTypeError('wdBm', int, type(row['wdBm']))
-        # new field value for readings consistency check
-        if 'hash' in row and not (type(row['hash']) == str):
-            raise ReadingTypeError('hash', str, type(row['hash']))
-
-    def _validateCommonMandatory(self, row):
-        '''Common mandatory readings fields for both TESS-W and TESS4C'''
-        if not( type(row['name']) == str):
-            raise ReadingTypeError('name', str, type(row['name']))
-        if type(row['seq']) != int:
-            raise ReadingTypeError('seq', int, type(row['seq']))
-        if type(row['tamb']) != float:
-            raise ReadingTypeError('tamb', float, type(row['tamb']))
-        if type(row['tsky']) != float:
-            raise ReadingTypeError('tsky', float, type(row['tsky']))
-        if type(row['rev']) != int:
-            raise ReadingTypeError('rev', int, type(row['rev']))
-
-    def validateReadingsTESSW(self, row):
-        '''validate TESSW readings fields'''
-        # Test mandatory keys
-        incoming  = set(row.keys())
-        if not self.MANDATORY_READ_TESSW <= incoming:
-            raise ReadingKeyError(self.MANDATORY_READ_TESSW - incoming)
-        # Mandatory field values
-        if type(row['freq']) != float:
-            raise ReadingTypeError('freq', float, type(row['freq']))
-        if type(row['mag']) != float:
-            raise ReadingTypeError('mag', float, type(row['mag']))
-        self._validateCommonMandatory(row)
-        self._validateCommonOptionals(row)
-
-    def validateRegisterTESSW(self, row):
-        '''validate the registration fields'''
-        # Test mandatory keys
-        incoming  = set(row.keys())
-        if not self.MANDATORY_REGR_TESSW <= incoming:
-            raise ReadingKeyError(self.MANDATORY_REGR_TESSW - incoming)
-        # Mandatory field values
-        if type(row['rev']) != int:
-            raise ReadingTypeError('rev', int, type(row['rev']))
-        if not( type(row['name']) == str):
-            raise ReadingTypeError('name', str, type(row['name']))
-        if not( type(row['mac']) == str):
-            raise ReadingTypeError('mac', str, type(row['mac']))
-        if type(row['calib']) != float:
-            raise ReadingTypeError('calib', float, type(row['calib']))
-        # optionals field values in Payload V1 format
-        if 'firmware' in row and not (type(row['firmware']) == str):
-            raise ReadingTypeError('firmware', str, type(row['firmware']))
-
-
-    def validateReadingsTESS4C(self, row):
-        '''validate the readings fields'''
-        # Test mandatory keys
-        incoming  = set(row.keys())
-        if not self.MANDATORY_READ_TESS4C <= incoming:
-            raise ReadingKeyError(self.MANDATORY_READ_TESSW - incoming)
-        # Mandatory field values
-        self._validateTESS4CMandatory(row)
-        self._validateCommonMandatory(row)
-        self._validateCommonOptionals(row)
-
-
-    def validateRegisterTESS4C(self, row):
-        '''validate the registration fields'''
-        # Test mandatory keys
-        incoming  = set(row.keys())
-        if not self.MANDATORY_REGR_TESS4C <= incoming:
-            raise ReadingKeyError(self.MANDATORY_REGR_TESS4C - incoming)
-        # Mandatory field values
-        if type(row['rev']) != int:
-            raise ReadingTypeError('rev', int, type(row['rev']))
-        if not( type(row['name']) == str or type(row['name']) == unicode):
-            raise ReadingTypeError('name', str, type(row['name']))
-        if not( type(row['mac']) == str or type(row['mac']) == unicode):
-            raise ReadingTypeError('mac', str, type(row['mac']))
-        # optionals field values in Payload V1 format
-        if 'firmware' in row and not (type(row['firmware']) == str):
-            raise ReadingTypeError('firmware', str, type(row['firmware']))
-
-
-    def handleRegistration(self, row, now):
-        '''
-        Handle registration data coming from onPublish()
-        '''
-        log.info("Register message at {now}: {row}", row=row, now=now)
-        self.nregister += 1
-        try:
-            if type(row['calib']) == int:
-                    row['calib'] = float(row['calib'])
-            self.validateRegisterTESSW(row)
-            self.handleTimestamps(row, now)
-        except ValidationError as e:
-            log.error('Validation error in registration payload={payload!s}', payload=row)
-            log.error('{excp!s}', excp=e)
-        except KeyError as e:
-            log.error('No "calib" keyword sent in registration message={payload!s}', payload=row)
-            log.error('{excp!s}', excp=e)
-        else:
-            try:
-                row['mac']  = formatted_mac(row['mac']) # Makes sure we have a properly formatted MAC
-            except Exception as e:
-                log.error('{excp!s}', excp=e)
-            else:
-                row['name'] = row['name'].lower()  # Get rid of upper case TESS names
-                log.debug('Enqueue registration from {log_tag} for DB Writter', log_tag=row['name'])
-                self.parent.queue['tess_register'].append(row)
-
 
     def handleTimestamps(self, row, now):
         '''
@@ -411,16 +251,129 @@ class MQTTService(ClientService):
                 log_tag=row['name'], delta=delta)
 
 
+    def _isTESS4CPayload(self, row):
+        return 'F4' in row
+    
+    def remapTESS4CReadings(self, row):
+        '''Flatten the JSON structure for further processing'''
+        for i, filt in enumerate(self.TESS4C_FILTER_KEYS):
+            for key, value in row[filt].items():
+                row[f"{key}{i}"] = value
+        for filt in self.TESS4C_FILTER_KEYS:
+            del row[fil]
+
+    def remapTESS4CRegister(self, row):
+        '''Flatten the JSON structure for further processing'''
+        for i, filt in enumerate(self.TESS4C_FILTER_KEYS):
+            for key, value in row[filt].items():
+                row[f"{key}{i}"] = value
+        for filt in self.TESS4C_FILTER_KEYS:
+            del row[fil]
+      
+
+    def  remapTESSWReadings(self, row):
+        '''remaps keywords for the filter/database statges'''
+        row['mag1'] = row['mag']
+        row['freq1'] = row['freq']
+        del row['mag']
+        del row['freq']
+
+    def  remapTESSWRegister(self, row):
+        '''remaps keywords for the filter/database statges'''
+        row['calib'] = row['zp1']
+        del row['calib']
+        row['model'] = row.get('model','TESS-W')
+        row['firmware'] = row.get('firmware','Unknown')
+        row['filter1'] = row.get('filter1','UV/IR-740')
+        row['nchannels'] = 1
+
+    def _validateCommonReadingsMandatory(self, row):
+        '''Common mandatory readings fields for both TESS-W and TESS4C'''
+        if not( type(row['name']) == str):
+            raise ReadingTypeError('name', str, type(row['name']))
+        if type(row['seq']) != int:
+            raise ReadingTypeError('seq', int, type(row['seq']))
+        if type(row['tamb']) != float:
+            raise ReadingTypeError('tamb', float, type(row['tamb']))
+        if type(row['tsky']) != float:
+            raise ReadingTypeError('tsky', float, type(row['tsky']))
+        if type(row['rev']) != int:
+            raise ReadingTypeError('rev', int, type(row['rev']))
+
+
+    def _validateCommonReadingsOptionals(self, row):
+        '''Common optionals fro TESS-W and TESS4C'''
+        if 'az' in row and type(row['az']) != float:
+            raise ReadingTypeError('az', float, type(row['az']))
+        if 'alt' in row and type(row['alt']) != float:
+            raise ReadingTypeError('alt', float, type(row['alt']))
+        if 'long' in row and type(row['long']) != float:
+            raise ReadingTypeError('long', float, type(row['long']))
+        if 'lat' in row and type(row['lat']) != float:
+            raise ReadingTypeError('lat', float, type(row['lat']))
+        if 'height' in row and type(row['height']) != float:
+            raise ReadingTypeError('height', float, type(row['height']))
+        if 'wdBm' in row and type(row['wdBm']) != int:
+            raise ReadingTypeError('wdBm', int, type(row['wdBm']))
+        # new field value for readings consistency check
+        if 'hash' in row and not (type(row['hash']) == str):
+            raise ReadingTypeError('hash', str, type(row['hash']))
+
+    def _validateTESS4CMandatoryReadings(self, row):
+        '''Specific TESS-4C regsitration part'''
+        mandatory = set(['freq', 'mag', 'zp'])
+        for filt in self.TESS4C_FILTER_KEYS:
+            incoming = set(filt.keys)
+            if not mandatory <= incoming:
+                raise ReadingKeyError(mandatory - incoming)
+            if type(filt['freq']) != float:
+                raise ReadingTypeError('freq', float, type(filt['freq']))
+            if type(filt['mag']) != float:
+                raise ReadingTypeError('mag', float, type(filt['mag']))
+            if type(filt['zp']) != float:
+                raise ReadingTypeError('zp', float, type(filt['zp']))
+
+
+    def validateReadingsTESSW(self, row):
+        '''validate TESSW readings fields'''
+        # Test mandatory keys
+        incoming  = set(row.keys())
+        if not self.MANDATORY_READ_TESSW <= incoming:
+            raise ReadingKeyError(self.MANDATORY_READ_TESSW - incoming)
+        # Mandatory field values
+        if type(row['freq']) != float:
+            raise ReadingTypeError('freq', float, type(row['freq']))
+        if type(row['mag']) != float:
+            raise ReadingTypeError('mag', float, type(row['mag']))
+        self._validateCommonReadingsMandatory(row)
+        self._validateCommonReadingsOptionals(row)
+
+
+    def validateReadingsTESS4C(self, row):
+        '''validate the readings fields'''
+        # Test mandatory keys
+        incoming  = set(row.keys())
+        if not self.MANDATORY_READ_TESS4C <= incoming:
+            raise ReadingKeyError(self.MANDATORY_READ_TESSW - incoming)
+        self._validateTESS4CMandatoryReadings(row)
+        self._validateCommonReadingsMandatory(row)
+        self._validateCommonReadingsOptionals(row)
+
+    
+
     def handleReadings(self, row, now):
         '''
         Handle actual reqadings data coming from onPublish()
         '''
         self.nreadings += 1
         try:
-            if self.isTESS4CPayload(row):
+            if self._isTESS4CPayload(row):
+                return
                 self.validateReadingsTES4C(row)
+                self.remapTESS4CReadings(row)
             else:
                 self.validateReadingsTESSW(row)
+                self.remapTESSWReadings(row)
             self.handleTimestamps(row, now)
         except ValidationError as e:
             log.error('Validation error in readings payload={payload!s}', payload=row)
@@ -432,6 +385,96 @@ class MQTTService(ClientService):
             log.debug('Enqueue reading from {log_tag} for DB Writter', log_tag=row['name'])
             row['name'] = row['name'].lower() # Get rid of upper case TESS names
             self.parent.queue['tess_readings'].put(row)
+
+
+
+    def _validateTESS4CMandatoryRegister(self, row):
+        mandatory = set(['band', 'calib'])
+        for filt in self.TESS4C_FILTER_KEYS:
+            incoming = set(filt.keys)
+            if mandatory <= incoming:
+                raise ReadingKeyError(mandatory - incoming)
+            if type(filt['band']) != str:
+                raise ReadingTypeError('band', str, type(filt['band']))
+            if type(filt['calib']) != float:
+                raise ReadingTypeError('calib', float, type(filt['float']))
+
+
+    
+
+    def validateRegisterTESSW(self, row):
+        '''validate the registration fields'''
+        # Test mandatory keys
+        incoming  = set(row.keys())
+        if not self.MANDATORY_REGR_TESSW <= incoming:
+            raise ReadingKeyError(self.MANDATORY_REGR_TESSW - incoming)
+        # Mandatory field values
+        if type(row['rev']) != int:
+            raise ReadingTypeError('rev', int, type(row['rev']))
+        if not( type(row['name']) == str):
+            raise ReadingTypeError('name', str, type(row['name']))
+        if not( type(row['mac']) == str):
+            raise ReadingTypeError('mac', str, type(row['mac']))
+        if type(row['calib']) != float:
+            raise ReadingTypeError('calib', float, type(row['calib']))
+        # optionals field values in Payload V1 format
+        if 'firmware' in row and not (type(row['firmware']) == str):
+            raise ReadingTypeError('firmware', str, type(row['firmware']))
+        if 'model' in row and not (type(row['model']) == str):
+            raise ReadingTypeError('model', str, type(row['model']))
+
+
+
+    def validateRegisterTESS4C(self, row):
+        '''validate the registration fields'''
+        # Test mandatory keys
+        incoming  = set(row.keys())
+        if not self.MANDATORY_REGR_TESS4C <= incoming:
+            raise ReadingKeyError(self.MANDATORY_REGR_TESS4C - incoming)
+        # Mandatory field values
+        if type(row['rev']) != int:
+            raise ReadingTypeError('rev', int, type(row['rev']))
+        if not( type(row['name']) == str):
+            raise ReadingTypeError('name', str, type(row['name']))
+        if not( type(row['mac']) == str):
+            raise ReadingTypeError('mac', str, type(row['mac']))
+        # optionals field values in Payload V1 format
+        if 'firmware' in row and not (type(row['firmware']) == str):
+            raise ReadingTypeError('firmware', str, type(row['firmware']))
+
+
+    def handleRegistration(self, row, now):
+        '''
+        Handle registration data coming from onPublish()
+        '''
+        log.info("Register message at {now}: {row}", row=row, now=now)
+        self.nregister += 1
+        try:
+            if self._isTESS4CPayload(row):
+               self.validateRegisterTESSW(row)
+               self.remapTESS4CRegister(row)
+            else:
+                if type(row['calib']) == int:
+                        row['calib'] = float(row['calib'])
+                self.validateRegisterTESSW(row)
+                self.remapTESSWRegister(row)
+            self.handleTimestamps(row, now)
+        except ValidationError as e:
+            log.error('Validation error in registration payload={payload!s}', payload=row)
+            log.error('{excp!s}', excp=e)
+        except KeyError as e:
+            log.error('No "calib" keyword sent in registration message={payload!s}', payload=row)
+            log.error('{excp!s}', excp=e)
+        else:
+            try:
+                row['mac']  = formatted_mac(row['mac']) # Makes sure we have a properly formatted MAC
+            except Exception as e:
+                log.error('{excp!s}', excp=e)
+            else:
+                row['name'] = row['name'].lower()  # Get rid of upper case TESS names
+                log.debug('Enqueue registration from {log_tag} for DB Writter', log_tag=row['name'])
+                self.parent.queue['tess_register'].append(row)
+
 
 
     def onDisconnection(self, reason):

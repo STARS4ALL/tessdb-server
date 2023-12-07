@@ -168,17 +168,17 @@ CREATE TABLE IF NOT EXISTS tess_new_t
     valid_since   TIMESTAMP NOT NULL,                 -- versioning attributes, start timestamp, ISO8601
     valid_until   TIMESTAMP NOT NULL,                 -- versioning attributes, end  timestamp, ISO8601
     valid_state   TEXT    NOT NULL,                   -- versioning attributes,state either 'Current' or 'Expired'
-    model         TEXT    NOT NULL,                   -- Either 'TESS-W', 'TESS4C'
+    model         TEXT    NOT NULL DEFAULT 'TESS-W',  -- Either 'TESS-W', 'TESS4C'
     firmware      TEXT    NOT NULL DEFAULT 'Unknown', -- Firmware version string.
-    authorised    INTEGER NOT NULL,                   -- Flag 1 = Authorised, 0 not authorised
+    authorised    INTEGER NOT NULL DEFAULT 0,         -- Flag 1 = Authorised, 0 not authorised
     registered    TEXT    NOT NULL DEFAULT 'Unknown', -- Either 'Manual' or 'Auto'
     cover_offset  REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
     fov           REAL    NOT NULL DEFAULT 17.0,      -- Deprecated
     azimuth       REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
     altitude      REAL    NOT NULL DEFAULT 90.0,      -- Deprecated
-    nchannels     INTEGER NOT NULL,                   -- 1 to 4
+    nchannels     INTEGER NOT NULL DEFAULT 1,        -- 1 to 4
     zp1           REAL    NOT NULL,                   -- Zero Point 1
-    filter1       TEXT    NOT NULL,                   -- Filter 1 name (i.e. UV/IR-740, R, G, B)
+    filter1       TEXT    NOT NULL DEFAULT 'UV/IR-740', -- Filter 1 name (i.e. UV/IR-740, R, G, B)
     zp2           REAL,                               -- Zero Point 2
     filter2       TEXT,                               -- Filter 2 name (i.e. UV/IR-740, R, G, B)
     zp3           REAL ,                              -- Zero Point 3

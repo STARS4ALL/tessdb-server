@@ -80,8 +80,8 @@ INSERT_READING_SQL = '''
         :seq,
         :freq1,               
         :mag1,                        
-        :box_temperature,    
-        :sky_temperature,    
+        :tamb,    
+        :tsky,    
         :az,            
         :alt,           
         :long,          
@@ -135,8 +135,8 @@ INSERT_READING4C_SQL = '''
         :mag3,               
         :freq4,              
         :mag4,               
-        :box_temperature,    
-        :sky_temperature,    
+        :tamb,    
+        :tsky,    
         :az,            
         :alt,           
         :long,          
@@ -170,7 +170,7 @@ class TESSReadings:
 
         self.parent = parent
         self.pool = None
-        self.setOptions(auth_filter=True)
+        self.authFilter = True
         self.resetCounters()
         # Internal buffers to do Block Writes
         self._rows1C = list()
@@ -215,10 +215,13 @@ class TESSReadings:
         Takes care of optional fields
         Returns a Deferred.
         '''
-        self._updateCommon(row)
-        self._rows1C.append(row)
-        if len(self._rows1C) >= self.BUFFER_SIZE:
-            yield self.flush(self._rows1C, INSERT_READING_SQL)
+        ok = yield self._updateCommon(row)
+        if ok:
+            log.info("Appending {name} reading for DB Write",row['name'])
+            self._rows1C.append(row)
+            if len(self._rows1C) >= self.BUFFER_SIZE:
+                log.info("Flushing TESSW queue with {len} items",len(self._rows1C))
+                yield self.flush(self._rows1C, INSERT_READING_SQL)
 
     @inlineCallbacks
     def update4C(self, row):
@@ -227,10 +230,13 @@ class TESSReadings:
         Takes care of optional fields
         Returns a Deferred.
         '''
-        self._updateCommon(row)
-        self._rows4C.append(row)
-        if len(self._rows4C) >= self.BUFFER_SIZE:
-            yield self.flush(self._rows4C, INSERT_READING4C_SQL)
+        ok = yield self._updateCommon(row)
+        if ok:
+            log.info("Appending {name} reading for DB Write",row['name'])
+            self._rows4C.append(row)
+            if len(self._rows4C) >= self.BUFFER_SIZE:
+                log.info("Flushing TESS4C queue with {len} items",len(self._rows1C))
+                yield self.flush(self._rows4C, INSERT_READING4C_SQL)
            
     # ==============
     # Helper methods
@@ -245,22 +251,30 @@ class TESSReadings:
         if not len(tess):
             log.warn("TESSReadings.update(): No TESS {log_tag} registered ! => {row}", log_tag=row['name'], row=row)
             self.rejNotRegistered += 1
-            return None
-        tess        = tess[0]  # Keep only the first row of result set
+            return False
+        tess        = tess[0] # Keep only the first row of result set
         tess_id     = tess[0]  
-        location_id = tess[3]
-        authorised  = tess[5] == 1
-        observer_id = tess[6]
+        location_id = tess[12]
+        authorised  = tess[10] == 1
+        observer_id = tess[13]
         # Review authorisation if this filter is enabled
         if self.authFilter and not authorised:
-            log.warn("TESSReadings.update({log_tag}): not authorised", log_tag=row['name'])
+            log.warn("TESSReadings.update({log_tag}): not authorised: {value}", log_tag=row['name'],value=tess[5])
             self.rejNotAuthorised += 1
-            return None
+            return False
         row['date_id'], row['time_id'] = roundDateTime(now, self.parent.options['secs_resolution'])
         row['tess_id'] = tess_id
         row['location_id'] = location_id
+        row['observer_id'] = observer_id
+        row['az'] = row.get('az')
+        row['alt'] = row.get('alt')
+        row['long'] = row.get('long')
+        row['lat'] = row.get('lat')
+        row['height'] = row.get('height')
+        row['hash'] = row.get('hash')
         row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
         log.debug("TESSReadings.update({log_tag}): About to write to DB {row!s}", log_tag=row['name'], row=row)
+        return True
 
     def setOptions(self, auth_filter):
         '''
@@ -282,13 +296,13 @@ class TESSReadings:
                 txn.executemany(sql, rows)
             else:
                 txn.execute(sql, rows)
-        return self._pool.runInteraction( _database_write)
+        return self.pool.runInteraction( _database_write)
 
 
     @inlineCallbacks
     def flush(self, rows, sql):
         try:
-            yield self.database_write(rows)
+            yield self.database_write(rows, sql)
         except sqlite3.IntegrityError as e:
             log.warn("SQL Integrity error in block write. Looping one by one ...")
             for row in rows:
@@ -303,6 +317,7 @@ class TESSReadings:
                 try:
                     yield self.database_write(row, sql)
                 except Exception as e:
-                    log.error("Discarding row by other SQL error: {row}", row=row)
+                    log.error("Discarding row by other SQL error. Exception {excp}, row: {row}", excp=e, row=row)
                     self.rejOther += 1
-        rows = list()
+        finally:
+            rows.clear()
