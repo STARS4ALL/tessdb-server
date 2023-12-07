@@ -36,3 +36,11 @@ class ReadingTypeError(ValidationError):
             s = ' {0}: "{1}". Should be {2}, got {3}'.format(s, self.args[0], self.args[1], self.args[2])
         s = '{0}.'.format(s)
         return s
+
+class RegistrationKeyError(ReadingKeyError):
+    '''Missing mandatory keys in registration'''
+    pass
+
+class RegistrationTypeError(ReadingTypeError):
+    '''Regegistration, incorrect type value corresponding to key'''
+    pass

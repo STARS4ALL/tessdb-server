@@ -3,3 +3,15 @@
 #
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
+
+# -----------------
+# Package constants
+# -----------------
+
+# Service Logging namespace
+NAMESPACE = 'mqttS'
+
+# MQTT Protocol logging namespace
+PROTOCOL_NAMESPACE = 'mqtt'
+
+TESS4C_FILTER_KEYS = ('F1', 'F2', 'F3', 'F4')

@@ -106,7 +106,7 @@ PHOT_INSERTION_SQL = '''
         authorised,
         registered,
         location_id,
-        observer_id,
+        observer_id
     ) VALUES (
         :model,
         :mac,
@@ -129,6 +129,9 @@ PHOT_INSERTION_SQL = '''
         :observer
     )
 '''
+
+def isTESS4C(row):
+    return 'freq4' in row
 
 # ============================================================================ #
 #                              TESS INSTRUMENT TABLE (DIMENSION)
@@ -179,8 +182,7 @@ class TESS:
     def setPool(self, pool):
         self.pool = pool
 
-    def isTESS4C(self, row):
-        return 'freq4' in row
+
 
     # ----------------------------
     # Instrument registration (NEW)
@@ -196,7 +198,7 @@ class TESS:
         self.nRegister += 1
 
          # Adding extra metadadta for all create/update operations
-        if isTESS4C(self, row):
+        if isTESS4C(row):
             row['model']     = TESS4C_MODEL
             row['nchannels'] = 4
         else:
@@ -296,15 +298,15 @@ class TESS:
 # -------------------------------
 
     def changedManagedAttributes(self, sequence, row):
-        if self.isTESS4C(row):
-            log2.info("TESS4C {log_tag} ({mac})  changed ZPs or Filters from {old} to {new} ", 
+        if isTESS4C(row):
+            log2.info("TESS4C {log_tag} ({mac}) maybe changing ZPs or Filters from {old} to {new} ", 
                 log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
             return not ((abs(row['zp1'] - float(sequence[0])) < 0.005) and (abs(row['zp2'] - float(sequence[1])) < 0.005) and \
             (abs(row['zp3'] - float(sequence[2])) < 0.005) and (abs(row['zp4'] - float(sequence[3])) < 0.005) and \
             (row['filter1'] == sequence[4]) and (row['filter2'] == sequence[5]) and \
             (row['filter3'] == sequence[6]) and (row['filter4'] == sequence[7]))
         else:
-            log2.info("TESS-W {log_tag} ({mac}) changed instrument calibration data from {old} to {calib}", 
+            log2.info("TESS-W {log_tag} ({mac}) maybe changing ZP from {old} to {calib}", 
                 log_tag=row['name'], old=sequence[0], calib=row['zp1'], mac=row['mac'])
             return not ((abs(row['zp1'] - float(sequence[0])) < 0.005))
 
