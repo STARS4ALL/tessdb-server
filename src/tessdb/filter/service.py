@@ -158,6 +158,11 @@ class FilterService(Service):
                 log_tag=new_sample['name'])
             if not self.isSequenceInvalid([ item['mag1'] for item in fifo ]):
                 chosen_sample = fifo[-1]
+                log.info("accepting (when refilling) {log_tag} sample with seq = {seq}, mag = {mag}, freq = {freq}",  
+                    seq=chosen_sample['seq'], 
+                    mag=chosen_sample['mag1'], 
+                    freq=chosen_sample['freq1'], 
+                    log_tag=chosen_sample['name'])
                 self.parent.queue['tess_filtered_readings'].append(chosen_sample)
             else:
                 log.debug("discarding {log_tag} sample with seq = {seq}, mag = {mag}, freq = {freq}",  
@@ -183,7 +188,7 @@ class FilterService(Service):
                     freq=chosen_sample['freq1'], 
                     log_tag=chosen_sample['name'])
             else:
-                log.debug("accepting {log_tag} sample with seq = {seq}, mag = {mag}, freq = {freq}",  
+                log.info("accepting {log_tag} sample with seq = {seq}, mag = {mag}, freq = {freq}",  
                     seq=chosen_sample['seq'], 
                     mag=chosen_sample['mag1'], 
                     freq=chosen_sample['freq1'], 
