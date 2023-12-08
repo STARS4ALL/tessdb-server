@@ -260,7 +260,7 @@ class DBaseService(Service):
                     else:
                         yield self.update(row)
         except Exception as e:
-            log.failure('DB Writter. Unexpected exception. Stack trace follows:')
+            log.failure('Unexpected exception. Stack trace follows:')
         self.timeStatList.append( (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds())
         self.nrowsStatList.append(l0)
         self.later = reactor.callLater(self.T_QUEUE_POLL, self.writter)

@@ -299,16 +299,20 @@ class TESS:
 
     def changedManagedAttributes(self, sequence, row):
         if isTESS4C(row):
-            log2.info("TESS4C {log_tag} ({mac}) maybe changing ZPs or Filters from {old} to {new} ", 
-                log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
-            return not ((abs(row['zp1'] - float(sequence[0])) < 0.005) and (abs(row['zp2'] - float(sequence[1])) < 0.005) and \
+            unchanged = (abs(row['zp1'] - float(sequence[0])) < 0.005) and (abs(row['zp2'] - float(sequence[1])) < 0.005) and \
             (abs(row['zp3'] - float(sequence[2])) < 0.005) and (abs(row['zp4'] - float(sequence[3])) < 0.005) and \
             (row['filter1'] == sequence[4]) and (row['filter2'] == sequence[5]) and \
-            (row['filter3'] == sequence[6]) and (row['filter4'] == sequence[7]))
+            (row['filter3'] == sequence[6]) and (row['filter4'] == sequence[7])
+            if not unchanged:
+                log2.info("TESS4C {log_tag} ({mac}) changing ZPs or Filters from {old} to {new} ", 
+                    log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
+            return not unchanged
         else:
-            log2.info("TESS-W {log_tag} ({mac}) maybe changing ZP from {old} to {calib}", 
-                log_tag=row['name'], old=sequence[0], calib=row['zp1'], mac=row['mac'])
-            return not ((abs(row['zp1'] - float(sequence[0])) < 0.005))
+            unchanged = (abs(row['zp1'] - float(sequence[0])) < 0.005)
+            if not unchanged:
+                log2.info("TESS-W {log_tag} ({mac}) changing ZP from {old} to {calib}", 
+                    log_tag=row['name'], old=sequence[0], calib=row['zp1'], mac=row['mac'])
+            return not unchanged
 
     @inlineCallbacks
     def maybeUpdateManagedAttributes(self, row):

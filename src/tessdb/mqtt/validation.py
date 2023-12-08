@@ -159,6 +159,7 @@ def validateReadingsTESS4C(row):
     # Test mandatory keys
     incoming  = set(row.keys())
     if not MANDATORY_READ_TESS4C <= incoming:
+        log.info("CUCU")
         raise ReadingKeyError(MANDATORY_READ_TESS4C - incoming)
     if not( type(row['name']) == str):
         raise ReadingTypeError('name', str, type(row['name']))
@@ -170,6 +171,7 @@ def validateReadingsTESS4C(row):
     for filt in TESS4C_FILTER_KEYS:
         incoming = set(row[filt].keys())
         if not mandatory <= incoming:
+            log.info("TRAS")
             raise ReadingKeyError(mandatory - incoming)
         item = row[filt]
         if type(item['freq']) != float:

@@ -3,3 +3,9 @@
 #
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
+
+# -------------------------
+# Package logging namespace
+# -------------------------
+
+NAMESPACE = 'tessdb'

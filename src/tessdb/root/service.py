@@ -33,16 +33,19 @@ from tessdb.mqtt.service   import MQTTService
 from tessdb.filter.service import FilterService
 from tessdb.dbase.service  import DBaseService
 from tessdb.logger         import setLogLevel, setLogTags
+import tessdb
 
 # ----------------
 # Module constants
 # ----------------
 
+NAMESPACE = 'tessdb'
+
 # -----------------------
 # Module global variables
 # -----------------------
 
-log = Logger(namespace='tessdb')
+log = Logger(namespace=NAMESPACE)
 
 
 

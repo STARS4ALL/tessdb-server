@@ -268,7 +268,6 @@ class MQTTService(ClientService):
             log.info("no need to subscribe")
         self.topics = topics
 
-    
     def handleReadings(self, row, now):
         '''
         Handle actual reqadings data coming from onPublish()
@@ -287,7 +286,7 @@ class MQTTService(ClientService):
         except IncorrectTimestampError as e:
             log.error("Source timestamp unknown format {tstamp}", tstamp=row['tstamp'])
         except Exception as e:
-            log.failure("When dealing with readings {payload}", payload=row)
+            log.failure("Unexpected exception when dealing with readings {payload}. Stack trace follows:", payload=row)
         else:
             row['name'] = row['name'].lower() # Get rid of upper case TESS names
             self.parent.queue['tess_readings'].put(row)
@@ -312,8 +311,8 @@ class MQTTService(ClientService):
         except ValidationError as e:
             log.error('Validation error in registration payload={payload!s}', payload=row)
             log.error('{excp!s}', excp=e)
-        except KeyError as e:
-            log.failure("When dealing with registration {payload}", payload=row)
+        except Exception as e:
+            log.failure("Unexpected exception When dealing with registration {payload}. Stack trace follows:", payload=row)
         else:
             try:
                 row['mac']  = formatted_mac(row['mac']) # Makes sure we have a properly formatted MAC

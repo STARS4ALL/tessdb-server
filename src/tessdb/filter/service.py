@@ -207,21 +207,26 @@ class FilterService(Service):
         Task driven by deferred readings
         '''
         log.debug("starting Filtering infinite loop")
-        while True:
-            if FilterService.sigflushing:
-                FilterService.sigflushing = False
-                log.warn("flushing filtering queues")
-                self.flush()    # Flush filters
-            new_sample = yield self.parent.queue['tess_readings'].get()
-            log.debug("got a new sample from {log_tag} with seq = {seq}, mag = {mag}, freq = {freq}",  
-                seq=new_sample['seq'], 
-                mag=new_sample['mag1'], 
-                freq=new_sample['freq1'], 
-                log_tag=new_sample['name'])
-            if self.enabled:
-                self.doFilter(new_sample)
-            else:
-                self.parent.queue['tess_filtered_readings'].append(new_sample)
+        try:
+            while True:
+                if FilterService.sigflushing:
+                    FilterService.sigflushing = False
+                    log.warn("flushing filtering queues")
+                    self.flush()    # Flush filters
+                new_sample = yield self.parent.queue['tess_readings'].get()
+                log.debug("got a new sample from {log_tag} with seq = {seq}, mag = {mag}, freq = {freq}",  
+                    seq=new_sample['seq'], 
+                    mag=new_sample['mag1'], 
+                    freq=new_sample['freq1'], 
+                    log_tag=new_sample['name'])
+                if self.enabled:
+                    self.doFilter(new_sample)
+                else:
+                    self.parent.queue['tess_filtered_readings'].append(new_sample)
+        except Exception as e:
+            log.failure("Unexpected exception. Stack trace follows:")
+            reactor.callLater(0, self.filter) # restart the task
+
         
         
 
