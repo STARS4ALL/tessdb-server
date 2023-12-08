@@ -146,7 +146,7 @@ def validateRegisterTESS4C(row):
     mandatory = set(['band', 'calib'])
     for filt in TESS4C_FILTER_KEYS:
         incoming = set(row[filt].keys())
-        if mandatory <= incoming:
+        if not mandatory <= incoming:
             raise RegistrationKeyError(mandatory - incoming)
         item = row[filt]
         if type(item['band']) != str:

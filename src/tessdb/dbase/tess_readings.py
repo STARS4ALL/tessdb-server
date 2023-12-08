@@ -156,6 +156,8 @@ log = Logger(namespace=NAMESPACE)
 # Module Utility Functions
 # ------------------------
 
+def isTESS4C(row):
+    return 'freq4' in row
 
 # ============================================================================ #
 #                   REAL TIME TESS READNGS (PERIODIC SNAPSHOT FACT TABLE)
@@ -208,6 +210,7 @@ class TESSReadings:
     def setPool(self, pool):
         self.pool = pool
 
+
     @inlineCallbacks
     def update(self, row):
         '''
@@ -215,35 +218,28 @@ class TESSReadings:
         Takes care of optional fields
         Returns a Deferred.
         '''
-        ok = yield self._updateCommon(row)
+        ok = yield self._gatherInfo(row)
         if ok:
             log.debug("Appending {name} reading for DB Write", name=row['name'])
-            self._rows1C.append(row)
-            if len(self._rows1C) >= self.BUFFER_SIZE:
-                log.info("Flushing TESSW queue with {len} items", len=len(self._rows1C))
-                yield self.flush(self._rows1C, INSERT_READING_SQL)
-
-    @inlineCallbacks
-    def update4C(self, row):
-        '''
-        Update tess_readings_t with a new row
-        Takes care of optional fields
-        Returns a Deferred.
-        '''
-        ok = yield self._updateCommon(row)
-        if ok:
-            log.debug("Appending {name} reading for DB Write", name=row['name'])
-            self._rows4C.append(row)
-            if len(self._rows4C) >= self.BUFFER_SIZE:
-                log.info("Flushing TESS4C queue with {len} items", len=len(self._rows1C))
-                yield self.flush(self._rows4C, INSERT_READING4C_SQL)
+            if isTESS4C(row):
+                buf = self._rows4C
+                sql = INSERT_READING4C_SQL
+                tag = 'TESS4C'
+            else:
+                buf = self._rows1C
+                sql = INSERT_READING_SQL
+                tag = 'TESS-W'
+            buf.append(row)
+            if len(buf) >= self.BUFFER_SIZE:
+                log.info("Flushing {tag} queue with {len} items", len=len(buf), tag=tag)
+                yield self.flush(buf, sql)
            
     # ==============
     # Helper methods
     # ==============
  
     @inlineCallbacks
-    def _updateCommon(self, row):
+    def _gatherInfo(self, row):
         now = row['tstamp'] 
         self.nreadings += 1
         tess = yield self.parent.tess.findPhotometerByName(row)

@@ -36,7 +36,7 @@ from tessdb.error import ValidationError, IncorrectTimestampError
 from tessdb.logger import setLogLevel
 from tessdb.utils  import chop, formatted_mac
 
-from tessdb.mqtt import NAMESPACE, TESS4C_FILTER_KEYS
+from tessdb.mqtt import NAMESPACE, TESS4C_FILTER_KEYS, TESSW_MODEL, TESS4C_MODEL
 from tessdb.mqtt.validation import  validateRegisterTESSW, validateReadingsTESSW, validateRegisterTESS4C, validateReadingsTESS4C
 
 # ----------------
@@ -76,7 +76,7 @@ def isTESS4CPayload(row):
     
 def remapTESS4CReadings(row):
     '''Flatten the JSON structure for further processing'''
-    for i, filt in enumerate(TESS4C_FILTER_KEYS):
+    for i, filt in enumerate(TESS4C_FILTER_KEYS,1):
         for key, value in row[filt].items():
             row[f"{key}{i}"] = value
     for filt in TESS4C_FILTER_KEYS:
@@ -84,11 +84,13 @@ def remapTESS4CReadings(row):
 
 def remapTESS4CRegister(row):
     '''Flatten the JSON structure for further processing'''
-    for i, filt in enumerate(TESS4C_FILTER_KEYS):
+    for i, filt in enumerate(TESS4C_FILTER_KEYS,1):
         for key, value in row[filt].items():
             row[f"{key}{i}"] = value
     for filt in TESS4C_FILTER_KEYS:
         del row[filt]
+    row['model']     = TESS4C_MODEL
+    row['nchannels'] = 4
       
 def remapTESSWReadings(row):
     '''remaps keywords for the filter/database statges'''
@@ -99,9 +101,11 @@ def remapTESSWReadings(row):
 
 def remapTESSWRegister(row):
     '''remaps keywords for the filter/database statges'''
-    row['zp1'] = row['calib'] 
+    row['calib1'] = row['calib'] 
     del row['calib']
-
+    row['model']  = TESSW_MODEL
+    row['nchannels'] = 1
+           
 
 def handleTimestamps(row, now):
     '''
@@ -303,8 +307,7 @@ class MQTTService(ClientService):
                validateRegisterTESS4C(row)
                remapTESS4CRegister(row)
             else:
-                if type(row['calib']) == int:
-                        row['calib'] = float(row['calib'])
+                row['calib'] = float(row['calib']) # ensure a floating point calibration constant
                 validateRegisterTESSW(row)
                 remapTESSWRegister(row)
             handleTimestamps(row, now)

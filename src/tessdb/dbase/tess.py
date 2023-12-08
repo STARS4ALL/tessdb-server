@@ -41,7 +41,7 @@ from twisted.logger           import Logger
 # local imports
 # -------------
 
-from . import NAMESPACE, INFINITE_TIME, EXPIRED, CURRENT, AUTOMATIC, UNKNOWN, DEFAULT_FILTER, TESSW_MODEL, TESS4C_MODEL 
+from . import NAMESPACE, INFINITE_TIME, EXPIRED, CURRENT, AUTOMATIC, UNKNOWN, DEFAULT_FILTER
 from tessdb.error import ReadingKeyError, ReadingTypeError
 
 # ----------------
@@ -111,14 +111,14 @@ PHOT_INSERTION_SQL = '''
         :model,
         :mac,
         :nchannels,
-        :zp1,
-        :filter1,
-        :zp2,
-        :filter2,
-        :zp3,
-        :filter3,
-        :zp4,
-        :filter4,
+        :calib1,
+        :band1,
+        :calib2,
+        :band2,
+        :calib3,
+        :band3,
+        :calib44,
+        :band4,
         :eff_date,
         :exp_date,
         :valid_current,
@@ -131,7 +131,7 @@ PHOT_INSERTION_SQL = '''
 '''
 
 def isTESS4C(row):
-    return 'freq4' in row
+    return row.get('band4') is not None
 
 # ============================================================================ #
 #                              TESS INSTRUMENT TABLE (DIMENSION)
@@ -194,23 +194,17 @@ class TESS:
         Registers an instrument given its MAC address, friendly name and calibration constant
         Returns a Deferred.
         '''
-        log2.debug("New registration request for {log_tag} (maybe not accepted) with data {row}", row=row, log_tag=row['name'])
+        log2.debug("New registration request for {log_tag} (may be not accepted) with data {row}", row=row, log_tag=row['name'])
         self.nRegister += 1
 
-         # Adding extra metadadta for all create/update operations
-        if isTESS4C(row):
-            row['model']     = TESS4C_MODEL
-            row['nchannels'] = 4
-        else:
-            row['model']     = TESSW_MODEL
-            row['nchannels'] = 1
-            row['filter1']   = DEFAULT_FILTER
-            row['zp2']       = None 
-            row['zp3']       = None
-            row['zp4']       = None
-            row['filter2']   = None 
-            row['filter3']   = None  
-            row['filter4']   = None
+        # Adding extra metadadta for all create/update operations
+        row['calib2'] = row.get('calib2') 
+        row['calib3'] = row.get('calib3')
+        row['calib4'] = row.get('calib4')
+        row['band1']  = row.get('band1',DEFAULT_FILTER)
+        row['band2']  = row.get('band2') 
+        row['band3']  = row.get('band3')  
+        row['band4']  = row.get('band4')
         row['eff_date']      = row['tstamp'].replace(microsecond=0)
         row['exp_date']      = INFINITE_TIME
         row['valid_expired'] = EXPIRED
@@ -299,8 +293,8 @@ class TESS:
 
     def changedManagedAttributes(self, sequence, row):
         if isTESS4C(row):
-            unchanged = (abs(row['zp1'] - float(sequence[0])) < 0.005) and (abs(row['zp2'] - float(sequence[1])) < 0.005) and \
-            (abs(row['zp3'] - float(sequence[2])) < 0.005) and (abs(row['zp4'] - float(sequence[3])) < 0.005) and \
+            unchanged = (abs(row['calib1'] - float(sequence[0])) < 0.005) and (abs(row['calib2'] - float(sequence[1])) < 0.005) and \
+            (abs(row['calib3'] - float(sequence[2])) < 0.005) and (abs(row['calib4'] - float(sequence[3])) < 0.005) and \
             (row['filter1'] == sequence[4]) and (row['filter2'] == sequence[5]) and \
             (row['filter3'] == sequence[6]) and (row['filter4'] == sequence[7])
             if not unchanged:
@@ -308,10 +302,10 @@ class TESS:
                     log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
             return not unchanged
         else:
-            unchanged = (abs(row['zp1'] - float(sequence[0])) < 0.005)
+            unchanged = (abs(row['calib1'] - float(sequence[0])) < 0.005)
             if not unchanged:
                 log2.info("TESS-W {log_tag} ({mac}) changing ZP from {old} to {calib}", 
-                    log_tag=row['name'], old=sequence[0], calib=row['zp1'], mac=row['mac'])
+                    log_tag=row['name'], old=sequence[0], calib=row['calib1'], mac=row['mac'])
             return not unchanged
 
     @inlineCallbacks
@@ -387,6 +381,7 @@ class TESS:
             txn.execute(PHOT_INSERTION_SQL, row)
             # Create a new entry the name to MAC association table
             txn.execute(NAME_INSERTION_SQL, row)
+        log.info("REGISTERING ROW {row}", row=row)
         return self.pool.runInteraction( _addBrandNewTess)
 
 
