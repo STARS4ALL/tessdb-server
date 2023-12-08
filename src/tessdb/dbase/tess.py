@@ -117,7 +117,7 @@ PHOT_INSERTION_SQL = '''
         :band2,
         :calib3,
         :band3,
-        :calib44,
+        :calib4,
         :band4,
         :eff_date,
         :exp_date,
@@ -209,7 +209,6 @@ class TESS:
         row['exp_date']      = INFINITE_TIME
         row['valid_expired'] = EXPIRED
         row['valid_current'] = CURRENT
-        row['registered']    = AUTOMATIC
         row['firmware']      = row.get('firmware',UNKNOWN)
 
         mac  = yield self.lookupMAC(row)    # Returns list of pairs (MAC, name)
@@ -295,8 +294,8 @@ class TESS:
         if isTESS4C(row):
             unchanged = (abs(row['calib1'] - float(sequence[0])) < 0.005) and (abs(row['calib2'] - float(sequence[1])) < 0.005) and \
             (abs(row['calib3'] - float(sequence[2])) < 0.005) and (abs(row['calib4'] - float(sequence[3])) < 0.005) and \
-            (row['filter1'] == sequence[4]) and (row['filter2'] == sequence[5]) and \
-            (row['filter3'] == sequence[6]) and (row['filter4'] == sequence[7])
+            (row['band1'] == sequence[4]) and (row['band2'] == sequence[5]) and \
+            (row['band3'] == sequence[6]) and (row['band4'] == sequence[7])
             if not unchanged:
                 log2.info("TESS4C {log_tag} ({mac}) changing ZPs or Filters from {old} to {new} ", 
                     log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
@@ -376,12 +375,15 @@ class TESS:
         row is a dictionary with the following keys: 'name', 'mac', 'calib'
         Returns a Deferred.
         '''
+        row['location']      = -1
+        row['observer']      = -1
+        row['authorised']    = 0
+        row['registered']    = AUTOMATIC
         def _addBrandNewTess(txn):
             # Create a new entry the photometer table
             txn.execute(PHOT_INSERTION_SQL, row)
             # Create a new entry the name to MAC association table
             txn.execute(NAME_INSERTION_SQL, row)
-        log.info("REGISTERING ROW {row}", row=row)
         return self.pool.runInteraction( _addBrandNewTess)
 
 

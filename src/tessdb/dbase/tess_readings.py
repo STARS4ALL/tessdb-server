@@ -165,7 +165,7 @@ def isTESS4C(row):
 
 class TESSReadings:
 
-    BUFFER_SIZE = 10
+    BUFFER_SIZE = 15
    
     def __init__(self, parent):
         '''Create the SQLite TESS Readings table'''
@@ -231,7 +231,7 @@ class TESSReadings:
                 tag = 'TESS-W'
             buf.append(row)
             if len(buf) >= self.BUFFER_SIZE:
-                log.info("Flushing {tag} queue with {len} items", len=len(buf), tag=tag)
+                log.info("Flushing {tag} queue with {len} readings", len=len(buf), tag=tag)
                 yield self.flush(buf, sql)
            
     # ==============
