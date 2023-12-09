@@ -181,15 +181,15 @@ CREATE TABLE IF NOT EXISTS tess_new_t
     filter1       TEXT    NOT NULL DEFAULT 'UV/IR-740', -- Filter 1 name (i.e. UV/IR-740, R, G, B)
     zp2           REAL,                               -- Zero Point 2
     filter2       TEXT,                               -- Filter 2 name (i.e. UV/IR-740, R, G, B)
-    zp3           REAL ,                              -- Zero Point 3
+    zp3           REAL,                               -- Zero Point 3
     filter3       TEXT,                               -- Filter 3 name (i.e. UV/IR-740, R, G, B)
     zp4           REAL,                               -- Zero Point 4
     filter4       TEXT,                               -- Filter 4 name (i.e. UV/IR-740, R, G, B)
     location_id   INTEGER NOT NULL DEFAULT -1,        -- Current location, defaults to unknown location
     observer_id   INTEGER NOT NULL DEFAULT -1,        -- Current observer, defaults to unknown observer
     PRIMARY KEY(tess_id),
-    FOREIGN KEY(location_id)    REFERENCES location_t(location_id),
-    FOREIGN KEY(observer_id)    REFERENCES observer_t(observer_id)
+    FOREIGN KEY(location_id) REFERENCES location_t(location_id),
+    FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id)
 );
 
 INSERT INTO tess_new_t(tess_id,mac_address,valid_since,valid_until,valid_state,authorised,registered,model,
@@ -293,26 +293,26 @@ CREATE TABLE tess_readings4c_t
     location_id     INTEGER NOT NULL DEFAULT -1,
     observer_id     INTEGER NOT NULL DEFAULT -1,
     units_id        INTEGER NOT NULL,
-    sequence_number INTEGER,  -- This should be NOT NULL. However, it is a pain to migrate this table
-    freq1           REAL,     -- This should be NOT NULL. However, it is a pain to migrate this table
-    mag1            REAL,     -- This should be NOT NULL. However, it is a pain to migrate this table
-    freq2           REAL,
-    mag2            REAL,
-    freq3           REAL,
-    mag3            REAL,
-    freq4           REAL,
-    mag4            REAL,
-    box_temperature REAL,
-    sky_temperature REAL,
-    azimuth         REAL,   -- decimal degrees
-    altitude        REAL,   -- decimal degrees
-    longitude       REAL,   -- decimal degrees
-    latitude        REAL,   -- decimal degrees
-    elevation       REAL,   -- meters above sea level
-    signal_strength INTEGER,
-    hash            TEXT,   -- to verify readings
+    sequence_number INTEGER NOT NULL,  
+    freq1           REAL    NOT NULL,    
+    mag1            REAL    NOT NULL,
+    freq2           REAL    NOT NULL,
+    mag2            REAL    NOT NULL,
+    freq3           REAL    NOT NULL,
+    mag3            REAL    NOT NULL,
+    freq4           REAL    NOT NULL,
+    mag4            REAL    NOT NULL,
+    box_temperature REAL    NOT NULL,
+    sky_temperature REAL    NOT NULL,
+    azimuth         REAL,   -- optional, in decimal degrees
+    altitude        REAL,   -- optional in decimal degrees
+    longitude       REAL,   -- optional decimal degrees
+    latitude        REAL,   -- optional decimal degrees
+    elevation       REAL,   -- optional meters above sea level
+    signal_strength INTEGER NOT NULL,
+    hash            TEXT,   -- optional, to verify readings
 
-    PRIMARY KEY (date_id, time_id, tess_id),
+    PRIMARY KEY(date_id, time_id, tess_id),
     FOREIGN KEY(date_id) REFERENCES date_t(date_id),
     FOREIGN KEY(time_id) REFERENCES time_t(time_id),
     FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),

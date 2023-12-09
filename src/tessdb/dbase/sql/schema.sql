@@ -249,20 +249,20 @@ CREATE TABLE tess_readings_t
     location_id     INTEGER NOT NULL DEFAULT -1,
     observer_id     INTEGER NOT NULL DEFAULT -1,
     units_id        INTEGER NOT NULL,
-    sequence_number INTEGER, -- This should be NOT NULL. However, it is a pain to migrate this table
-    frequency       REAL,    -- This should be NOT NULL. However, it is a pain to migrate this table
-    magnitude       REAL,    -- This should be NOT NULL. However, it is a pain to migrate this table
-    box_temperature REAL,
-    sky_temperature REAL,
-    azimuth         REAL,    -- decimal degrees
-    altitude        REAL,    -- decimal degrees
-    longitude       REAL,    -- decimal degrees
-    latitude        REAL,    -- decimal degrees
-    elevation       REAL,    -- meters above sea level
-    signal_strength INTEGER, 
-    hash            TEXT,    -- to verify readings
+    sequence_number INTEGER NOT NULL, 
+    frequency       REAL    NOT NULL,    
+    magnitude       REAL    NOT NULL,
+    box_temperature REAL    NOT NULL,
+    sky_temperature REAL    NOT NULL,
+    azimuth         REAL,    -- optional, in decimal degrees
+    altitude        REAL,    -- optional, in decimal degrees
+    longitude       REAL,    -- optional, in decimal degrees
+    latitude        REAL,    -- optional, in decimal degrees
+    elevation       REAL,    -- optional, in decimal degrees
+    signal_strength INTEGER NOT NULL, 
+    hash            TEXT,    -- optional, to verify readings
  
-    PRIMARY KEY (date_id, time_id, tess_id),
+    PRIMARY KEY(date_id, time_id, tess_id),
     FOREIGN KEY(date_id) REFERENCES date_t(date_id),
     FOREIGN KEY(time_id) REFERENCES time_t(time_id),
     FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),
@@ -283,26 +283,26 @@ CREATE TABLE tess_readings4c_t
     location_id     INTEGER NOT NULL DEFAULT -1,
     observer_id     INTEGER NOT NULL DEFAULT -1,
     units_id        INTEGER NOT NULL,
-    sequence_number INTEGER,  -- This should be NOT NULL. However, it is a pain to migrate this table
-    freq1           REAL,     -- This should be NOT NULL. However, it is a pain to migrate this table
-    mag1            REAL,     -- This should be NOT NULL. However, it is a pain to migrate this table
-    freq2           REAL,
-    mag2            REAL,
-    freq3           REAL,
-    mag3            REAL,
-    freq4           REAL,
-    mag4            REAL,
-    box_temperature REAL,
-    sky_temperature REAL,
-    azimuth         REAL,   -- decimal degrees
-    altitude        REAL,   -- decimal degrees
-    longitude       REAL,   -- decimal degrees
-    latitude        REAL,   -- decimal degrees
-    elevation       REAL,   -- meters above sea level
-    signal_strength INTEGER,
-    hash            TEXT,   -- to verify readings
+    sequence_number INTEGER NOT NULL,  
+    freq1           REAL    NOT NULL,    
+    mag1            REAL    NOT NULL,
+    freq2           REAL    NOT NULL,
+    mag2            REAL    NOT NULL,
+    freq3           REAL    NOT NULL,
+    mag3            REAL    NOT NULL,
+    freq4           REAL    NOT NULL,
+    mag4            REAL    NOT NULL,
+    box_temperature REAL    NOT NULL,
+    sky_temperature REAL    NOT NULL,
+    azimuth         REAL,   -- optional, in decimal degrees
+    altitude        REAL,   -- optional in decimal degrees
+    longitude       REAL,   -- optional decimal degrees
+    latitude        REAL,   -- optional decimal degrees
+    elevation       REAL,   -- optional meters above sea level
+    signal_strength INTEGER NOT NULL,
+    hash            TEXT,   -- optional, to verify readings
 
-    PRIMARY KEY (date_id, time_id, tess_id),
+    PRIMARY KEY(date_id, time_id, tess_id),
     FOREIGN KEY(date_id) REFERENCES date_t(date_id),
     FOREIGN KEY(time_id) REFERENCES time_t(time_id),
     FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),
@@ -310,5 +310,6 @@ CREATE TABLE tess_readings4c_t
     FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id),
     FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
 );
+
 
 COMMIT;
