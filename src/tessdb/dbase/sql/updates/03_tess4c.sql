@@ -20,14 +20,14 @@ CREATE TABLE observer_t
     type            TEXT NOT NULL,    -- Observer category: 'Individual' or 'Organization'
     name            TEXT NOT NULL,    -- Individual full name / Organization name 
     affiliation     TEXT,             -- Individual affiliation if individual belongs to an organization
-    acronym         TEXT,             -- Organization acronym (i.e. AAM). Also may be applied to affiliation
+    acronym         TEXT,             -- Organization or affiliation acronym (i.e. AAM).
     website_url     TEXT,             -- Individual / Organization Web page
     email           TEXT,             -- Individual / Organization contact email
-    valid_since     TIMESTAMP NOT NULL,  -- versioning attributes, start timestamp, ISO8601
-    valid_until     TIMESTAMP NOT NULL,  -- versioning attributes, end  timestamp, ISO8601
+    valid_since     TIMESTAMP NOT NULL,  -- versioning attributes, start timestamp, 
+    valid_until     TIMESTAMP NOT NULL,  -- versioning attributes, end  timestamp, 
     valid_state     TEXT NOT NULL,    -- versioning attributes,state either 'Current' or 'Expired'
  
-    UNIQUE(name,valid_since,valid_until),
+    UNIQUE(name,valid_until),
     PRIMARY KEY(observer_id)
 );
 
@@ -321,6 +321,9 @@ CREATE TABLE tess_readings4c_t
     FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
 );
 
+-- Register missing TESS4C
+INSERT INTO tess_t ("mac_address", "valid_since", "valid_until", "valid_state", "model", "firmware", "authorised", "registered", "nchannels", "zp1", "filter1", "zp2", "filter2", "zp3", "filter3", "zp4", "filter4", "location_id", "observer_id") VALUES ('EC:62:60:82:62:9C', '2023-12-08 21:10:43+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 30 2022', 0, 'Automatic', 4, 20.08, 'UVIR750', 20.23, 'UVIR650', 20.17, 'RGB-R', 19.84, 'RGB-B', -1, -1);
+INSERT INTO tess_t ("mac_address", "valid_since", "valid_until", "valid_state", "model", "firmware", "authorised", "registered", "nchannels", "zp1", "filter1", "zp2", "filter2", "zp3", "filter3", "zp4", "filter4", "location_id", "observer_id") VALUES ('C8:C9:A3:F9:C9:48', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 28 2022', 0, 'Automatic', 4, 20.03, 'UVIR750', 20.04, 'UVIR650', 19.9,  'RGB-R', 19.8,  'RGB-B', -1, -1);
 
 INSERT OR REPLACE INTO config_t(section, property, value) 
 VALUES ('database', 'version', '03');
