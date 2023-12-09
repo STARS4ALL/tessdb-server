@@ -32,7 +32,7 @@ CREATE TABLE observer_t
 );
 
 INSERT INTO observer_t (observer_id, name, type, valid_since, valid_until, valid_state)
-VALUES (-1, 'Unknown', 'Organization', '2000-01-01T00:00:00', '2999-12-31T23:59:59', 'Current');
+VALUES (-1, 'Unknown', 'Organization', '2000-01-01 00:00:00+00:00', '2999-12-31 23:59:59+00:00', 'Current');
 
 
 --------------------------------------------------------------------------------------------
@@ -321,10 +321,24 @@ CREATE TABLE tess_readings4c_t
     FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
 );
 
--- Register missing TESS4C
-INSERT INTO tess_t ("mac_address", "valid_since", "valid_until", "valid_state", "model", "firmware", "authorised", "registered", "nchannels", "zp1", "filter1", "zp2", "filter2", "zp3", "filter3", "zp4", "filter4", "location_id", "observer_id") VALUES ('EC:62:60:82:62:9C', '2023-12-08 21:10:43+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 30 2022', 0, 'Automatic', 4, 20.08, 'UVIR750', 20.23, 'UVIR650', 20.17, 'RGB-R', 19.84, 'RGB-B', -1, -1);
-INSERT INTO tess_t ("mac_address", "valid_since", "valid_until", "valid_state", "model", "firmware", "authorised", "registered", "nchannels", "zp1", "filter1", "zp2", "filter2", "zp3", "filter3", "zp4", "filter4", "location_id", "observer_id") VALUES ('C8:C9:A3:F9:C9:48', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 28 2022', 0, 'Automatic', 4, 20.03, 'UVIR750', 20.04, 'UVIR650', 19.9,  'RGB-R', 19.8,  'RGB-B', -1, -1);
+-- Fixes timestamps to match latest convention from tessdb program
+UPDATE tess_t SET valid_since = REPLACE(valid_since, 'T', ' ') || '+00:00';
+UPDATE tess_t SET valid_since = REPLACE(valid_since, '+00:00+00:00', '+00:00');
+UPDATE tess_t SET valid_until = REPLACE(valid_until, 'T', ' ') || '+00:00';
+UPDATE tess_t SET valid_until = REPLACE(valid_until, '+00:00+00:00', '+00:00');
 
+UPDATE name_to_mac_t SET valid_since = REPLACE(valid_since, 'T', ' ') || '+00:00';
+UPDATE name_to_mac_t SET valid_since = REPLACE(valid_since, '+00:00+00:00', '+00:00');
+UPDATE name_to_mac_t SET valid_until = REPLACE(valid_until, 'T', ' ') || '+00:00';
+UPDATE name_to_mac_t SET valid_until = REPLACE(valid_until, '+00:00+00:00', '+00:00');
+
+-- Register missing TESS4C
+INSERT INTO tess_t ("mac_address", "valid_since", "valid_until", "valid_state", "model", "firmware", "authorised", "registered", "nchannels", "zp1", "filter1", "zp2", "filter2", "zp3", "filter3", "zp4", "filter4", "location_id", "observer_id") VALUES ('EC:62:60:82:62:9C', '2023-12-08 21:10:43+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 30 2022', 0, 'Manual', 4, 20.08, 'UVIR750', 20.23, 'UVIR650', 20.17, 'RGB-R', 19.84, 'RGB-B', -1, -1);
+INSERT INTO name_to_mac_t("name", "mac_address", "valid_since", "valid_until", "valid_state") VALUES ('stars1081', 'EC:62:60:82:62:9C', '2023-12-08 21:10:43+00:00', '2999-12-31 23:59:59+00:00', 'Current');
+INSERT INTO tess_t ("mac_address", "valid_since", "valid_until", "valid_state", "model", "firmware", "authorised", "registered", "nchannels", "zp1", "filter1", "zp2", "filter2", "zp3", "filter3", "zp4", "filter4", "location_id", "observer_id") VALUES ('C8:C9:A3:F9:C9:48', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 28 2022', 0, 'Manual', 4, 20.03, 'UVIR750', 20.04, 'UVIR650', 19.9,  'RGB-R', 19.8,  'RGB-B', -1, -1);
+INSERT INTO name_to_mac_t("name", "mac_address", "valid_since", "valid_until", "valid_state") VALUES ('stars854',  'C8:C9:A3:F9:C9:48', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current');
+
+-- Upgrades database model version
 INSERT OR REPLACE INTO config_t(section, property, value) 
 VALUES ('database', 'version', '03');
 
