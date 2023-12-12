@@ -276,6 +276,7 @@ class TESSReadings:
             return False
         row['date_id'], row['time_id'] = roundDateTime(now, self.parent.options['secs_resolution'])
         row['tess_id'] = tess_id
+        row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
         row['location_id'] = location_id
         row['observer_id'] = observer_id
         row['az'] = row.get('az')
@@ -286,8 +287,7 @@ class TESSReadings:
         row['hash'] = row.get('hash')
         # TESS4C Early prototypes did not provide any temperature 
         row['tamb'] = row.get('tamb', IMPOSSIBLE_TEMP) 
-        row['tsky'] = row.get('tsky', IMPOSSIBLE_TEMP) 
-        row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
+        row['tsky'] = row.get('tsky', IMPOSSIBLE_TEMP)
         log.debug("TESSReadings.update({log_tag}): About to write to DB {row!s}", log_tag=row['name'], row=row)
         return True
 
