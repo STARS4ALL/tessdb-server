@@ -1,8 +1,10 @@
 # Change Log
 # 3.0.0
-Major sever code refactoring.
-Packaging also uses pyproject.toml.
-Included hash in readings.
+Server major overhaul:
+1. Datamodel revision to include TESS4C
+2. More robust exception handling code
+3. Buffered database write.
+4. Source code refactoring, simplification and new packaging scheme (pyproject.toml)
 # 2.6.0
 First release as a standalone tessdb-server package. Production-ready
 
