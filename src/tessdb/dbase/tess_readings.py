@@ -50,6 +50,8 @@ from tessdb.error import ReadingKeyError, ReadingTypeError
 # Module Constants
 # ----------------
 
+IMPOSSIBLE_TEMP = -273.15
+
 INSERT_READING_SQL = '''
     INSERT INTO tess_readings_t (
         date_id,
@@ -166,6 +168,7 @@ def isTESS4C(row):
 class TESSReadings:
 
     BUFFER_SIZE = 15
+    FACTOR      = 0.6 # TESS4C Buffer size in peerfentage of TESS-W Buffer size
    
     def __init__(self, parent):
         '''Create the SQLite TESS Readings table'''
@@ -177,6 +180,8 @@ class TESSReadings:
         # Internal buffers to do Block Writes
         self._rows1C = list()
         self._rows4C = list()
+        self._tesswSIZE  = self.BUFFER_SIZE
+        self._tess4cSIZE = max(1,int(self.BUFFER_SIZE * self.FACTOR))
 
     # -------------
     # log stats API
@@ -210,6 +215,15 @@ class TESSReadings:
     def setPool(self, pool):
         self.pool = pool
 
+    def setBufferSize(self, n):
+        self._tesswSIZE = max(1,n)
+        self._tess4cSIZE = max(1, int(n*self.FACTOR))
+
+    def setAuthFilter(self, auth_filter):
+        '''
+        Set filtering Auth
+        '''
+        self.authFilter = auth_filter
 
     @inlineCallbacks
     def update(self, row):
@@ -225,12 +239,14 @@ class TESSReadings:
                 buf = self._rows4C
                 sql = INSERT_READING4C_SQL
                 tag = 'TESS4C'
+                N   = self._tess4cSIZE
             else:
                 buf = self._rows1C
                 sql = INSERT_READING_SQL
                 tag = 'TESS-W'
+                N   = self._tesswSIZE
             buf.append(row)
-            if len(buf) >= self.BUFFER_SIZE:
+            if len(buf) >= N:
                 log.info("Flushing {tag} queue with {len} readings", len=len(buf), tag=tag)
                 yield self.flush(buf, sql)
            
@@ -268,15 +284,14 @@ class TESSReadings:
         row['lat'] = row.get('lat')
         row['height'] = row.get('height')
         row['hash'] = row.get('hash')
+        # TESS4C Early prototypes did not provide any temperature 
+        row['tamb'] = row.get('tamb', IMPOSSIBLE_TEMP) 
+        row['tsky'] = row.get('tsky', IMPOSSIBLE_TEMP) 
         row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
         log.debug("TESSReadings.update({log_tag}): About to write to DB {row!s}", log_tag=row['name'], row=row)
         return True
 
-    def setOptions(self, auth_filter):
-        '''
-        Set filtering Auth
-        '''
-        self.authFilter = auth_filter
+   
 
 
     def database_write(self, rows, sql):

@@ -89,6 +89,7 @@ class DBaseService(Service):
         self.tess           = TESS()
         self.tess_units     = TESSUnits()
         self.tess_readings  = TESSReadings(self)
+       
     
     #------------
     # Service API
@@ -103,7 +104,8 @@ class DBaseService(Service):
         super().startService()
         setLogLevel(namespace=NAMESPACE, levelStr=self.options['log_level'])
         setLogLevel(namespace='registry', levelStr=self.options['register_log_level'])
-        self.tess_readings.setOptions(auth_filter=self.options['auth_filter'])
+        self.tess_readings.setAuthFilter(self.options['auth_filter'])
+        self.tess_readings.setBufferSize(self.options['buffer_size'])
         # setup the connection pool for asynchronouws adbapi
         self.openPool()
         self.startTasks()
@@ -151,7 +153,8 @@ class DBaseService(Service):
         setLogLevel(namespace=NAMESPACE, levelStr=new_options['log_level'])
         setLogLevel(namespace='register', levelStr=new_options['register_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.tess_readings.setOptions(auth_filter=new_options['auth_filter'])
+        self.tess_readings.setAuthFilter(new_options['auth_filter'])
+        self.tess_readings.setBufferSize(new_options['buffer_size'])
         self.options = new_options
         # self.tess.invalidCache()
         # self.tess_locations.invalidCache()
