@@ -370,6 +370,21 @@ INSERT INTO tess_t (mac_address,valid_since,valid_until,valid_state,model,firmwa
 VALUES ('C8:C9:A3:F9:C9:48', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 28 2022', 0, 'Manual', 4, 20.03, 'UVIR750', 20.04, 'UVIR650', 19.9, 'RGB-R', 19.8, 'RGB-B', -1, -1);
 INSERT INTO name_to_mac_t(name, mac_address,valid_since,valid_until,valid_state) 
 VALUES ('stars854',  'C8:C9:A3:F9:C9:48', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current');
+-- stars855
+INSERT INTO tess_t (mac_address,valid_since,valid_until,valid_state,model,firmware,authorised,registered,nchannels,zp1,filter1,zp2,filter2,zp3,filter3,zp4,filter4,location_id,observer_id) 
+VALUES ('C8:C9:A3:F9:C7:94', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 28 2022', 0, 'Manual', 4, 20.03, 'UVIR750', 20.04, 'UVIR650', 19.9, 'RGB-R', 19.8, 'RGB-B', -1, -1);
+INSERT INTO name_to_mac_t(name, mac_address,valid_since,valid_until,valid_state) 
+VALUES ('stars855',  'C8:C9:A3:F9:C7:94', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current');
+-- stars856
+INSERT INTO tess_t (mac_address,valid_since,valid_until,valid_state,model,firmware,authorised,registered,nchannels,zp1,filter1,zp2,filter2,zp3,filter3,zp4,filter4,location_id,observer_id) 
+VALUES ('C8:C9:A3:FC:EB:50', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 28 2022', 0, 'Manual', 4, 20.03, 'UVIR750', 20.04, 'UVIR650', 19.9, 'RGB-R', 19.8, 'RGB-B', -1, -1);
+INSERT INTO name_to_mac_t(name, mac_address,valid_since,valid_until,valid_state) 
+VALUES ('stars856',  'C8:C9:A3:FC:EB:50', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current');
+-- stars857
+INSERT INTO tess_t (mac_address,valid_since,valid_until,valid_state,model,firmware,authorised,registered,nchannels,zp1,filter1,zp2,filter2,zp3,filter3,zp4,filter4,location_id,observer_id) 
+VALUES ('C8:C9:A3:FC:EB:F4', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 28 2022', 0, 'Manual', 4, 20.03, 'UVIR750', 20.04, 'UVIR650', 19.9, 'RGB-R', 19.8, 'RGB-B', -1, -1);
+INSERT INTO name_to_mac_t(name, mac_address,valid_since,valid_until,valid_state) 
+VALUES ('stars857',  'C8:C9:A3:FC:EB:F4', '2023-12-08 21:24:04+00:00', '2999-12-31 23:59:59+00:00', 'Current');
 -- stars1081
 INSERT INTO tess_t (mac_address,valid_since,valid_until,valid_state,model,firmware,authorised,registered,nchannels,zp1,filter1,zp2,filter2,zp3,filter3,zp4,filter4,location_id,observer_id) 
 VALUES ('EC:62:60:82:62:9C', '2023-12-08 21:10:43+00:00', '2999-12-31 23:59:59+00:00', 'Current', 'TESS4C', 'Nov 30 2022', 0, 'Manual', 4, 20.08, 'UVIR750', 20.23, 'UVIR650', 20.17, 'RGB-R', 19.84, 'RGB-B', -1, -1);

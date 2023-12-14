@@ -322,6 +322,9 @@ class TESSReadings:
                 except sqlite3.IntegrityError as e:
                     log.error("Discarding row by SQL Integrity error: {row}", row=row)
                     self.rejDuplicate += 1
+                except Exception as e:
+                    log.error("Discarding row by other SQL error. Exception {excp}, row: {row}", excp=e, row=row)
+                    self.rejOther += 1
         except Exception as e:
             log.error("TESSReadings.update(): exception {excp!s}. Looping one by one ...", excp=e)
             for row in rows:
