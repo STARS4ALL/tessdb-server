@@ -38,6 +38,7 @@ from .tess import TESS
 from .tess_readings import TESSReadings
 from .tess_units import TESSUnits
 from tessdb.logger import Logger, setLogLevel
+from tessdb import __version__
 
 # ----------------
 # Module constants
@@ -161,7 +162,7 @@ class DBaseService(Service):
 
         
     def pauseService(self):
-        log.info('TESS database writer paused')
+        log.info('TESS {version} database writer paused',version=__version__)
         if not self.paused:
             self.paused = True
             self.closePool()
@@ -169,7 +170,7 @@ class DBaseService(Service):
 
 
     def resumeService(self):
-        log.info('TESS database writer resumed')
+        log.info('TESS {version} database writer resumed',version=__version__)
         if self.paused:
             self.openPool()
             self.paused = False

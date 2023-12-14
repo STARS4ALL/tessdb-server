@@ -24,7 +24,7 @@ from twisted.application.service import IService
 # local imports
 # -------------
 
-from ._version             import __version__
+from .                     import __version__
 from .config               import load_config_file
 from .service.relopausable import Service, MultiService, Application
 from .logger               import startLogging
