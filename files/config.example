@@ -126,6 +126,12 @@ secs_resolution = 1
 # However, this can be disabled.
 auth_filter = yes
 
+# Write Buffer size
+# Writes to database every N readings to improve I/O performance
+# Integer > 1
+# Reloadable property
+buffer_size = 15
+
 # general namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = info

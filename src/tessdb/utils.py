@@ -55,4 +55,4 @@ def formatted_mac(mac):
     return corrected_mac
 
 
-__all__ = [chop]
+__all__ = ['chop','formatted_mac']

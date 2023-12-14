@@ -2,6 +2,8 @@
 --          TESSDB DATA MODEL
 ------------------------------------------------------------
 
+BEGIN TRANSACTION;
+
 -- --------------------------------------------------------------
 -- Miscelaneous configuration not found in the configuration file
 -- --------------------------------------------------------------
@@ -11,10 +13,10 @@ CREATE TABLE IF NOT EXISTS config_t
     section        TEXT NOT NULL,  -- Configuration section
     property       TEXT NOT NULL,  -- Property name
     value          TEXT NOT NULL,  -- Property value
-
     PRIMARY KEY(section, property)
 );
 
+INSERT OR REPLACE INTO config_t(section, property, value) VALUES ('database', 'version', '03');
 
 -- --------------
 -- Date dimension
@@ -22,19 +24,20 @@ CREATE TABLE IF NOT EXISTS config_t
 
 CREATE TABLE IF NOT EXISTS date_t 
 (
-    date_id        INTEGER PRIMARY KEY, 
-    sql_date       TEXT, 
-    date           TEXT,
-    day    		   INTEGER,
-    day_year       INTEGER,
-    julian_day     REAL,
-    weekday        TEXT,
-    weekday_abbr   TEXT,
-    weekday_num    INTEGER,
-    month_num      INTEGER,
-    month          TEXT,
-    month_abbr     TEXT,
-    year           INTEGER
+    date_id        INTEGER NOT NULL, 
+    sql_date       TEXT    NOT NULL, 
+    date           TEXT    NOT NULL,
+    day    		   INTEGER NOT NULL,
+    day_year       INTEGER NOT NULL,
+    julian_day     REAL    NOT NULL,
+    weekday        TEXT    NOT NULL,
+    weekday_abbr   TEXT    NOT NULL,
+    weekday_num    INTEGER NOT NULL,
+    month_num      INTEGER NOT NULL,
+    month          TEXT    NOT NULL,
+    month_abbr     TEXT    NOT NULL,
+    year           INTEGER NOT NULL,
+    PRIMARY KEY(date_id)
 );
 
 -- -------------------------
@@ -43,12 +46,13 @@ CREATE TABLE IF NOT EXISTS date_t
 
 CREATE TABLE IF NOT EXISTS time_t
 (
-    time_id        INTEGER PRIMARY KEY, 
-    time           TEXT,
-    hour           INTEGER,
-    minute         INTEGER,
-    second         INTEGER,
-    day_fraction   REAL
+    time_id        INTEGER NOT NULL, 
+    time           TEXT    NOT NULL,
+    hour           INTEGER NOT NULL,
+    minute         INTEGER NOT NULL,
+    second         INTEGER NOT NULL,
+    day_fraction   REAL    NOT NULL,
+    PRIMARY KEY(time_id)
 );
 
 -- ------------------
@@ -57,21 +61,58 @@ CREATE TABLE IF NOT EXISTS time_t
 
 CREATE TABLE IF NOT EXISTS location_t
 (
-    location_id     INTEGER PRIMARY KEY AUTOINCREMENT,  
-    site            TEXT,
-    longitude       REAL,
-    latitude        REAL,
-    elevation       REAL,
-    zipcode         TEXT,
-    location        TEXT,
-    province        TEXT,
-    state           TEXT,
-    country         TEXT,
-    timezone        TEXT DEFAULT 'Etc/UTC',
-    contact_name    TEXT,
-    contact_email           TEXT,
-    organization    TEXT
+    location_id     INTEGER NOT NULL,  
+    longitude       REAL,          -- in floating point degrees
+    latitude        REAL,          -- in floating point degrees
+    elevation       REAL,          -- meters above sea level
+    place           TEXT NOT NULL,
+    town    TEXT NOT NULL, -- village, town, city, etc.
+    sub_region      TEXT NOT NULL, -- province, etc.
+    region          TEXT NOT NULL, -- federal state, etc
+    country         TEXT NOT NULL,
+    timezone        TEXT NOT NULL,
+
+    contact_name    TEXT,          -- Deprecated. Now, part of observer_t table
+    contact_email   TEXT,          -- Deprecated. Now, part of observer_t table
+    organization    TEXT,          -- Deprecated. Now, part of observer_t table
+
+    UNIQUE(longitude, latitude), -- The must be unique but they can be NULL
+    PRIMARY KEY(location_id)
 );
+
+INSERT OR IGNORE INTO location_t (location_id,longitude,latitude,elevation,place,town,sub_region,region,country,timezone)
+VALUES (-1,NULL,NULL,NULL,'Unknown','Unknown','Unknown','Unknown','Unknown','Etc/UTC');
+
+-- ------------------
+-- Observer dimension
+-- ------------------
+
+-- --------------------------------------------------------------------------------
+-- This table is a mix-in from indiduals and organizations in a flat table
+-- Versioned attributed are for individuals only (they may change organiztaions) 
+-- and include:
+--   1) affiliation, 2) acronym, 3) email, 4) website_url
+-----------------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS observer_t
+(
+    observer_id     INTEGER NOT NULL,
+    type    TEXT NOT NULL,    -- Observer category: 'Individual' or 'Organization'
+    name    TEXT NOT NULL,    -- Individual full name / Organization name 
+    affiliation     TEXT,     -- Individual affiliation if individual belongs to an organization
+    acronym         TEXT,     -- Organization acronym (i.e. AAM). Also may be applied to affiliation
+    website_url     TEXT,     -- Individual / Organization Web page
+    email           TEXT,     -- Individual / Organization contact email
+    valid_since     TIMESTAMP NOT NULL,  -- versioning attributes, start timestamp, ISO8601
+    valid_until     TIMESTAMP NOT NULL,  -- versioning attributes, end  timestamp, ISO8601
+    valid_state     TEXT NOT NULL,       -- versioning attributes,state either 'Current' or 'Expired'
+ 
+    UNIQUE(name,valid_since,valid_until),
+    PRIMARY KEY(observer_id)
+);
+
+INSERT OR IGNORE INTO observer_t (observer_id, name, type, valid_since, valid_until, valid_state)
+VALUES (-1, 'Unknown', 'Organization', '2000-01-01T00:00:00', '2999-12-31T23:59:59', 'Current');
 
 -- -----------------------------------
 -- Miscelaneous dimension (flags, etc)
@@ -79,72 +120,57 @@ CREATE TABLE IF NOT EXISTS location_t
 
 CREATE TABLE IF NOT EXISTS tess_units_t
 (
-    units_id          INTEGER PRIMARY KEY AUTOINCREMENT, 
-    timestamp_source  TEXT,
-    reading_source    TEXT
+    units_id          INTEGER NOT NULL, 
+    timestamp_source  TEXT    NOT NULL,
+    reading_source    TEXT    NOT NULL,
+    PRIMARY KEY(units_id)
 );
+
+INSERT OR IGNORE INTO tess_units_t (units_id, timestamp_source, reading_source) VALUES (0, 'Subscriber', 'Direct');
+INSERT OR IGNORE INTO tess_units_t (units_id, timestamp_source, reading_source) VALUES (1, 'Publisher',  'Direct');
+INSERT OR IGNORE INTO tess_units_t (units_id, timestamp_source, reading_source) VALUES (2, 'Subscriber', 'Imported');
+INSERT OR IGNORE INTO tess_units_t (units_id, timestamp_source, reading_source) VALUES (3, 'Publisher',  'Imported');
 
 -- ------------------------
 -- The Instrument dimension
 -- ------------------------
 
+-----------------------------------------------------------
+-- Default values are used for the old registration message
+-----------------------------------------------------------
+
 CREATE TABLE IF NOT EXISTS tess_t
 (
-    tess_id       INTEGER PRIMARY KEY AUTOINCREMENT,
-    mac_address   TEXT, 
-    zero_point    REAL,
-    filter        TEXT DEFAULT 'UV/IR-cut',
-    valid_since   TEXT,
-    valid_until   TEXT,
-    valid_state   TEXT,
-    location_id   INTEGER NOT NULL DEFAULT -1 REFERENCES location_t(location_id),
-    model         TEXT    DEFAULT 'TESS-W',
-    firmware      TEXT    DEFAULT '1.0',
-    channel       INTEGER DEFAULT 0,
-    cover_offset  REAL    DEFAULT 0.0,
-    fov           REAL    DEFAULT 17.0,
-    azimuth       REAL    DEFAULT 0.0,
-    altitude      REAL    DEFAULT 90.0,
-    authorised    INTEGER DEFAULT 0,
-    registered    TEXT    DEFAULT 'Unknown'
+    tess_id       INTEGER,
+    mac_address   TEXT    NOT NULL,             -- Device MAC address
+    valid_since   TIMESTAMP NOT NULL,           -- versioning attributes, start timestamp, ISO8601
+    valid_until   TIMESTAMP NOT NULL,           -- versioning attributes, end  timestamp, ISO8601
+    valid_state   TEXT    NOT NULL,             -- versioning attributes,state either 'Current' or 'Expired'
+    model         TEXT    NOT NULL,             -- Either 'TESS-W', 'TESS4C'
+    firmware      TEXT    NOT NULL,             -- Firmware version string.
+    authorised    INTEGER NOT NULL,             -- Flag 1 = Authorised, 0 not authorised
+    registered    TEXT    NOT NULL,             -- Either 'Manual' or 'Auto' or 'Unknown' in the worst case
+    cover_offset  REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
+    fov           REAL    NOT NULL DEFAULT 17.0,      -- Deprecated
+    azimuth       REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
+    altitude      REAL    NOT NULL DEFAULT 90.0,      -- Deprecated
+    nchannels     INTEGER NOT NULL,   -- 1 to 4
+    zp1           REAL    NOT NULL,   -- Zero Point 1
+    filter1       TEXT    NOT NULL,   -- Filter 1 name (i.e. UV/IR-740, R, G, B)
+    zp2           REAL,               -- Zero Point 2
+    filter2       TEXT,               -- Filter 2 name (i.e. UV/IR-740, R, G, B)
+    zp3           REAL ,              -- Zero Point 3
+    filter3       TEXT,               -- Filter 3 name (i.e. UV/IR-740, R, G, B)
+    zp4           REAL,               -- Zero Point 4
+    filter4       TEXT,               -- Filter 4 name (i.e. UV/IR-740, R, G, B)
+    location_id   INTEGER NOT NULL DEFAULT -1,        -- Current location, defaults to unknown location
+    observer_id   INTEGER NOT NULL DEFAULT -1,        -- Current observer, defaults to unknown observer
+    PRIMARY KEY(tess_id),
+    FOREIGN KEY(location_id) REFERENCES location_t(location_id),
+    FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id)
 );
 
 CREATE INDEX IF NOT EXISTS tess_mac_i ON tess_t(mac_address);
-
-CREATE VIEW IF NOT EXISTS tess_v AS SELECT
-    tess_t.tess_id,
-    name_to_mac_t.name,
-    tess_t.channel,
-    tess_t.model,
-    tess_t.firmware,
-    tess_t.mac_address,
-    tess_t.zero_point,
-    tess_t.cover_offset,
-    tess_t.filter,
-    tess_t.fov,
-    tess_t.azimuth,
-    tess_t.altitude,
-    tess_t.valid_since,
-    tess_t.valid_until,
-    tess_t.valid_state,
-    tess_t.authorised,
-    tess_t.registered,
-    location_t.contact_name,
-    location_t.organization,
-    location_t.contact_email,
-    location_t.site,
-    location_t.longitude,
-    location_t.latitude,
-    location_t.elevation,
-    location_t.zipcode,
-    location_t.location,
-    location_t.province,
-    location_t.country,
-    location_t.timezone
-FROM tess_t 
-JOIN location_t    USING (location_id)
-JOIN name_to_mac_t USING (mac_address)
-WHERE name_to_mac_t.valid_state == "Current";
 
 -----------------------------------------------------
 -- Names to MACs mapping
@@ -156,37 +182,134 @@ CREATE TABLE IF NOT EXISTS name_to_mac_t
 (
     name          TEXT NOT NULL,
     mac_address   TEXT NOT NULL REFERENCES tess_t(mac_adddres), 
-    valid_since   TEXT NOT NULL,
-    valid_until   TEXT NOT NULL,
-    valid_state   TEXT NOT NULL 
+    valid_since   TIMESTAMP NOT NULL,  -- start date when the name,mac association was valid
+    valid_until   TIMESTAMP NOT NULL,  -- end date when the name,mac association was valid
+    valid_state   TEXT NOT NULL        -- either 'Current' or 'Expired'
 );
 
 CREATE INDEX IF NOT EXISTS mac_to_name_i ON name_to_mac_t(mac_address);
 CREATE INDEX IF NOT EXISTS name_to_mac_i ON name_to_mac_t(name);
 
--------------------------
--- The main 'Facts' table
--------------------------
+-----------------------------------------------------
+-- The TESS-W integrated View
+-----------------------------------------------------
+
+CREATE VIEW IF NOT EXISTS tess_v AS SELECT
+    tess_t.tess_id,
+    tess_t.mac_address,
+    name_to_mac_t.name,
+    tess_t.valid_since,
+    tess_t.valid_until,
+    tess_t.valid_state,
+    tess_t.model,
+    tess_t.firmware,
+    tess_t.authorised,
+    tess_t.registered,
+    tess_t.cover_offset,
+    tess_t.fov,
+    tess_t.azimuth,
+    tess_t.altitude,
+    tess_t.nchannels,
+    tess_t.zp1,
+    tess_t.filter1,
+    tess_t.zp2,
+    tess_t.filter2,
+    tess_t.zp3,
+    tess_t.filter3,
+    tess_t.zp4,
+    tess_t.filter4,
+    location_t.longitude,
+    location_t.latitude,
+    location_t.elevation,
+    location_t.place,
+    location_t.town,
+    location_t.sub_region,
+    location_t.region,
+    location_t.country,
+    location_t.timezone,
+    observer_t.name,
+    observer_t.type,
+    observer_t.affiliation,
+    observer_t.acronym
+FROM tess_t 
+JOIN location_t    USING (location_id)
+JOIN observer_t    USING (observer_id)
+JOIN name_to_mac_t USING (mac_address)
+WHERE name_to_mac_t.valid_state == "Current";
+
+---------------------------
+-- The TESS-W 'Facts' table
+---------------------------
 
 CREATE TABLE tess_readings_t
 (
-    date_id             INTEGER NOT NULL REFERENCES date_t(date_id), 
-    time_id             INTEGER NOT NULL REFERENCES time_t(time_id), 
-    tess_id             INTEGER NOT NULL REFERENCES tess_t(tess_id),
-    location_id         INTEGER NOT NULL REFERENCES location_t(location_id),
-    units_id            INTEGER NOT NULL REFERENCES tess_units_t(units_id),
-    sequence_number     INTEGER,
-    frequency           REAL,
-    magnitude           REAL,
-    ambient_temperature REAL,
-    sky_temperature     REAL,
-    azimuth             REAL,
-    altitude            REAL,
-    longitude           REAL,
-    latitude            REAL,
-    height              REAL, 
-    signal_strength     INTEGER,
-    hash                TEXT, -- to verify readings
-
-    PRIMARY KEY (date_id, time_id, tess_id)
+    date_id         INTEGER NOT NULL, 
+    time_id         INTEGER NOT NULL, 
+    tess_id         INTEGER NOT NULL,
+    location_id     INTEGER NOT NULL DEFAULT -1,
+    observer_id     INTEGER NOT NULL DEFAULT -1,
+    units_id        INTEGER NOT NULL,
+    sequence_number INTEGER NOT NULL, 
+    frequency       REAL    NOT NULL,    
+    magnitude       REAL    NOT NULL,
+    box_temperature REAL    NOT NULL,
+    sky_temperature REAL    NOT NULL,
+    azimuth         REAL,    -- optional, in decimal degrees
+    altitude        REAL,    -- optional, in decimal degrees
+    longitude       REAL,    -- optional, in decimal degrees
+    latitude        REAL,    -- optional, in decimal degrees
+    elevation       REAL,    -- optional, in decimal degrees
+    signal_strength INTEGER NOT NULL, 
+    hash            TEXT,    -- optional, to verify readings
+ 
+    PRIMARY KEY(date_id, time_id, tess_id),
+    FOREIGN KEY(date_id) REFERENCES date_t(date_id),
+    FOREIGN KEY(time_id) REFERENCES time_t(time_id),
+    FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),
+    FOREIGN KEY(location_id) REFERENCES location_t(location_id),
+    FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id),
+    FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
 );
+
+---------------------------
+-- The TESS4C 'Facts' table
+---------------------------
+
+CREATE TABLE tess_readings4c_t
+(
+    date_id         INTEGER NOT NULL, 
+    time_id         INTEGER NOT NULL, 
+    tess_id         INTEGER NOT NULL,
+    location_id     INTEGER NOT NULL DEFAULT -1,
+    observer_id     INTEGER NOT NULL DEFAULT -1,
+    units_id        INTEGER NOT NULL,
+    sequence_number INTEGER NOT NULL,  
+    freq1           REAL    NOT NULL,    
+    mag1            REAL    NOT NULL,
+    freq2           REAL    NOT NULL,
+    mag2            REAL    NOT NULL,
+    freq3           REAL    NOT NULL,
+    mag3            REAL    NOT NULL,
+    freq4           REAL    NOT NULL,
+    mag4            REAL    NOT NULL,
+    box_temperature REAL    NOT NULL,
+    sky_temperature REAL    NOT NULL,
+    azimuth         REAL,   -- optional, in decimal degrees
+    altitude        REAL,   -- optional in decimal degrees
+    longitude       REAL,   -- optional decimal degrees
+    latitude        REAL,   -- optional decimal degrees
+    elevation       REAL,   -- optional meters above sea level
+    signal_strength INTEGER NOT NULL,
+    hash            TEXT,   -- optional, to verify readings
+
+    PRIMARY KEY(date_id, time_id, tess_id),
+    FOREIGN KEY(date_id) REFERENCES date_t(date_id),
+    FOREIGN KEY(time_id) REFERENCES time_t(time_id),
+    FOREIGN KEY(tess_id) REFERENCES tess_t(tess_id),
+    FOREIGN KEY(location_id) REFERENCES location_t(location_id),
+    FOREIGN KEY(observer_id) REFERENCES observer_t(observer_id),
+    FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
+);
+
+
+COMMIT;
