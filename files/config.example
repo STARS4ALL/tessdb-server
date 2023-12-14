@@ -112,11 +112,6 @@ log_level = info
 # Reloadable property, but see below
 connection_string = tess.db
 
-# Closes the database connection when pausing
-# This is useful for special situations (i.e. moving an SQLite3 database file)
-# Reloadable property
-close_when_pause = no
-
 # Day resolution (in seconds)
 # Must be one of 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1
 # If changed to a lower time span it may be necessary to delete excess rows
@@ -130,6 +125,12 @@ secs_resolution = 1
 # is in place and measuring properly
 # However, this can be disabled.
 auth_filter = yes
+
+# Write Buffer size
+# Writes to database every N readings to improve I/O performance
+# Integer > 1
+# Reloadable property
+buffer_size = 15
 
 # general namespace log level (debug, info, warn, error, critical)
 # Reloadable property

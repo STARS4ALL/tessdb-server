@@ -89,6 +89,7 @@ class DBaseService(Service):
         self.tess           = TESS()
         self.tess_units     = TESSUnits()
         self.tess_readings  = TESSReadings(self)
+       
     
     #------------
     # Service API
@@ -103,7 +104,8 @@ class DBaseService(Service):
         super().startService()
         setLogLevel(namespace=NAMESPACE, levelStr=self.options['log_level'])
         setLogLevel(namespace='registry', levelStr=self.options['register_log_level'])
-      
+        self.tess_readings.setAuthFilter(self.options['auth_filter'])
+        self.tess_readings.setBufferSize(self.options['buffer_size'])
         # setup the connection pool for asynchronouws adbapi
         self.openPool()
         self.startTasks()
@@ -151,7 +153,8 @@ class DBaseService(Service):
         setLogLevel(namespace=NAMESPACE, levelStr=new_options['log_level'])
         setLogLevel(namespace='register', levelStr=new_options['register_log_level'])
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.tess_readings.setOptions(auth_filter=new_options['auth_filter'])
+        self.tess_readings.setAuthFilter(new_options['auth_filter'])
+        self.tess_readings.setBufferSize(new_options['buffer_size'])
         self.options = new_options
         # self.tess.invalidCache()
         # self.tess_locations.invalidCache()
@@ -163,16 +166,14 @@ class DBaseService(Service):
         log.info('TESS database writer paused')
         if not self.paused:
             self.paused = True
-            if self.options["close_when_pause"]:
-                self.closePool()
+            self.closePool()
         return defer.succeed(None)
 
 
     def resumeService(self):
         log.info('TESS database writer resumed')
         if self.paused:
-            if self.options["close_when_pause"]:
-                self.openPool()
+            self.openPool()
             self.paused = False
         return defer.succeed(None)
 
@@ -259,7 +260,7 @@ class DBaseService(Service):
                     row = self.parent.queue['tess_filtered_readings'].popleft()
                     yield self.update(row)
         except Exception as e:
-            log.failure('DB Writter. Unexpected exception. Stack trace follows:')
+            log.failure('Unexpected exception. Stack trace follows:')
         self.timeStatList.append( (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds())
         self.nrowsStatList.append(l0)
         self.later = reactor.callLater(self.T_QUEUE_POLL, self.writter)
@@ -273,16 +274,13 @@ class DBaseService(Service):
         # setup the connection pool for asynchronouws adbapi
         pool  = self.getPoolFunc(self.path)
         self.pool = pool
-        self.tess.openPool(pool)
-        self.tess_units.openPool(pool)
-        self.tess_readings.openPool(pool)
+        self.tess.setPool(pool)
+        self.tess_units.setPool(pool)
+        self.tess_readings.setPool(pool)
         log.debug("Opened DB Connection Pool to {conn!s}", conn=self.path)
 
 
     def closePool(self):
         '''setup the connection pool for asynchronouws adbapi'''
         self.pool.close()
-        self.tess.closePool()
-        self.tess_units.closePool()
-        self.tess_readings.closePool()
         log.debug("Closed DB Connection Pool to {conn!s}", conn=self.path)
