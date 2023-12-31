@@ -120,6 +120,8 @@ def handleTimestamps(row, now):
     row['tstamp_src'] = "Publisher"
     # - This is gonna be awfull with different GPS timestamps ...
     i = 0
+    # Add Z to include UTC timezone in the datetime constructor
+    row['tstamp'] = row['tstamp'] if row['tstamp'][-1] == 'Z' else row['tstamp'] + 'Z'
     while True:
         try:
             row['tstamp']   = datetime.datetime.strptime(row['tstamp'], TSTAMP_FORMAT[i])
@@ -130,6 +132,7 @@ def handleTimestamps(row, now):
         except IndexError as e:
             raise IncorrectTimestampError(row['tstamp'])
         else:
+            row['tstamp'] = row['tstamp'].replace(tzinfo=datetime.timezone.utc)
             break
     delta = math.fabs((now - row['tstamp']).total_seconds())
     if delta > MAX_TSTAMP_OOS:
