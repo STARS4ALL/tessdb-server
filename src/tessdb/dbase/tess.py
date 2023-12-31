@@ -394,6 +394,10 @@ class TESS:
         row is a dictionary with the following keys: 'name', 'mac', 'calib'
         Returns a Deferred.
         '''
+        row['location']      = -1
+        row['observer']      = -1
+        row['authorised']    = 0
+        row['registered']    = AUTOMATIC
         def _replacingPhotometer(txn):
             # Create a new entry the photometer table
             txn.execute(PHOT_INSERTION_SQL, row)
