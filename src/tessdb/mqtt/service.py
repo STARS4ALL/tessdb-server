@@ -120,8 +120,8 @@ def handleTimestamps(row, now):
     row['tstamp_src'] = "Publisher"
     # - This is gonna be awfull with different GPS timestamps ...
     i = 0
-    # Add Z to include UTC timezone in the datetime constructor
-    row['tstamp'] = row['tstamp'] if row['tstamp'][-1] == 'Z' else row['tstamp'] + 'Z'
+    # Strips possible trailing Z before the datetime constructor
+    row['tstamp'] = row['tstamp'][:-1] if row['tstamp'][-1] == 'Z' else row['tstamp']
     while True:
         try:
             row['tstamp']   = datetime.datetime.strptime(row['tstamp'], TSTAMP_FORMAT[i])
