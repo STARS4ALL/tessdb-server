@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS location_t
     latitude        REAL,          -- in floating point degrees
     elevation       REAL,          -- meters above sea level
     place           TEXT NOT NULL,
-    town    TEXT NOT NULL, -- village, town, city, etc.
+    town            TEXT NOT NULL, -- village, town, city, etc.
     sub_region      TEXT NOT NULL, -- province, etc.
     region          TEXT NOT NULL, -- federal state, etc
     country         TEXT NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS observer_t
 );
 
 INSERT OR IGNORE INTO observer_t (observer_id, name, type, valid_since, valid_until, valid_state)
-VALUES (-1, 'Unknown', 'Organization', '2000-01-01T00:00:00', '2999-12-31T23:59:59', 'Current');
+VALUES (-1, 'Unknown', 'Organization', '2000-01-01 00:00:00.000', '2999-12-31 23:59:59.000', 'Current');
 
 -- -----------------------------------
 -- Miscelaneous dimension (flags, etc)
@@ -235,7 +235,7 @@ FROM tess_t
 JOIN location_t    USING (location_id)
 JOIN observer_t    USING (observer_id)
 JOIN name_to_mac_t USING (mac_address)
-WHERE name_to_mac_t.valid_state == "Current";
+WHERE name_to_mac_t.valid_state == 'Current';
 
 ---------------------------
 -- The TESS-W 'Facts' table
