@@ -60,6 +60,13 @@ log2 = Logger(namespace=NAMESPACE2)
 # Module Utility Functions
 # ------------------------
 
+GET_PHOT_CURR_LOCATION_OBSERVER = '''
+    SELECT location_id, observer_id
+    FROM tess_t
+    WHERE mac_address = :mac_address
+    AND valid_state = 'Current' -- Just in case ...
+'''
+
 NAME_INSERTION_SQL = '''
     INSERT INTO name_to_mac_t (
         name,
@@ -228,22 +235,20 @@ class TESS:
             # A clean rename with no collision
             # A (MAC, name) exists in the name_to_mac_t table with the MAC given by the regisitry message
             # but the name in the regisitry message does not.
-            oldname = mac[0][1]
-            log2.debug("Renaming photometer {oldname} (MAC = {mac}) with brand new name {log_tag}", oldname=oldname, log_tag=row['name'], mac=row['mac'])
+            old_name = mac[0][1]
+            log2.debug("Renaming photometer {old_name} (MAC = {mac}) with brand new name {log_tag}", old_name=old_name, log_tag=row['name'], mac=row['mac'])
             yield self.renamingPhotometer(row)
-            #self.invalidCache(oldname)
-            #self.nRename += 1
-            log2.info("Renamed photometer {oldname} (MAC = {mac}) with brand new name {log_tag}", oldname=oldname, log_tag=row['name'], mac=row['mac'])
+            self.nRename += 1
+            log2.info("Renamed photometer {old_name} (MAC = {mac}) with brand new name {log_tag}", old_name=old_name, log_tag=row['name'], mac=row['mac'])
         elif not len(mac) and len(name):
-            # A (MAC, name) pair exist in the name_to_mac_t table with the same name as the registre message
+            # A (MAC, name) pair exist in the name_to_mac_t table with the same name as the registry message
             # but the MAC in the registry message is new.
             # This means that we are probably replacing a broken photometer with a new one, keeping the same name.
-            oldmac = name[0][1]
-            log2.debug("Replacing photometer tagged {log_tag} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, log_tag=row['name'], mac=row['mac']) 
-            yield self.replacingPhotometer(row)
-            #self.invalidCache(row['name'])
+            old_mac = name[0][1]
+            log2.debug("Replacing photometer tagged {log_tag} (old MAC = {old_mac}) with new one with MAC {mac}", old_mac=old_mac, log_tag=row['name'], mac=row['mac']) 
+            yield self.replacingPhotometer(row, old_mac)
             self.nReplace += 1
-            log2.info("Replaced photometer tagged {log_tag} (old MAC = {oldmac}) with new one with MAC {mac}", oldmac=oldmac, log_tag=row['name'], mac=row['mac']) 
+            log2.info("Replaced photometer tagged {log_tag} (old MAC = {old_mac}) with new one with MAC {mac}", old_mac=old_mac, log_tag=row['name'], mac=row['mac']) 
         else:
             mac  = mac[0]
             name = name[0]
@@ -386,16 +391,25 @@ class TESS:
             txn.execute(NAME_INSERTION_SQL, row)
         return self.pool.runInteraction( _addBrandNewTess)
 
-
-    def replacingPhotometer(self, row):
+    @inlineCallbacks
+    def replacingPhotometer(self, row, old_mac):
         '''
         Adds a brand new photometer with a given MAC
         but replaces the association table
         row is a dictionary with the following keys: 'name', 'mac', 'calib'
         Returns a Deferred.
         '''
-        row['location']      = -1
-        row['observer']      = -1
+        params = {'mac_address': old_mac, 'valid_state': CURRENT}
+        old_ids = yield self.pool.runQuery(
+            '''
+            SELECT location_id, observer_id FROM tess_t
+            WHERE mac_address = :mac_address
+            AND valid_state = :valid_state -- Just in case. This should be enough to return only one photometer
+            ''', 
+            params
+        )
+        row['location']      = old_ids[0][0] # carries over location id from previous photometer
+        row['observer']      = old_ids[0][1] # Crrries over observer_id from previous photometer
         row['authorised']    = 0
         row['registered']    = AUTOMATIC
         def _replacingPhotometer(txn):
@@ -405,7 +419,7 @@ class TESS:
             txn.execute(EXPIRE_EXISTING_NAME_SQL, row)
             # Create a new entry the name to MAC association table
             txn.execute(NAME_INSERTION_SQL, row)
-        return self.pool.runInteraction(_replacingPhotometer)
+        yield self.pool.runInteraction(_replacingPhotometer)
 
 
     def renamingPhotometer(self, row):
