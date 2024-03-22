@@ -51,6 +51,7 @@ from tessdb.error import ReadingKeyError, ReadingTypeError
 # ----------------
 
 IMPOSSIBLE_TEMP = -273.15
+IMPOSSIBLE_SIGNAL_STRENGTH = 99
 
 INSERT_READING_SQL = '''
     INSERT INTO tess_readings_t (
@@ -287,6 +288,8 @@ class TESSReadings:
         # TESS4C Early prototypes did not provide any temperature 
         row['tamb'] = row.get('tamb', IMPOSSIBLE_TEMP) 
         row['tsky'] = row.get('tsky', IMPOSSIBLE_TEMP)
+        # TESSTRACTOR software emulation do not provide received signal strength
+        row['wdBm'] = row.get('wdBm', IMPOSSIBLE_SIGNAL_STRENGTH)
         log.debug("TESSReadings.update({log_tag}): About to write to DB {row!s}", log_tag=row['name'], row=row)
         return True
 
