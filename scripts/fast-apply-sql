@@ -1,13 +1,10 @@
 #!/bin/bash
 
-
-DEFAULT_URL=/var/dbase/tess.db
-
 DATABASE=${1:-${DEFAULT_URL}}
+SECS=3
 
 read -p "This is the SQLite3 database path ([Ctrl-C] to abort): ${DATABASE}" yes_no
 
-SECS=3
 
 FILES=$(ls -1 sql/*.sql)
 if [ "$?" -ne "0" ]; then
@@ -22,7 +19,7 @@ fi
 for FILE in $FILES
 do
 	echo "sqlite3 ${DATABASE} < ${FILE}"
-	/usr/bin/time --format='%C took %e seconds' sqlite3 ${DATABASE} < ${FILE}
+	nice -n 19 ionice -c3 /usr/bin/time --format='%C took %e seconds' sqlite3 ${DATABASE} < ${FILE}
 	mv ${FILE} sql/processed || exit 255
 	sleep ${SECS}
 done

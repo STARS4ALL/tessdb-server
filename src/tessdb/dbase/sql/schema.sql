@@ -271,6 +271,9 @@ CREATE TABLE tess_readings_t
     FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
 );
 
+-- This is meant for IDA reports
+CREATE INDEX IF NOT EXISTS tess_readings_i ON tess_readings_t(tess_id, date_id, time_id, location_id);
+
 ---------------------------
 -- The TESS4C 'Facts' table
 ---------------------------
@@ -311,5 +314,6 @@ CREATE TABLE tess_readings4c_t
     FOREIGN KEY(units_id) REFERENCES tess_units_t(units_id)
 );
 
+CREATE INDEX IF NOT EXISTS tess_id_readings4c_i ON tess_readings4c_t(tess_id, date_id, time_id, location_id);
 
 COMMIT;
