@@ -10,10 +10,10 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,7 +23,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ----------------------------------------------------------------------
 
-#--------------------
+# --------------------
 # System wide imports
 # -------------------
 
@@ -34,10 +34,10 @@ import datetime
 # Twisted imports
 # ---------------
 
-from twisted.internet.defer   import inlineCallbacks
-from twisted.logger           import Logger
+from twisted.internet.defer import inlineCallbacks
+from twisted.logger import Logger
 
-#--------------
+# --------------
 # local imports
 # -------------
 
@@ -53,7 +53,7 @@ NAMESPACE2 = 'registry'
 # Module Global Variables
 # -----------------------
 
-log  = Logger(namespace=NAMESPACE)
+log = Logger(namespace=NAMESPACE)
 log2 = Logger(namespace=NAMESPACE2)
 
 # ------------------------
@@ -137,6 +137,7 @@ PHOT_INSERTION_SQL = '''
     )
 '''
 
+
 def isTESS4C(row):
     return row.get('band4') is not None
 
@@ -146,8 +147,8 @@ def isTESS4C(row):
 
 # This is what is left after an extensive refactoring but still maintianing the class
 
-class TESS:
 
+class TESS:
 
     def __init__(self, zp_threshold):
         self.pool = None
@@ -162,25 +163,25 @@ class TESS:
         '''Resets stat counters'''
         self.nRegister = 0
         self.nCreation = 0
-        self.nRename   = 0
-        self.nReplace  = 0
+        self.nRename = 0
+        self.nReplace = 0
         self.nOverriden = 0
         self.nZPChange = 0
-        self.nReboot   = 0
+        self.nReboot = 0
 
     def getCounters(self):
         '''get stat counters'''
-        return (    
-                "[Total, New, Rebooted, Renamed, ZP Changed, Replaced, Overriden]",
-                [
-                    self.nRegister, 
-                    self.nCreation,
-                    self.nReboot,
-                    self.nRename, 
-                    self.nZPChange, 
-                    self.nReplace, 
-                    self.nOverriden,
-                ]
+        return (
+            "[Total, New, Rebooted, Renamed, ZP Changed, Replaced, Overriden]",
+            [
+                self.nRegister,
+                self.nCreation,
+                self.nReboot,
+                self.nRename,
+                self.nZPChange,
+                self.nReplace,
+                self.nOverriden,
+            ]
         )
 
     # ===============
@@ -189,8 +190,6 @@ class TESS:
 
     def setPool(self, pool):
         self.pool = pool
-
-
 
     # ----------------------------
     # Instrument registration (NEW)
@@ -202,59 +201,68 @@ class TESS:
         Registers an instrument given its MAC address, friendly name and calibration constant
         Returns a Deferred.
         '''
-        log2.debug("New registration request for {log_tag} (may be not accepted) with data {row}", row=row, log_tag=row['name'])
+        log2.debug(
+            "New registration request for {log_tag} (may be not accepted) with data {row}", row=row, log_tag=row['name'])
         self.nRegister += 1
 
         # Adding extra metadadta for all create/update operations
-        row['calib2'] = row.get('calib2') 
+        row['calib2'] = row.get('calib2')
         row['calib3'] = row.get('calib3')
         row['calib4'] = row.get('calib4')
-        row['band1']  = row.get('band1',DEFAULT_FILTER)
-        row['band2']  = row.get('band2') 
-        row['band3']  = row.get('band3')  
-        row['band4']  = row.get('band4')
-        row['eff_date']      = row['tstamp'].replace(microsecond=0)
-        row['exp_date']      = INFINITE_TIME
+        row['band1'] = row.get('band1', DEFAULT_FILTER)
+        row['band2'] = row.get('band2')
+        row['band3'] = row.get('band3')
+        row['band4'] = row.get('band4')
+        row['eff_date'] = row['tstamp'].replace(microsecond=0)
+        row['exp_date'] = INFINITE_TIME
         row['valid_expired'] = EXPIRED
         row['valid_current'] = CURRENT
-        row['firmware']      = row.get('firmware',UNKNOWN)
+        row['firmware'] = row.get('firmware', UNKNOWN)
 
-        mac  = yield self.lookupMAC(row)    # Returns list of pairs (MAC, name)
+        mac = yield self.lookupMAC(row)    # Returns list of pairs (MAC, name)
         name = yield self.lookupName(row)   # Returns list of pairs (name, MAC)
 
         log2.debug("self.lookupMAC(row) yields {mac}", mac=mac)
-        log2.debug("self.lookupName(row) yields {name}",name=name)
+        log2.debug("self.lookupName(row) yields {name}", name=name)
 
         if not len(mac) and not len(name):
             # Brand new TESS-W case:
             # No existitng (MAC, name) pairs in the name_to_mac_t table
-            log2.debug("Registering Brand new photometer: {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
+            log2.debug(
+                "Registering Brand new photometer: {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
             yield self.addBrandNewTess(row)
             self.nCreation += 1
-            log2.info("Brand new photometer registered: {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
+            log2.info(
+                "Brand new photometer registered: {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
         elif len(mac) and not len(name):
             # A clean rename with no collision
             # A (MAC, name) exists in the name_to_mac_t table with the MAC given by the regisitry message
             # but the name in the regisitry message does not.
             old_name = mac[0][1]
-            log2.debug("Renaming photometer {old_name} (MAC = {mac}) with brand new name {log_tag}", old_name=old_name, log_tag=row['name'], mac=row['mac'])
+            log2.debug("Renaming photometer {old_name} (MAC = {mac}) with brand new name {log_tag}",
+                       old_name=old_name, log_tag=row['name'], mac=row['mac'])
             yield self.renamingPhotometer(row)
             self.nRename += 1
-            log2.info("Renamed photometer {old_name} (MAC = {mac}) with brand new name {log_tag}", old_name=old_name, log_tag=row['name'], mac=row['mac'])
+            log2.info("Renamed photometer {old_name} (MAC = {mac}) with brand new name {log_tag}",
+                      old_name=old_name, log_tag=row['name'], mac=row['mac'])
         elif not len(mac) and len(name):
             # A (MAC, name) pair exist in the name_to_mac_t table with the same name as the registry message
             # but the MAC in the registry message is new.
             # This means that we are probably replacing a broken photometer with a new one, keeping the same name.
             old_mac = name[0][1]
-            log2.debug("Replacing photometer tagged {log_tag} (old MAC = {old_mac}) with new one with MAC {mac}", old_mac=old_mac, log_tag=row['name'], mac=row['mac']) 
+            log2.debug("Replacing photometer tagged {log_tag} (old MAC = {old_mac}) with new one with MAC {mac}",
+                       old_mac=old_mac, log_tag=row['name'], mac=row['mac'])
             yield self.replacingPhotometer(row, old_mac)
             self.nReplace += 1
-            log2.info("Replaced photometer tagged {log_tag} (old MAC = {old_mac}) with new one with MAC {mac}", old_mac=old_mac, log_tag=row['name'], mac=row['mac']) 
+            log2.info("Replaced photometer tagged {log_tag} (old MAC = {old_mac}) with new one with MAC {mac}",
+                      old_mac=old_mac, log_tag=row['name'], mac=row['mac'])
         else:
-            mac  = mac[0]
+            mac = mac[0]
             name = name[0]
-            row['prev_mac']  = name[1]  # MAC not from the register message, but associtated to existing name
-            row['prev_name'] = mac[1]   # name not from from the register message, but assoctiated to to existing MAC
+            # MAC not from the register message, but associtated to existing name
+            row['prev_mac'] = name[1]
+            # name not from from the register message, but assoctiated to to existing MAC
+            row['prev_name'] = mac[1]
             # If the same MAC and same name remain, we must examine if there
             # is a change in the photometer managed attributes
             if row['name'] == row['prev_name'] and row['mac'] == row['prev_mac']:
@@ -267,14 +275,13 @@ class TESS:
                 # The name not coming in the message will get unassigned to a photometer.
                 # Renaming with side effects.
                 log2.debug("Overriding associations ({n1} -> {m1}) and ({n2} -> {m2}) with new ({log_tag} -> {m}) association data",
-                    m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
+                           m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
                 yield self.overrideAssociations(row)
                 self.nOverriden += 1
                 log2.info("Overridden associations ({n1} -> {m1}) and ({n2} -> {m2}) with new ({log_tag} -> {m}) association data",
-                    m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
-                log2.warn("Label {label} has no associated photometer now!", label=row['prev_name'])
-            
-
+                          m=row['mac'], log_tag=row['name'], m1=mac[0], n1=row['prev_name'], m2=row['prev_mac'], n2=name[0])
+                log2.warn(
+                    "Label {label} has no associated photometer now!", label=row['prev_name'])
 
     def updateManagedAttributes(self, row):
         '''Updates Instrument calibration constant keeping its history'''
@@ -296,45 +303,50 @@ class TESS:
 # New refactored STUFF goes here
 # -------------------------------
 
-    def changedManagedAttributes(self, row, zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4):
+
+    def changedManagedAttributes(self, row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4):
         if isTESS4C(row):
             unchanged = (abs(row['calib1'] - float(zp1)) < 0.005) and \
-            (abs(row['calib2'] - float(zp2)) < 0.005) and \
-            (abs(row['calib3'] - float(zp3)) < 0.005) and \
-            (abs(row['calib4'] - float(zp4)) < 0.005) and \
-            (row['band1'] == filter1) and (row['band2'] == filter2) and \
-            (row['band3'] == filter3) and (row['band4'] == filter4)
+                (abs(row['calib2'] - float(zp2)) < 0.005) and \
+                (abs(row['calib3'] - float(zp3)) < 0.005) and \
+                (abs(row['calib4'] - float(zp4)) < 0.005) and \
+                (row['band1'] == filter1) and (row['band2'] == filter2) and \
+                (row['band3'] == filter3) and (row['band4'] == filter4)
             if not unchanged:
-                log2.info("TESS4C {log_tag} ({mac}) changing ZPs or Filters from {old} to {new} ", 
-                    log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
+                log2.info("TESS4C {log_tag} ({mac}) changing ZPs or Filters from {old} to {new} ",
+                          log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
             return not unchanged
         # Discard absurd ZP due to firmware bug in single channel TESS-W devices
         elif row['calib1'] <= self.zp_threshold:
-            log2.info("TESS-W {log_tag} ({mac}): Discarding absurd ZP change from {old} to {calib}", 
-                    log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'])
+            log2.info("TESS-W {log_tag} ({mac}): Discarding absurd ZP change from {old} to {calib}",
+                      log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'])
             return False
         else:
             unchanged = (abs(row['calib1'] - float(zp1)) < 0.005)
             if not unchanged:
-                log2.info("TESS-W {log_tag} ({mac}) changing ZP from {old} to {calib}", 
-                    log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'])
+                log2.info("TESS-W {log_tag} ({mac}) changing ZP from {old} to {calib}",
+                          log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'])
             return not unchanged
 
     @inlineCallbacks
     def maybeUpdateManagedAttributes(self, row):
         photometer = yield self.findPhotometerByName(row)
-        tess_id,mac_address,zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4,authorised,registered,location_id,observer_id = photometer[0]
-        log2.debug("{log_tag}: previous stored info is {photometer}",log_tag=row['name'], photometer=photometer[0])
-        if self.changedManagedAttributes(row, zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4):
-            row['authorised'] = authorised # carries over the authorised flag
-            row['registered'] = registered # carries over the registration method
-            row['location']   = location_id # carries over the location id
-            row['observer']   = observer_id # carries over the observer id
+        tess_id, mac_address, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4, authorised, registered, location_id, observer_id = photometer[
+            0]
+        log2.debug("{log_tag}: previous stored info is {photometer}",
+                   log_tag=row['name'], photometer=photometer[0])
+        if self.changedManagedAttributes(row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4):
+            row['authorised'] = authorised  # carries over the authorised flag
+            # carries over the registration method
+            row['registered'] = registered
+            row['location'] = location_id  # carries over the location id
+            row['observer'] = observer_id  # carries over the observer id
             yield self.updateManagedAttributes(row)
             self.nZPChange += 1
         else:
             self.nReboot += 1
-            log2.info("Detected reboot for photometer {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
+            log2.info(
+                "Detected reboot for photometer {log_tag} (MAC = {mac})", log_tag=row['name'], mac=row['mac'])
 
     def lookupMAC(self, row):
         '''
@@ -370,7 +382,7 @@ class TESS:
         Caches result if possible
         Returns a Deferred.
         '''
-        row['valid_current'] = CURRENT # needed when called by tess_readings.
+        row['valid_current'] = CURRENT  # needed when called by tess_readings.
         d = self.pool.runQuery(
             '''
             SELECT tess_id,mac_address,zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4,authorised,registered,location_id,observer_id 
@@ -388,16 +400,17 @@ class TESS:
         row is a dictionary with the following keys: 'name', 'mac', 'calib'
         Returns a Deferred.
         '''
-        row['location']      = -1
-        row['observer']      = -1
-        row['authorised']    = 0
-        row['registered']    = AUTOMATIC
+        row['location'] = -1
+        row['observer'] = -1
+        row['authorised'] = 0
+        row['registered'] = AUTOMATIC
+
         def _addBrandNewTess(txn):
             # Create a new entry the photometer table
             txn.execute(PHOT_INSERTION_SQL, row)
             # Create a new entry the name to MAC association table
             txn.execute(NAME_INSERTION_SQL, row)
-        return self.pool.runInteraction( _addBrandNewTess)
+        return self.pool.runInteraction(_addBrandNewTess)
 
     @inlineCallbacks
     def replacingPhotometer(self, row, old_mac):
@@ -413,13 +426,16 @@ class TESS:
             SELECT location_id, observer_id FROM tess_t
             WHERE mac_address = :mac_address
             AND valid_state = :valid_state -- Just in case. This should be enough to return only one photometer
-            ''', 
+            ''',
             params
         )
-        row['location']      = old_ids[0][0] # carries over location id from previous photometer
-        row['observer']      = old_ids[0][1] # Crrries over observer_id from previous photometer
-        row['authorised']    = 0
-        row['registered']    = AUTOMATIC
+        # carries over location id from previous photometer
+        row['location'] = old_ids[0][0]
+        # Crrries over observer_id from previous photometer
+        row['observer'] = old_ids[0][1]
+        row['authorised'] = 0
+        row['registered'] = AUTOMATIC
+
         def _replacingPhotometer(txn):
             # Create a new entry the photometer table
             txn.execute(PHOT_INSERTION_SQL, row)
@@ -429,7 +445,6 @@ class TESS:
             txn.execute(NAME_INSERTION_SQL, row)
         yield self.pool.runInteraction(_replacingPhotometer)
 
-
     def renamingPhotometer(self, row):
         '''
         Renames an existing photometer with a given MAC
@@ -438,14 +453,11 @@ class TESS:
         Returns a Deferred.
         '''
         def _renamingPhotometer(txn):
-             # Expire current association (mac, name)
+            # Expire current association (mac, name)
             txn.execute(EXPIRE_EXISTING_MAC_SQL, row)
             # Create a new entry the name to MAC association table
             txn.execute(NAME_INSERTION_SQL, row)
         return self.pool.runInteraction(_renamingPhotometer)
-
-
-    
 
     def overrideAssociations(self, row):
         def _overrideAssociations(txn):
@@ -467,5 +479,3 @@ class TESS:
                 ''', row)
             txn.execute(NAME_INSERTION_SQL, row)
         return self.pool.runInteraction(_overrideAssociations)
-
-    

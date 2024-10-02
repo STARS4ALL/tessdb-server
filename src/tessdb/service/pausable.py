@@ -8,7 +8,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-#--------------------
+# --------------------
 # System wide imports
 # -------------------
 
@@ -24,22 +24,20 @@ import signal
 from zope.interface import implementer, Interface
 
 from twisted.persisted import sob
-from twisted.python    import components
-from twisted.internet  import defer, task
+from twisted.python import components
+from twisted.internet import defer, task
 from twisted.application.service import IService, Service as BaseService, MultiService as BaseMultiService, Process
 
-#--------------
+# --------------
 # local imports
 # -------------
 
 from .interfaces import IPausable
 
-        
+
 # ----------------
 # Global functions
 # -----------------
-
-
 
 
 # --------------------------------------------------------------
@@ -58,7 +56,7 @@ class Service(BaseService):
             del dic['paused']
         return dic
 
-    #--------------------------------
+    # --------------------------------
     # Extended Service API
     # -------------------------------
 
@@ -72,16 +70,16 @@ class Service(BaseService):
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 @implementer(IPausable)
 class MultiService(BaseMultiService):
     '''
     Container for pausable services
     '''
 
-    #--------------------------------
+    # --------------------------------
     # Extended Pausable BaseService API
     # -------------------------------
-
 
     def pauseService(self):
         self.paused = 1
@@ -92,7 +90,6 @@ class MultiService(BaseMultiService):
             dl.append(defer.maybeDeferred(service.pauseService))
         return defer.DeferredList(dl)
 
-
     def resumeService(self):
         self.paused = 0
         dl = []
@@ -101,15 +98,16 @@ class MultiService(BaseMultiService):
         for service in services:
             dl.append(defer.maybeDeferred(service.resumeService))
         return defer.DeferredList(dl)
-        
+
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
-class TopLevelService(MultiService):    
+
+class TopLevelService(MultiService):
     '''
     This one is for use with the ReloadableApplication below
-    '''    
+    '''
     instance = None
     T = 1
 
@@ -130,7 +128,7 @@ class TopLevelService(MultiService):
     def __init__(self):
         super(TopLevelService, self).__init__()
         TopLevelService.instance = self
-        self.sigpaused  = False
+        self.sigpaused = False
         self.sigresumed = False
         self.periodicTask = task.LoopingCall(self._sighandler)
 
@@ -148,11 +146,11 @@ class TopLevelService(MultiService):
         return dic
 
     def startService(self):
-        self.periodicTask.start(self.T, now=False) # call every T seconds
+        self.periodicTask.start(self.T, now=False)  # call every T seconds
         BaseMultiService.startService(self)
 
     def stopService(self):
-        self.periodicTask.cancel() # call every T seconds
+        self.periodicTask.cancel()  # call every T seconds
         return BaseMultiService.stopService(self)
 
     def _sighandler(self):
@@ -176,6 +174,7 @@ if os.name != "nt":
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 def Application(name, uid=None, gid=None):
     """
     Return a compound class.
@@ -191,7 +190,8 @@ def Application(name, uid=None, gid=None):
     for comp in availableComponents:
         ret.addComponent(comp, ignoreClass=1)
     IService(ret).setName(name)
-    return ret  
+    return ret
+
 
 __all__ = [
     "Service",

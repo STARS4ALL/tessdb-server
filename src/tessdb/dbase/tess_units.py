@@ -10,10 +10,10 @@
 # distribute, sublicense, and/or sell copies of the Software, and to
 # permit persons to whom the Software is furnished to do so, subject to
 # the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be
 # included in all copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 # EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 # MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,7 +23,7 @@
 # WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 # ----------------------------------------------------------------------
 
-#--------------------
+# --------------------
 # System wide imports
 # -------------------
 
@@ -34,9 +34,9 @@ import os
 # ---------------
 
 from twisted.internet.defer import inlineCallbacks
-from twisted.logger         import Logger
+from twisted.logger import Logger
 
-#--------------
+# --------------
 # local imports
 # -------------
 
@@ -66,12 +66,12 @@ log = Logger(namespace=NAMESPACE)
 # This is what is left after an extensive refactoring but still maintianing the class
 
 class TESSUnits:
-    
+
     def __init__(self):
 
         # Cached row ids
         self._id = {}
-        self._id['Publisher']  = None
+        self._id['Publisher'] = None
         self._id['Subscriber'] = None
         self.pool = None
 
@@ -87,8 +87,8 @@ class TESSUnits:
 
         def queryLatest(dbpool, timestamp_source):
             row = {
-                'timestamp_source': timestamp_source,  
-                'reading_source'  : reading_source
+                'timestamp_source': timestamp_source,
+                'reading_source': reading_source
             }
             return dbpool.runQuery(
                 '''
@@ -101,4 +101,3 @@ class TESSUnits:
             row = yield queryLatest(self.pool, timestamp_source)
             self._id[timestamp_source] = row[0][0]
         return self._id[timestamp_source]
-   

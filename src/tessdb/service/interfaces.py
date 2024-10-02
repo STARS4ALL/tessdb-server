@@ -4,7 +4,7 @@
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
 
-#--------------------
+# --------------------
 # System wide imports
 # -------------------
 
@@ -16,6 +16,7 @@ from __future__ import division, absolute_import
 
 from zope.interface import implementer, Interface
 
+
 class IPausable(Interface):
     """
     A pausable interface for services.
@@ -23,7 +24,6 @@ class IPausable(Interface):
     @type paused:         C{boolean}
     @ivar paused:         Whether the service is paused.
     """
-
 
     def pauseService():
         """
@@ -50,7 +50,6 @@ class IReloadable(Interface):
     Run reload code at the appropriate times.
     """
 
-
     def reloadService(config=None):
         """
         Reloads the service by reading on the fly its service configuration.
@@ -67,4 +66,4 @@ class IReloadable(Interface):
         """
 
 
-__all__ = [ "IReloadable", "IPausable" ]
+__all__ = ["IReloadable", "IPausable"]

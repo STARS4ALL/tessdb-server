@@ -8,7 +8,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-#--------------------
+# --------------------
 # System wide imports
 # -------------------
 
@@ -24,11 +24,11 @@ import signal
 from zope.interface import implementer, Interface
 
 from twisted.persisted import sob
-from twisted.python    import components
-from twisted.internet  import defer, task
+from twisted.python import components
+from twisted.internet import defer, task
 from twisted.application.service import IService, Service as BaseService, MultiService as BaseMultiService, Process
 
-#--------------
+# --------------
 # local imports
 # -------------
 
@@ -43,7 +43,6 @@ from .interfaces import IReloadable
 # -----------------
 
 
-
 # -----------------------
 # Module global variables
 # -----------------------
@@ -56,7 +55,7 @@ from .interfaces import IReloadable
 @implementer(IReloadable)
 class Service(BaseService):
 
-    #--------------------------------
+    # --------------------------------
     # Extended Service API
     # -------------------------------
 
@@ -67,16 +66,17 @@ class Service(BaseService):
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 @implementer(IReloadable)
 class MultiService(BaseMultiService):
     '''
     Container for reloadable services
     '''
 
-    #--------------------------------
+    # --------------------------------
     # Extended Service API
     # -------------------------------
-       
+
     def reloadService(self, options=None):
         dl = []
         services = list(self)
@@ -90,13 +90,12 @@ class MultiService(BaseMultiService):
 # --------------------------------------------------------------
 
 
-class TopLevelService(MultiService):    
+class TopLevelService(MultiService):
     '''
     This one is for use with the Application below
-    '''    
+    '''
     instance = None
     T = 1
-
 
     @staticmethod
     def sigreload(signum, frame):
@@ -108,7 +107,7 @@ class TopLevelService(MultiService):
     def __init__(self):
         super(TopLevelService, self).__init__()
         TopLevelService.instance = self
-        self.sigreloaded  = False
+        self.sigreloaded = False
         self.periodicTask = task.LoopingCall(self._sighandler)
 
     def __getstate__(self):
@@ -123,13 +122,12 @@ class TopLevelService(MultiService):
         return dic
 
     def startService(self):
-        self.periodicTask.start(self.T, now=False) # call every T seconds
+        self.periodicTask.start(self.T, now=False)  # call every T seconds
         BaseMultiService.startService(self)
 
     def stopService(self):
-        self.periodicTask.cancel() # call every T seconds
+        self.periodicTask.cancel()  # call every T seconds
         return BaseMultiService.stopService(self)
-
 
     def _sighandler(self):
         '''
@@ -138,7 +136,8 @@ class TopLevelService(MultiService):
         if self.sigreloaded:
             self.sigreloaded = False
             self.reloadService()
-        
+
+
 if os.name != "nt":
     # Install this signal handlers
     signal.signal(signal.SIGHUP,  TopLevelService.sigreload)
@@ -163,7 +162,8 @@ def Application(name, uid=None, gid=None):
     for comp in availableComponents:
         ret.addComponent(comp, ignoreClass=1)
     IService(ret).setName(name)
-    return ret  
+    return ret
+
 
 __all__ = [
     "Service",

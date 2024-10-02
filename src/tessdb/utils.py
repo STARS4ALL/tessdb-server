@@ -4,7 +4,7 @@
 # See the LICENSE file for details
 # ----------------------------------------------------------------------
 
-#--------------------
+# --------------------
 # System wide imports
 # -------------------
 
@@ -12,7 +12,7 @@
 # Twisted imports
 # ---------------
 
-#--------------
+# --------------
 # local imports
 # -------------
 
@@ -31,7 +31,7 @@
 def chop(string, sep=None):
     '''Chop a list of strings, separated by sep and 
     strips individual string items from leading and trailing blanks'''
-    chopped = [ elem.strip() for elem in string.split(sep) ]
+    chopped = [elem.strip() for elem in string.split(sep)]
     if len(chopped) == 1 and chopped[0] == '':
         chopped = []
     return chopped
@@ -39,6 +39,8 @@ def chop(string, sep=None):
 # This allows to register photometers like SQMs, which don't have a MAC
 # Hopwever for TESS-W MACs, do the proper formatting in uppercase and with
 # zero-padding of digits if necessary
+
+
 def formatted_mac(mac):
     ''''If this doesn't look like a MAC address at all, simple returns it.
     Otherwise properly formats it. Do not allow for invalid digits.
@@ -55,4 +57,4 @@ def formatted_mac(mac):
     return corrected_mac
 
 
-__all__ = ['chop','formatted_mac']
+__all__ = ['chop', 'formatted_mac']

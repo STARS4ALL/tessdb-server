@@ -8,7 +8,7 @@
 # Copyright (c) Twisted Matrix Laboratories.
 # See LICENSE for details.
 
-#--------------------
+# --------------------
 # System wide imports
 # -------------------
 
@@ -24,16 +24,16 @@ import signal
 from zope.interface import implementer, Interface
 
 from twisted.persisted import sob
-from twisted.python    import components
-from twisted.internet  import defer, task
+from twisted.python import components
+from twisted.internet import defer, task
 from twisted.application.service import IService, Process
 
-#--------------
+# --------------
 # local imports
 # -------------
 
 import tessdb.service.reloadable as reloadable
-import tessdb.service.pausable   as pausable
+import tessdb.service.pausable as pausable
 
 # ----------------
 # Global functions
@@ -56,27 +56,26 @@ class Service(reloadable.Service, pausable.Service):
         '''I don't know if this makes sense'''
         reloadable.Service.__getstate__(self)
         return pausable.Service.__getstate__(self)
-       
-        
+
+
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
-class MultiService(reloadable.MultiService, pausable.MultiService): 
+class MultiService(reloadable.MultiService, pausable.MultiService):
     '''
     Container for pausable & reloadable services
     '''
 
     def __init__(self):
         super(MultiService, self).__init__()
-   
 
-        
+
 # --------------------------------------------------------------
 # --------------------------------------------------------------
-# --------------------------------------------------------------     
+# --------------------------------------------------------------
 
-class TopLevelService(reloadable.TopLevelService, pausable.TopLevelService):    
+class TopLevelService(reloadable.TopLevelService, pausable.TopLevelService):
     '''
     Top level container for pausable & reloadable services.
     Handles the signals for pasue/resume & reload.
@@ -84,21 +83,19 @@ class TopLevelService(reloadable.TopLevelService, pausable.TopLevelService):
 
     def __init__(self):
         super(TopLevelService, self).__init__()
-       
+
     def __getstate__(self):
         '''I don't know if this makes sense'''
         reloadable.TopLevelService.__getstate__(self)
         return pausable.TopLevelService.__getstate__(self)
-        
+
     def _sighandler(self):
         '''
         Periodic task to check for signal events
         '''
         reloadable.TopLevelService._sighandler(self)
         pausable.TopLevelService._sighandler(self)
-    
-        
- 
+
 
 # --------------------------------------------------------------
 # --------------------------------------------------------------
@@ -120,7 +117,8 @@ def Application(name, uid=None, gid=None):
     for comp in availableComponents:
         ret.addComponent(comp, ignoreClass=1)
     IService(ret).setName(name)
-    return ret  
+    return ret
+
 
 __all__ = [
     "Service",
