@@ -87,7 +87,7 @@ class DBaseService(Service):
         self.timeStatList  = []
         self.nrowsStatList = []
         # Create subordinate objects
-        self.tess           = TESS()
+        self.tess           = TESS(options['zp_threshold'])
         self.tess_units     = TESSUnits()
         self.tess_readings  = TESSReadings(self)
        

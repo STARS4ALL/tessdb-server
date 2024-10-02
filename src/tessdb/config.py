@@ -99,6 +99,7 @@ def load_config_file(path):
     options['dbase']['secs_resolution']   = parser.getint("dbase","secs_resolution")
     options['dbase']['buffer_size']       = parser.getint("dbase","buffer_size")
     options['dbase']['auth_filter']       = parser.getboolean("dbase","auth_filter")
+    options['dbase']['zp_threshold']      = parser.getfloat("dbase","zp_threshold")
 
     options['filter'] = {}
     options['filter']['enabled']   = parser.getboolean("filter","enabled")

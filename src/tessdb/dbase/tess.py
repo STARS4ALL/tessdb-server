@@ -149,8 +149,9 @@ def isTESS4C(row):
 class TESS:
 
 
-    def __init__(self):
+    def __init__(self, zp_threshold):
         self.pool = None
+        self.zp_threshold = zp_threshold
         self.resetCounters()
 
     # -------------
@@ -305,6 +306,11 @@ class TESS:
                 log2.info("TESS4C {log_tag} ({mac}) changing ZPs or Filters from {old} to {new} ", 
                     log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
             return not unchanged
+        # Discard absurd ZP due to firmware bug
+        elif row['calib1'] <= self.zp_threshold:
+            log2.info("TESS-W {log_tag} ({mac}): Discarding absurd ZP change from {old} to {calib}", 
+                    log_tag=row['name'], old=sequence[0], calib=row['calib1'], mac=row['mac'])
+            return False
         else:
             unchanged = (abs(row['calib1'] - float(sequence[0])) < 0.005)
             if not unchanged:
