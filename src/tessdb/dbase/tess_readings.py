@@ -264,14 +264,11 @@ class TESSReadings:
             log.warn("TESSReadings.update(): No TESS {log_tag} registered ! => {row}", log_tag=row['name'], row=row)
             self.rejNotRegistered += 1
             return False
-        tess        = tess[0] # Keep only the first row of result set
-        tess_id     = tess[0]  
-        location_id = tess[12]
-        authorised  = tess[10] == 1
-        observer_id = tess[13]
+        tess_id,mac_address,zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4,authorised,registered,location_id,observer_id = tess[0]  
+        authorised  = authorised == 1
         # Review authorisation if this filter is enabled
         if self.authFilter and not authorised:
-            log.warn("TESSReadings.update({log_tag}): not authorised: {value}", log_tag=row['name'],value=tess[5])
+            log.warn("TESSReadings.update({log_tag}): authorised: {value}", log_tag=row['name'],value=authorised)
             self.rejNotAuthorised += 1
             return False
         row['date_id'], row['time_id'] = roundDateTime(now, self.parent.options['secs_resolution'])

@@ -296,38 +296,40 @@ class TESS:
 # New refactored STUFF goes here
 # -------------------------------
 
-    def changedManagedAttributes(self, sequence, row):
+    def changedManagedAttributes(self, row, zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4):
         if isTESS4C(row):
-            unchanged = (abs(row['calib1'] - float(sequence[0])) < 0.005) and (abs(row['calib2'] - float(sequence[1])) < 0.005) and \
-            (abs(row['calib3'] - float(sequence[2])) < 0.005) and (abs(row['calib4'] - float(sequence[3])) < 0.005) and \
-            (row['band1'] == sequence[4]) and (row['band2'] == sequence[5]) and \
-            (row['band3'] == sequence[6]) and (row['band4'] == sequence[7])
+            unchanged = (abs(row['calib1'] - float(zp1)) < 0.005) and \
+            (abs(row['calib2'] - float(zp2)) < 0.005) and \
+            (abs(row['calib3'] - float(zp3)) < 0.005) and \
+            (abs(row['calib4'] - float(zp4)) < 0.005) and \
+            (row['band1'] == filter1) and (row['band2'] == filter2) and \
+            (row['band3'] == filter3) and (row['band4'] == filter4)
             if not unchanged:
                 log2.info("TESS4C {log_tag} ({mac}) changing ZPs or Filters from {old} to {new} ", 
                     log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
             return not unchanged
-        # Discard absurd ZP due to firmware bug
+        # Discard absurd ZP due to firmware bug in single channel TESS-W devices
         elif row['calib1'] <= self.zp_threshold:
             log2.info("TESS-W {log_tag} ({mac}): Discarding absurd ZP change from {old} to {calib}", 
-                    log_tag=row['name'], old=sequence[0], calib=row['calib1'], mac=row['mac'])
+                    log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'])
             return False
         else:
-            unchanged = (abs(row['calib1'] - float(sequence[0])) < 0.005)
+            unchanged = (abs(row['calib1'] - float(zp1)) < 0.005)
             if not unchanged:
                 log2.info("TESS-W {log_tag} ({mac}) changing ZP from {old} to {calib}", 
-                    log_tag=row['name'], old=sequence[0], calib=row['calib1'], mac=row['mac'])
+                    log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'])
             return not unchanged
 
     @inlineCallbacks
     def maybeUpdateManagedAttributes(self, row):
         photometer = yield self.findPhotometerByName(row)
-        photometer = photometer[0]
-        log2.debug("{log_tag}: previous stored info is {photometer}",log_tag=row['name'], photometer=photometer)
-        if self.changedManagedAttributes(photometer[2:10], row):
-            row['authorised'] = photometer[10] # carries over the authorised flag
-            row['registered'] = photometer[11] # carries over the registration method
-            row['location']   = photometer[12] # carries over the location id
-            row['observer']   = photometer[13] # carries over the observer id
+        tess_id,mac_address,zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4,authorised,registered,location_id,observer_id = photometer[0]
+        log2.debug("{log_tag}: previous stored info is {photometer}",log_tag=row['name'], photometer=photometer[0])
+        if self.changedManagedAttributes(row, zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4):
+            row['authorised'] = authorised # carries over the authorised flag
+            row['registered'] = registered # carries over the registration method
+            row['location']   = location_id # carries over the location id
+            row['observer']   = observer_id # carries over the observer id
             yield self.updateManagedAttributes(row)
             self.nZPChange += 1
         else:
