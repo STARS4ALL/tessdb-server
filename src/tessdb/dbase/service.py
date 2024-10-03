@@ -156,6 +156,7 @@ class DBaseService(Service):
         log.info("new log level is {lvl}", lvl=new_options['log_level'])
         self.tess_readings.setAuthFilter(new_options['auth_filter'])
         self.tess_readings.setBufferSize(new_options['buffer_size'])
+        self.tess.setZeroPointThreshold(new_options['zp_threshold'])
         self.options = new_options
         return defer.succeed(None)
 

@@ -191,6 +191,9 @@ class TESS:
     def setPool(self, pool):
         self.pool = pool
 
+    def setZeroPointThreshold(self, zp_threshold):
+        self.zp_threshold = zp_threshold
+
     # ----------------------------
     # Instrument registration (NEW)
     # ----------------------------
@@ -317,9 +320,9 @@ class TESS:
                           log_tag=row['name'], old=sequence, new=row, mac=row['mac'])
             return not unchanged
         # Discard absurd ZP due to firmware bug in single channel TESS-W devices
-        elif row['calib1'] <= self.zp_threshold:
-            log2.info("TESS-W {log_tag} ({mac}): Discarding absurd ZP change from {old} to {calib}",
-                      log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'])
+        elif row['calib1'] < self.zp_threshold:
+            log2.info("TESS-W {log_tag} ({mac}): Discarding absurd ZP change from {old} to {calib}. Proposed ZP {calib} < Threshold ZP {th}",
+                      log_tag=row['name'], old=zp1, calib=row['calib1'], mac=row['mac'], th=self.zp_threshold)
             return False
         else:
             unchanged = (abs(row['calib1'] - float(zp1)) < 0.005)

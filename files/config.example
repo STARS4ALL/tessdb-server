@@ -135,6 +135,7 @@ buffer_size = 15
 # ZP Low Limit
 # Due to a firmware bug, some ZP sends absurd low ZP values such as 2 or 0
 # This filters out all register messages with a ZP value below a thresold
+# Reloadable property
 zp_threshold = 10
 
 # general namespace log level (debug, info, warn, error, critical)
