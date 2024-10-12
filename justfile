@@ -16,6 +16,9 @@ build:
     rm -fr dist/*
     uv build
 
+# Publish the package in (pypi|testpypi)
+publish repo="pypi" : build
+    twine upload --verbose -r {{ repo }} dist/*
 
 # Install tools globally
 tools:
