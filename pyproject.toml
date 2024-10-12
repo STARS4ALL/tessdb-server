@@ -1,14 +1,10 @@
-[build-system]
-requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "tessdb-server"
 dynamic = ["version"]
 description = "A package to collect measurements published by TESS instruments into a SQlite database"
 readme = "README.md"
-requires-python = ">=3.6"
-license = {text = "MIT"}
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
 authors = [
     {name = "Rafael González", email = "rafael08@ucm.es"},
 ]
@@ -27,13 +23,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 dependencies = [
-   'twisted >= 16.3.0',
-   'twisted-mqtt',
-]
-
-[project.optional-dependencies]
-test = [
-    "pytest>=6",
+   'twisted-mqtt>0.3.9',
 ]
 
 [project.urls]
@@ -42,6 +32,10 @@ Repository = "https://github.com/astrorafael/tessdb-server.git"
 
 [project.scripts]
 tessdb = "tessdb.main:main"
+
+[build-system]
+requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
 
 # pyproject.toml
 # Autimatically generates a _version-py file from with Git information
@@ -70,3 +64,11 @@ script-files = [
 "tessdb.dbase.sql" = ["*.sql"]
 "tessdb.dbase.sql.initial" = ["*.sql"]
 "tessdb.dbase.sql.updates" = ["*.sql"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.3",
+    "ruff>=0.6.9",
+    "rust-just>=1.36.0",
+    "twine>=5.1.1",
+]
