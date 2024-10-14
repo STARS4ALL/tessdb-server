@@ -9,12 +9,12 @@
 # -----------------
 
 # Service Logging namespace
-NAMESPACE = 'mqttS'
+NAMESPACE = "mqttS"
 
 # MQTT Protocol logging namespace
-PROTOCOL_NAMESPACE = 'mqtt'
+PROTOCOL_NAMESPACE = "mqtt"
 
-TESS4C_FILTER_KEYS = ('F1', 'F2', 'F3', 'F4')
+TESS4C_FILTER_KEYS = ("F1", "F2", "F3", "F4")
 
-TESSW_MODEL = 'TESS-W'
-TESS4C_MODEL = 'TESS4C'
+TESSW_MODEL = "TESS-W"
+TESS4C_MODEL = "TESS4C"

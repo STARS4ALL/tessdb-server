@@ -9,19 +9,23 @@
 # System wide imports
 # -------------------
 
-import os
 import sys
 
 # ---------------
 # Twisted imports
 # ---------------
 
-from zope.interface import Interface, implementer
+from zope.interface import implementer
 
 from twisted.logger import (
-    Logger, LogLevel, globalLogBeginner, textFileLogObserver,
-    FilteringLogObserver, LogLevelFilterPredicate,
-    ILogFilterPredicate, PredicateResult)
+    LogLevel,
+    globalLogBeginner,
+    textFileLogObserver,
+    FilteringLogObserver,
+    LogLevelFilterPredicate,
+    ILogFilterPredicate,
+    PredicateResult,
+)
 
 # --------------
 # local imports
@@ -45,8 +49,7 @@ class LogTagFilterPredicate(object):
     """
 
     def __init__(self, defaultLogTags=None):
-        """
-        """
+        """ """
         self.logTags = list() if defaultLogTags is None else defaultLogTags
 
     def setLogTags(self, logTags):
@@ -72,6 +75,7 @@ class LogTagFilterPredicate(object):
 
         return PredicateResult.no
 
+
 # ----------------------------------------------------------------------
 
 
@@ -80,8 +84,7 @@ class LogTagFilterPredicate(object):
 # -----------------------
 
 # Global object to control globally namespace logging
-logLevelFilterPredicate = LogLevelFilterPredicate(
-    defaultLogLevel=LogLevel.info)
+logLevelFilterPredicate = LogLevelFilterPredicate(defaultLogLevel=LogLevel.info)
 
 # Global object for filtering out events with a log_tag not in a tag set
 logTagFilterPredicate = LogTagFilterPredicate()
@@ -92,39 +95,47 @@ logTagFilterPredicate = LogTagFilterPredicate()
 
 
 def startLogging(console=True, filepath=None):
-    '''
+    """
     Starts the global Twisted logger subsystem with maybe
     stdout and/or a file specified in the config file
-    '''
+    """
     global logLevelFilterPredicate
     global logTagFilterPredicate
 
     observers = []
     if console:
-        observers.append(FilteringLogObserver(observer=textFileLogObserver(sys.stdout),
-                                              predicates=[logTagFilterPredicate, logLevelFilterPredicate]))
+        observers.append(
+            FilteringLogObserver(
+                observer=textFileLogObserver(sys.stdout),
+                predicates=[logTagFilterPredicate, logLevelFilterPredicate],
+            )
+        )
 
     if filepath is not None and filepath != "":
-        observers.append(FilteringLogObserver(observer=textFileLogObserver(open(filepath, 'a')),
-                                              predicates=[logTagFilterPredicate, logLevelFilterPredicate]))
+        observers.append(
+            FilteringLogObserver(
+                observer=textFileLogObserver(open(filepath, "a")),
+                predicates=[logTagFilterPredicate, logLevelFilterPredicate],
+            )
+        )
     globalLogBeginner.beginLoggingTo(observers)
 
 
-def setLogLevel(namespace=None, levelStr='info'):
-    '''
+def setLogLevel(namespace=None, levelStr="info"):
+    """
     Set a new log level for a given namespace
     LevelStr is: 'critical', 'error', 'warn', 'info', 'debug'
-    '''
+    """
     level = LogLevel.levelWithName(levelStr)
-    logLevelFilterPredicate.setLogLevelForNamespace(
-        namespace=namespace, level=level)
+    logLevelFilterPredicate.setLogLevelForNamespace(namespace=namespace, level=level)
 
 
 def setLogTags(logTags):
-    '''
+    """
     Set a new tag set for filtering out events
-    '''
+    """
     logTagFilterPredicate.setLogTags(logTags)
+
 
 # ----------------------------------------------------------------------
 

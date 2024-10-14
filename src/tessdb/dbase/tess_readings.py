@@ -43,8 +43,6 @@ from twisted.logger import Logger
 from . import NAMESPACE
 from .utils import roundDateTime
 
-from tessdb.logger import setLogLevel
-from tessdb.error import ReadingKeyError, ReadingTypeError
 
 # ----------------
 # Module Constants
@@ -53,7 +51,7 @@ from tessdb.error import ReadingKeyError, ReadingTypeError
 IMPOSSIBLE_TEMP = -273.15
 IMPOSSIBLE_SIGNAL_STRENGTH = 99
 
-INSERT_READING_SQL = '''
+INSERT_READING_SQL = """
     INSERT INTO tess_readings_t (
         date_id,
         time_id,
@@ -93,10 +91,10 @@ INSERT_READING_SQL = '''
         :wdBm,     
         :hash
     )
-'''
+"""
 
 
-INSERT_READING4C_SQL = '''
+INSERT_READING4C_SQL = """
     INSERT INTO tess_readings4c_t (
         date_id,
         time_id,
@@ -148,7 +146,7 @@ INSERT_READING4C_SQL = '''
         :wdBm,     
         :hash
     )
-'''
+"""
 # -----------------------
 # Module Global Variables
 # -----------------------
@@ -161,7 +159,8 @@ log = Logger(namespace=NAMESPACE)
 
 
 def isTESS4C(row):
-    return 'freq4' in row
+    return "freq4" in row
+
 
 # ============================================================================ #
 #                   REAL TIME TESS READNGS (PERIODIC SNAPSHOT FACT TABLE)
@@ -169,12 +168,11 @@ def isTESS4C(row):
 
 
 class TESSReadings:
-
     BUFFER_SIZE = 15
     FACTOR = 0.6  # TESS4C Buffer size in peerfentage of TESS-W Buffer size
 
     def __init__(self, parent):
-        '''Create the SQLite TESS Readings table'''
+        """Create the SQLite TESS Readings table"""
         self.parent = parent
         self.pool = None
         self.authFilter = True
@@ -190,7 +188,7 @@ class TESSReadings:
     # -------------
 
     def resetCounters(self):
-        '''Resets stat counters'''
+        """Resets stat counters"""
         self.nreadings = 0
         self.rejNotRegistered = 0
         self.rejNotAuthorised = 0
@@ -199,14 +197,14 @@ class TESSReadings:
         self.rejOther = 0
 
     def getCounters(self):
-        '''get stat counters'''
+        """get stat counters"""
         return [
             self.nreadings,
             self.rejNotRegistered,
             self.rejNotAuthorised,
             self.rejSunrise,
             self.rejDuplicate,
-            self.rejOther
+            self.rejOther,
         ]
 
     # ===============
@@ -218,39 +216,39 @@ class TESSReadings:
 
     def setBufferSize(self, n):
         self._tesswSIZE = max(1, n)
-        self._tess4cSIZE = max(1, int(n*self.FACTOR))
+        self._tess4cSIZE = max(1, int(n * self.FACTOR))
 
     def setAuthFilter(self, auth_filter):
-        '''
+        """
         Set filtering Auth
-        '''
+        """
         self.authFilter = auth_filter
 
     @inlineCallbacks
     def update(self, row):
-        '''
+        """
         Update tess_readings_t with a new row
         Takes care of optional fields
         Returns a Deferred.
-        '''
+        """
         ok = yield self._gatherInfo(row)
         if ok:
-            log.debug(
-                "Appending {name} reading for DB Write", name=row['name'])
+            log.debug("Appending {name} reading for DB Write", name=row["name"])
             if isTESS4C(row):
                 buf = self._rows4C
                 sql = INSERT_READING4C_SQL
-                tag = 'TESS4C'
+                tag = "TESS4C"
                 N = self._tess4cSIZE
             else:
                 buf = self._rows1C
                 sql = INSERT_READING_SQL
-                tag = 'TESS-W'
+                tag = "TESS-W"
                 N = self._tesswSIZE
             buf.append(row)
             if len(buf) >= N:
                 log.info(
-                    "Flushing {tag} queue with {len} readings", len=len(buf), tag=tag)
+                    "Flushing {tag} queue with {len} readings", len=len(buf), tag=tag
+                )
                 yield self.flush(buf, sql)
 
     # ==============
@@ -259,87 +257,125 @@ class TESSReadings:
 
     @inlineCallbacks
     def _gatherInfo(self, row):
-        now = row['tstamp']
+        now = row["tstamp"]
         self.nreadings += 1
         tess = yield self.parent.tess.findPhotometerByName(row)
         log.debug(
-            "TESSReadings.update({log_tag}): Found TESS => {tess!s}", tess=tess, log_tag=row['name'])
+            "TESSReadings.update({log_tag}): Found TESS => {tess!s}",
+            tess=tess,
+            log_tag=row["name"],
+        )
         if not len(tess):
             log.warn(
-                "TESSReadings.update(): No TESS {log_tag} registered ! => {row}", log_tag=row['name'], row=row)
+                "TESSReadings.update(): No TESS {log_tag} registered ! => {row}",
+                log_tag=row["name"],
+                row=row,
+            )
             self.rejNotRegistered += 1
             return False
-        tess_id, mac_address, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4, authorised, registered, location_id, observer_id = tess[
-            0]
+        (
+            tess_id,
+            mac_address,
+            zp1,
+            zp2,
+            zp3,
+            zp4,
+            filter1,
+            filter2,
+            filter3,
+            filter4,
+            authorised,
+            registered,
+            location_id,
+            observer_id,
+        ) = tess[0]
         authorised = authorised == 1
         # Review authorisation if this filter is enabled
         if self.authFilter and not authorised:
             log.warn(
-                "TESSReadings.update({log_tag}): authorised: {value}", log_tag=row['name'], value=authorised)
+                "TESSReadings.update({log_tag}): authorised: {value}",
+                log_tag=row["name"],
+                value=authorised,
+            )
             self.rejNotAuthorised += 1
             return False
-        row['date_id'], row['time_id'] = roundDateTime(
-            now, self.parent.options['secs_resolution'])
-        row['tess_id'] = tess_id
-        row['units_id'] = yield self.parent.tess_units.latest(timestamp_source=row['tstamp_src'])
-        row['location_id'] = location_id
-        row['observer_id'] = observer_id
-        row['az'] = row.get('az')
-        row['alt'] = row.get('alt')
-        row['long'] = row.get('long')
-        row['lat'] = row.get('lat')
-        row['height'] = row.get('height')
-        row['hash'] = row.get('hash')
+        row["date_id"], row["time_id"] = roundDateTime(
+            now, self.parent.options["secs_resolution"]
+        )
+        row["tess_id"] = tess_id
+        row["units_id"] = yield self.parent.tess_units.latest(
+            timestamp_source=row["tstamp_src"]
+        )
+        row["location_id"] = location_id
+        row["observer_id"] = observer_id
+        row["az"] = row.get("az")
+        row["alt"] = row.get("alt")
+        row["long"] = row.get("long")
+        row["lat"] = row.get("lat")
+        row["height"] = row.get("height")
+        row["hash"] = row.get("hash")
         # TESS4C Early prototypes did not provide any temperature
-        row['tamb'] = row.get('tamb', IMPOSSIBLE_TEMP)
-        row['tsky'] = row.get('tsky', IMPOSSIBLE_TEMP)
+        row["tamb"] = row.get("tamb", IMPOSSIBLE_TEMP)
+        row["tsky"] = row.get("tsky", IMPOSSIBLE_TEMP)
         # TESSTRACTOR software emulation do not provide received signal strength
-        row['wdBm'] = row.get('wdBm', IMPOSSIBLE_SIGNAL_STRENGTH)
+        row["wdBm"] = row.get("wdBm", IMPOSSIBLE_SIGNAL_STRENGTH)
         log.debug(
-            "TESSReadings.update({log_tag}): About to write to DB {row!s}", log_tag=row['name'], row=row)
+            "TESSReadings.update({log_tag}): About to write to DB {row!s}",
+            log_tag=row["name"],
+            row=row,
+        )
         return True
 
     def database_write(self, rows, sql):
-        '''
-        Append row in one of the readings table where rows may be 
-        - a single row (a dict) or 
+        """
+        Append row in one of the readings table where rows may be
+        - a single row (a dict) or
         - a sequence of rows (sequence or tuple of dicts)
         Returns a Deferred
-        '''
+        """
+
         def _database_write(txn):
             log.debug("{sql} <= {rows}", sql=sql, rows=rows)
             if type(rows) in (list, tuple):
                 txn.executemany(sql, rows)
             else:
                 txn.execute(sql, rows)
+
         return self.pool.runInteraction(_database_write)
 
     @inlineCallbacks
     def flush(self, rows, sql):
         try:
             yield self.database_write(rows, sql)
-        except sqlite3.IntegrityError as e:
+        except sqlite3.IntegrityError:
             log.warn("SQL Integrity error in block write. Looping one by one ...")
             for row in rows:
                 try:
                     yield self.database_write(row, sql)
-                except sqlite3.IntegrityError as e:
-                    log.error(
-                        "Discarding row by SQL Integrity error: {row}", row=row)
+                except sqlite3.IntegrityError:
+                    log.error("Discarding row by SQL Integrity error: {row}", row=row)
                     self.rejDuplicate += 1
                 except Exception as e:
                     log.error(
-                        "Discarding row by other SQL error. Exception {excp}, row: {row}", excp=e, row=row)
+                        "Discarding row by other SQL error. Exception {excp}, row: {row}",
+                        excp=e,
+                        row=row,
+                    )
                     self.rejOther += 1
         except Exception as e:
             log.error(
-                "TESSReadings.update(): exception {excp!s}. Looping one by one ...", excp=e)
+                "TESSReadings.update(): exception {excp!s}. Looping one by one ...",
+                excp=e,
+            )
             for row in rows:
                 try:
                     yield self.database_write(row, sql)
                 except Exception as e:
                     log.error(
-                        "Discarding row by other SQL error. Exception {excp}, row: {row}", excp=e, row=row)
+                        "Discarding row by other SQL error. Exception {excp}, row: {row}",
+                        excp=e,
+                        row=row,
+                    )
                     self.rejOther += 1
         finally:
             rows.clear()

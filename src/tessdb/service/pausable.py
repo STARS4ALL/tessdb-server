@@ -21,12 +21,17 @@ import signal
 # Twisted imports
 # ---------------
 
-from zope.interface import implementer, Interface
+from zope.interface import implementer
 
 from twisted.persisted import sob
 from twisted.python import components
 from twisted.internet import defer, task
-from twisted.application.service import IService, Service as BaseService, MultiService as BaseMultiService, Process
+from twisted.application.service import (
+    IService,
+    Service as BaseService,
+    MultiService as BaseMultiService,
+    Process,
+)
 
 # --------------
 # local imports
@@ -44,16 +49,16 @@ from .interfaces import IPausable
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 @implementer(IPausable)
 class Service(BaseService):
-
     paused = 0
 
     def __getstate__(self):
-        '''I don't know if this makes sense'''
+        """I don't know if this makes sense"""
         dic = BaseService.__getstate__(self)
         if "paused" in dic:
-            del dic['paused']
+            del dic["paused"]
         return dic
 
     # --------------------------------
@@ -66,6 +71,7 @@ class Service(BaseService):
     def resumeService(self):
         self.paused = 0
 
+
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 # --------------------------------------------------------------
@@ -73,9 +79,9 @@ class Service(BaseService):
 
 @implementer(IPausable)
 class MultiService(BaseMultiService):
-    '''
+    """
     Container for pausable services
-    '''
+    """
 
     # --------------------------------
     # Extended Pausable BaseService API
@@ -99,30 +105,32 @@ class MultiService(BaseMultiService):
             dl.append(defer.maybeDeferred(service.resumeService))
         return defer.DeferredList(dl)
 
+
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
 
 class TopLevelService(MultiService):
-    '''
+    """
     This one is for use with the ReloadableApplication below
-    '''
+    """
+
     instance = None
     T = 1
 
     @staticmethod
     def sigpause(signum, frame):
-        '''
+        """
         Signal handler (SIGUSR1)
-        '''
+        """
         TopLevelService.instance.sigpaused = True
 
     @staticmethod
     def sigresume(signum, frame):
-        '''
+        """
         Signal handler (SIGUSR2)
-        '''
+        """
         TopLevelService.instance.sigresumed = True
 
     def __init__(self):
@@ -133,16 +141,16 @@ class TopLevelService(MultiService):
         self.periodicTask = task.LoopingCall(self._sighandler)
 
     def __getstate__(self):
-        '''I don't know if this makes sense'''
+        """I don't know if this makes sense"""
         dic = Service.__getstate__(self)
         if "instance" in dic:
-            del dic['instance']
+            del dic["instance"]
         if "sigpaused" in dic:
-            del dic['sigpaused']
+            del dic["sigpaused"]
         if "sigresumed" in dic:
-            del dic['sigresumed']
+            del dic["sigresumed"]
         if "periodicTask" in dic:
-            del dic['periodicTask']
+            del dic["periodicTask"]
         return dic
 
     def startService(self):
@@ -154,9 +162,9 @@ class TopLevelService(MultiService):
         return BaseMultiService.stopService(self)
 
     def _sighandler(self):
-        '''
+        """
         Periodic task to check for signal events
-        '''
+        """
         if self.sigpaused:
             self.sigpaused = False
             self.pauseService()
@@ -184,8 +192,11 @@ def Application(name, uid=None, gid=None):
     one of the interfaces.
     """
     ret = components.Componentized()
-    availableComponents = [TopLevelService(), Process(uid, gid),
-                           sob.Persistent(ret, name)]
+    availableComponents = [
+        TopLevelService(),
+        Process(uid, gid),
+        sob.Persistent(ret, name),
+    ]
 
     for comp in availableComponents:
         ret.addComponent(comp, ignoreClass=1)

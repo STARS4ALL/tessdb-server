@@ -20,9 +20,8 @@ from twisted.logger import Logger
 from twisted.enterprise import adbapi
 
 
-from twisted.internet import reactor, task, defer
+from twisted.internet import reactor, defer
 from twisted.internet.defer import inlineCallbacks
-from twisted.internet.threads import deferToThread
 
 # -------------------
 # Third party imports
@@ -32,13 +31,13 @@ from twisted.internet.threads import deferToThread
 # local imports
 # -------------
 
-from . import NAMESPACE
+from . import NAMESPACE, __version__
 from .dbutils import create_or_open_database
 from .tess import TESS
 from .tess_readings import TESSReadings
 from .tess_units import TESSUnits
-from tessdb.logger import Logger, setLogLevel
-from tessdb import __version__
+from .error import DiscreteValueError
+from .logger import setLogLevel
 
 # ----------------
 # Module constants
@@ -57,8 +56,8 @@ log = Logger(namespace=NAMESPACE)
 
 
 def getPool(*args, **kargs):
-    '''Get connetion pool for sqlite3 driver'''
-    kargs['check_same_thread'] = False
+    """Get connetion pool for sqlite3 driver"""
+    kargs["check_same_thread"] = False
     return adbapi.ConnectionPool("sqlite3", *args, **kargs)
 
 
@@ -66,17 +65,17 @@ def getPool(*args, **kargs):
 # Module Classes
 # --------------
 
-class DBaseService(Service):
 
+class DBaseService(Service):
     # Service name
-    NAME = 'DBaseService'
+    NAME = "DBaseService"
 
     # Sunrise/Sunset Task period in seconds
     T_SUNRISE = 3600
     T_QUEUE_POLL = 1
     SECS_RESOLUTION = [60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1]
 
-    def __init__(self, path,  options, **kargs):
+    def __init__(self, path, options, **kargs):
         super().__init__()
         self.path = path
         self.pool = None
@@ -88,7 +87,7 @@ class DBaseService(Service):
         self.timeStatList = []
         self.nrowsStatList = []
         # Create subordinate objects
-        self.tess = TESS(options['zp_threshold'])
+        self.tess = TESS(options["zp_threshold"])
         self.tess_units = TESSUnits()
         self.tess_readings = TESSReadings(self)
 
@@ -97,18 +96,18 @@ class DBaseService(Service):
     # ------------
 
     def startService(self):
-        setLogLevel(namespace=NAMESPACE, levelStr='warn')
-        if self.options['secs_resolution'] not in self.SECS_RESOLUTION:
+        setLogLevel(namespace=NAMESPACE, levelStr="warn")
+        if self.options["secs_resolution"] not in self.SECS_RESOLUTION:
             raise DiscreteValueError(
-                self.options['secs_resolution'], self.SECS_RESOLUTION)
+                self.options["secs_resolution"], self.SECS_RESOLUTION
+            )
         connection = create_or_open_database(self.path)
         connection.close()
         super().startService()
-        setLogLevel(namespace=NAMESPACE, levelStr=self.options['log_level'])
-        setLogLevel(namespace='registry',
-                    levelStr=self.options['register_log_level'])
-        self.tess_readings.setAuthFilter(self.options['auth_filter'])
-        self.tess_readings.setBufferSize(self.options['buffer_size'])
+        setLogLevel(namespace=NAMESPACE, levelStr=self.options["log_level"])
+        setLogLevel(namespace="registry", levelStr=self.options["register_log_level"])
+        self.tess_readings.setAuthFilter(self.options["auth_filter"])
+        self.tess_readings.setBufferSize(self.options["buffer_size"])
         # setup the connection pool for asynchronouws adbapi
         self.openPool()
         self.startTasks()
@@ -120,7 +119,7 @@ class DBaseService(Service):
         return d
 
     def startTasks(self):
-        '''Start periodic tasks'''
+        """Start periodic tasks"""
         self.later = reactor.callLater(2, self.writter)
 
     # ---------------
@@ -128,17 +127,17 @@ class DBaseService(Service):
     # ---------------
 
     def register(self, row):
-        '''
+        """
         Registers an instrument given its MAC address, friendly name and calibration constant.
         Returns a Deferred
-        '''
+        """
         return self.tess.register(row)
 
     def update(self, row):
-        '''
+        """
         Update readings table
-        Returns a Deferred 
-        '''
+        Returns a Deferred
+        """
         return self.tess_readings.update(row)
 
     # ---------------------
@@ -146,29 +145,28 @@ class DBaseService(Service):
     # --------------------
 
     def reloadService(self, new_options):
-        '''
+        """
         Reload configuration.
         Returns a Deferred
-        '''
-        setLogLevel(namespace=NAMESPACE, levelStr=new_options['log_level'])
-        setLogLevel(namespace='register',
-                    levelStr=new_options['register_log_level'])
-        log.info("new log level is {lvl}", lvl=new_options['log_level'])
-        self.tess_readings.setAuthFilter(new_options['auth_filter'])
-        self.tess_readings.setBufferSize(new_options['buffer_size'])
-        self.tess.setZeroPointThreshold(new_options['zp_threshold'])
+        """
+        setLogLevel(namespace=NAMESPACE, levelStr=new_options["log_level"])
+        setLogLevel(namespace="register", levelStr=new_options["register_log_level"])
+        log.info("new log level is {lvl}", lvl=new_options["log_level"])
+        self.tess_readings.setAuthFilter(new_options["auth_filter"])
+        self.tess_readings.setBufferSize(new_options["buffer_size"])
+        self.tess.setZeroPointThreshold(new_options["zp_threshold"])
         self.options = new_options
         return defer.succeed(None)
 
     def pauseService(self):
-        log.info('TESS {version} database writer paused', version=__version__)
+        log.info("TESS {version} database writer paused", version=__version__)
         if not self.paused:
             self.paused = True
             self.closePool()
         return defer.succeed(None)
 
     def resumeService(self):
-        log.info('TESS {version} database writer resumed', version=__version__)
+        log.info("TESS {version} database writer resumed", version=__version__)
         if self.paused:
             self.openPool()
             self.paused = False
@@ -179,7 +177,7 @@ class DBaseService(Service):
     # -------------
 
     def resetCounters(self):
-        '''Resets stat counters'''
+        """Resets stat counters"""
         self.tess_readings.resetCounters()
         self.tess.resetCounters()
         self.timeStatList = []
@@ -192,25 +190,38 @@ class DBaseService(Service):
             rowsStats = ["UNDEF Pend Samples", 0, 0, 0]
             efficiency = 0
         else:
-            timeStats = ["I/O Time (sec.)", min(self.timeStatList),
-                         sum(self.timeStatList)/N,  max(self.timeStatList)]
-            rowsStats = ["Pend Samples", min(self.nrowsStatList), sum(
-                self.nrowsStatList)/N, max(self.nrowsStatList)]
-            efficiency = (100 * N * self.T_QUEUE_POLL) / \
-                float(self.parent.T_STAT)
+            timeStats = [
+                "I/O Time (sec.)",
+                min(self.timeStatList),
+                sum(self.timeStatList) / N,
+                max(self.timeStatList),
+            ]
+            rowsStats = [
+                "Pend Samples",
+                min(self.nrowsStatList),
+                sum(self.nrowsStatList) / N,
+                max(self.nrowsStatList),
+            ]
+            efficiency = (100 * N * self.T_QUEUE_POLL) / float(self.parent.T_STAT)
         return ((timeStats, rowsStats), efficiency, N)
 
     def logCounters(self):
-        '''log stat counters'''
+        """log stat counters"""
 
         # get readings stats
         resultRds = self.tess_readings.getCounters()
-        global_nok = resultRds[1:]
+        global_nok = resultRds[1:]  # noqa: F841
         global_nok_sum = sum(resultRds[1:])
         global_ok_sum = resultRds[0] - global_nok_sum
         global_stats = (resultRds[0], global_ok_sum, global_nok_sum)
-        global_stats_nok = (
-            global_nok_sum, resultRds[1], resultRds[2], resultRds[3], resultRds[4], resultRds[5])
+        global_stats_nok = (  # noqa: F841
+            global_nok_sum,
+            resultRds[1],
+            resultRds[2],
+            resultRds[3],
+            resultRds[4],
+            resultRds[5],
+        )
 
         # get registration stats
         labelReg, resultReg = self.tess.getCounters()
@@ -220,19 +231,31 @@ class DBaseService(Service):
 
         # Readings statistics
         log.info(
-            "DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}", global_stats_rds=global_stats)
-        log.info("DB Stats Register {labelReg!s} = {resultReg!s}",
-                 labelReg=labelReg, resultReg=resultReg)
-        log.info("DB Stats NOK details [Not Reg, Not Auth, Daylight, Dup, Other] = [{Reg}, {Auth}, {Sun}, {Dup}, {Other}]",
-                 Reg=resultRds[1], Auth=resultRds[2], Sun=resultRds[3], Dup=resultRds[4], Other=resultRds[5])
-        log.info("DB Stats I/O Effic. [Nsec, %, Tmin, Taver, Tmax, Naver] = [{Nsec}, {eff:0.2g}%, {Tmin:0.2g}, {Taver:0.2g}, {Tmax:0.2g}, {Naver:0.2g}]",
-                 Nsec=resultEff[2],
-                 eff=resultEff[1],
-                 Tmin=resultEff[0][0][1],
-                 Taver=resultEff[0][0][2],
-                 Tmax=resultEff[0][0][3],
-                 Naver=resultEff[0][1][2]
-                 )
+            "DB Stats Readings [Total, OK, NOK] = {global_stats_rds!s}",
+            global_stats_rds=global_stats,
+        )
+        log.info(
+            "DB Stats Register {labelReg!s} = {resultReg!s}",
+            labelReg=labelReg,
+            resultReg=resultReg,
+        )
+        log.info(
+            "DB Stats NOK details [Not Reg, Not Auth, Daylight, Dup, Other] = [{Reg}, {Auth}, {Sun}, {Dup}, {Other}]",
+            Reg=resultRds[1],
+            Auth=resultRds[2],
+            Sun=resultRds[3],
+            Dup=resultRds[4],
+            Other=resultRds[5],
+        )
+        log.info(
+            "DB Stats I/O Effic. [Nsec, %, Tmin, Taver, Tmax, Naver] = [{Nsec}, {eff:0.2g}%, {Tmin:0.2g}, {Taver:0.2g}, {Tmax:0.2g}, {Naver:0.2g}]",
+            Nsec=resultEff[2],
+            eff=resultEff[1],
+            Tmin=resultEff[0][0][1],
+            Taver=resultEff[0][0][2],
+            Tmax=resultEff[0][0][3],
+            Naver=resultEff[0][1][2],
+        )
 
     # =============
     # Twisted Tasks
@@ -244,25 +267,27 @@ class DBaseService(Service):
 
     @inlineCallbacks
     def writter(self):
-        '''
+        """
         Periodic task that takes rows from the queues
         and update them to database
-        '''
+        """
         t0 = datetime.datetime.now(datetime.timezone.utc)
-        l0 = len(self.parent.queue['tess_filtered_readings']
-                 ) + len(self.parent.queue['tess_register'])
+        l0 = len(self.parent.queue["tess_filtered_readings"]) + len(
+            self.parent.queue["tess_register"]
+        )
         try:
             if not self.paused:
-                while len(self.parent.queue['tess_register']):
-                    row = self.parent.queue['tess_register'].popleft()
+                while len(self.parent.queue["tess_register"]):
+                    row = self.parent.queue["tess_register"].popleft()
                     yield self.register(row)
-                while len(self.parent.queue['tess_filtered_readings']):
-                    row = self.parent.queue['tess_filtered_readings'].popleft()
+                while len(self.parent.queue["tess_filtered_readings"]):
+                    row = self.parent.queue["tess_filtered_readings"].popleft()
                     yield self.update(row)
-        except Exception as e:
-            log.failure('Unexpected exception. Stack trace follows:')
-        self.timeStatList.append((datetime.datetime.now(
-            datetime.timezone.utc) - t0).total_seconds())
+        except Exception:
+            log.failure("Unexpected exception. Stack trace follows:")
+        self.timeStatList.append(
+            (datetime.datetime.now(datetime.timezone.utc) - t0).total_seconds()
+        )
         self.nrowsStatList.append(l0)
         self.later = reactor.callLater(self.T_QUEUE_POLL, self.writter)
 
@@ -280,6 +305,6 @@ class DBaseService(Service):
         log.debug("Opened DB Connection Pool to {conn!s}", conn=self.path)
 
     def closePool(self):
-        '''setup the connection pool for asynchronouws adbapi'''
+        """setup the connection pool for asynchronouws adbapi"""
         self.pool.close()
         log.debug("Closed DB Connection Pool to {conn!s}", conn=self.path)

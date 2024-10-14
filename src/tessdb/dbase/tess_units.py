@@ -27,7 +27,6 @@
 # System wide imports
 # -------------------
 
-import os
 
 # ---------------
 # Twisted imports
@@ -40,7 +39,7 @@ from twisted.logger import Logger
 # local imports
 # -------------
 
-from . import NAMESPACE, INFINITE_TIME, CURRENT
+from . import NAMESPACE
 
 # ----------------
 # Module Constants
@@ -65,14 +64,13 @@ log = Logger(namespace=NAMESPACE)
 
 # This is what is left after an extensive refactoring but still maintianing the class
 
+
 class TESSUnits:
-
     def __init__(self):
-
         # Cached row ids
         self._id = {}
-        self._id['Publisher'] = None
-        self._id['Subscriber'] = None
+        self._id["Publisher"] = None
+        self._id["Subscriber"] = None
         self.pool = None
 
     # ===============
@@ -84,18 +82,19 @@ class TESSUnits:
 
     @inlineCallbacks
     def latest(self, timestamp_source="Subscriber", reading_source="Direct"):
-
         def queryLatest(dbpool, timestamp_source):
             row = {
-                'timestamp_source': timestamp_source,
-                'reading_source': reading_source
+                "timestamp_source": timestamp_source,
+                "reading_source": reading_source,
             }
             return dbpool.runQuery(
-                '''
+                """
                 SELECT units_id FROM tess_units_t
                 WHERE timestamp_source == :timestamp_source
                 AND reading_source == :reading_source
-                ''', row)
+                """,
+                row,
+            )
 
         if self._id.get(timestamp_source) is None:
             row = yield queryLatest(self.pool, timestamp_source)

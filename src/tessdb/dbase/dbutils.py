@@ -39,10 +39,10 @@ from . import NAMESPACE
 # ----------------
 
 # Database resources
-SQL_SCHEMA = files('tessdb.dbase.sql').joinpath('schema.sql')
-SQL_INITIAL_DATA_DIR = files('tessdb.dbase.sql.initial')
+SQL_SCHEMA = files("tessdb.dbase.sql").joinpath("schema.sql")
+SQL_INITIAL_DATA_DIR = files("tessdb.dbase.sql.initial")
 try:
-    SQL_UPDATES_DATA_DIR = files('tessdb.dbase.sql.updates')
+    SQL_UPDATES_DATA_DIR = files("tessdb.dbase.sql.updates")
 except ModuleNotFoundError:
     SQL_UPDATES_DATA_DIR = None  # When there are no updates
 
@@ -54,7 +54,9 @@ except ModuleNotFoundError:
 # Module constants
 # ----------------
 
-VERSION_QUERY = "SELECT value from config_t WHERE section ='database' AND property = 'version'"
+VERSION_QUERY = (
+    "SELECT value from config_t WHERE section ='database' AND property = 'version'"
+)
 
 # -----------------------
 # Module global variables
@@ -76,6 +78,7 @@ def _filter_factory(connection):
     version = int(result[0])
     return lambda path: int(os.path.basename(path)[:2]) > version
 
+
 # -------------------------
 # Module private functions
 # -------------------------
@@ -86,32 +89,37 @@ def _execute_script(dbase_path, sql_path_obj):
     try:
         connection = sqlite3.connect(dbase_path)
         connection.executescript(sql_path_obj.read_text())
-    except sqlite3.OperationalError as e:
+    except sqlite3.OperationalError:
         connection.close()
         log.error("Error using the Python API. Trying with sqlite3 CLI")
         sqlite_cli = shutil.which("sqlite3")
-        output = subprocess.check_call(
-            [sqlite_cli, dbase_path, "-init", sql_path_obj])
+        _ = subprocess.check_call([sqlite_cli, dbase_path, "-init", sql_path_obj])
     else:
         connection.close()
 
 
 def _create_database(dbase_path):
-    '''Creates a Database file if not exists and returns a connection'''
+    """Creates a Database file if not exists and returns a connection"""
     new_database = False
     output_dir = os.path.dirname(dbase_path)
     if not output_dir:
         output_dir = os.getcwd()
     os.makedirs(output_dir, exist_ok=True)
     if not os.path.exists(dbase_path):
-        with open(dbase_path, 'w') as f:
+        with open(dbase_path, "w"):
             pass
         new_database = True
     sqlite3.connect(dbase_path).close()
     return new_database
 
 
-def _create_schema(dbase_path, schema_resource, initial_data_dir_path, updates_data_dir, query=VERSION_QUERY):
+def _create_schema(
+    dbase_path,
+    schema_resource,
+    initial_data_dir_path,
+    updates_data_dir,
+    query=VERSION_QUERY,
+):
     created = True
     connection = sqlite3.connect(dbase_path)
     cursor = connection.cursor()
@@ -121,20 +129,30 @@ def _create_schema(dbase_path, schema_resource, initial_data_dir_path, updates_d
         created = False
     if not created:
         connection.executescript(schema_resource.read_text())
-        log.debug("Created data model from {url}",
-                  url=os.path.basename(schema_resource))
+        log.debug(
+            "Created data model from {url}", url=os.path.basename(schema_resource)
+        )
         # the filtering part is because Python 3.9 resource folders cannot exists without __init__.py
-        file_list = [sql_file for sql_file in initial_data_dir_path.iterdir(
-        ) if not sql_file.name.startswith('__') and not sql_file.is_dir()]
+        file_list = [
+            sql_file
+            for sql_file in initial_data_dir_path.iterdir()
+            if not sql_file.name.startswith("__") and not sql_file.is_dir()
+        ]
         for sql_file in file_list:
             log.debug(
-                "Populating data model from {path}", path=os.path.basename(sql_file))
+                "Populating data model from {path}", path=os.path.basename(sql_file)
+            )
             connection.executescript(sql_file.read_text())
     elif updates_data_dir is not None:
         filter_func = _filter_factory(connection)
         # the filtering part is beacuse Python 3.9 resource folders cannot exists without __init__.py
-        file_list = sorted([sql_file for sql_file in updates_data_dir.iterdir(
-        ) if not sql_file.name.startswith('__') and not sql_file.is_dir()])
+        file_list = sorted(
+            [
+                sql_file
+                for sql_file in updates_data_dir.iterdir()
+                if not sql_file.name.startswith("__") and not sql_file.is_dir()
+            ]
+        )
         file_list = list(filter(filter_func, file_list))
         connection.close()
         for sql_file in file_list:
@@ -143,6 +161,7 @@ def _create_schema(dbase_path, schema_resource, initial_data_dir_path, updates_d
         file_list = list()
     return not created, file_list
 
+
 # -------------------------
 # UUID and version handling
 # -------------------------
@@ -150,7 +169,9 @@ def _create_schema(dbase_path, schema_resource, initial_data_dir_path, updates_d
 
 def _read_database_version(connection):
     cursor = connection.cursor()
-    query = "SELECT value FROM config_t WHERE section = 'database' AND property = 'version'"
+    query = (
+        "SELECT value FROM config_t WHERE section = 'database' AND property = 'version'"
+    )
     cursor.execute(query)
     version = cursor.fetchone()[0]
     return version
@@ -159,13 +180,13 @@ def _read_database_version(connection):
 def _write_database_uuid(connection):
     guid = str(uuid.uuid4())
     cursor = connection.cursor()
-    param = {'section': 'database', 'property': 'uuid', 'value': guid}
+    param = {"section": "database", "property": "uuid", "value": guid}
     cursor.execute(
-        '''
+        """
         INSERT INTO config_t(section,property,value) 
         VALUES(:section,:property,:value)
-        ''',
-        param
+        """,
+        param,
     )
     connection.commit()
     return guid
@@ -173,7 +194,9 @@ def _write_database_uuid(connection):
 
 def _make_database_uuid(connection):
     cursor = connection.cursor()
-    query = "SELECT value FROM config_t WHERE section = 'database' AND property = 'uuid'"
+    query = (
+        "SELECT value FROM config_t WHERE section = 'database' AND property = 'uuid'"
+    )
     cursor.execute(query)
     guid = cursor.fetchone()
     if guid:
@@ -187,6 +210,7 @@ def _make_database_uuid(connection):
         guid = _write_database_uuid(connection)
     return guid
 
+
 # ----------------
 # Exported funtion
 # ----------------
@@ -197,20 +221,26 @@ def create_or_open_database(url):
     if new_database:
         log.warn("Created new database file: {url}", url=url)
     just_created, file_list = _create_schema(
-        url, SQL_SCHEMA, SQL_INITIAL_DATA_DIR, SQL_UPDATES_DATA_DIR)
+        url, SQL_SCHEMA, SQL_INITIAL_DATA_DIR, SQL_UPDATES_DATA_DIR
+    )
     if just_created:
         for sql_file in file_list:
-            log.warn(
-                "Populated data model from {url}", url=os.path.basename(sql_file))
+            log.warn("Populated data model from {url}", url=os.path.basename(sql_file))
     else:
         for sql_file in file_list:
             log.warn(
-                "Applied updates to data model from {url}", url=os.path.basename(sql_file))
+                "Applied updates to data model from {url}",
+                url=os.path.basename(sql_file),
+            )
     connection = sqlite3.connect(url)
     version = _read_database_version(connection)
     guid = _make_database_uuid(connection)
-    log.warn("Open database: {url}, data model version = {version}, UUID = {uuid}",
-             url=url, version=version, uuid=guid)
+    log.warn(
+        "Open database: {url}, data model version = {version}, UUID = {uuid}",
+        url=url,
+        version=version,
+        uuid=guid,
+    )
     connection.commit()
     return connection
 

@@ -14,7 +14,7 @@ from __future__ import division, absolute_import
 # Twisted imports
 # ---------------
 
-from zope.interface import implementer, Interface
+from zope.interface import Interface
 
 
 class IPausable(Interface):

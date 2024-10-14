@@ -25,22 +25,17 @@
 # System wide imports
 # -------------------
 
-import os
-import sys
-
 # ---------------
 # Twisted imports
 # ---------------
 
 from twisted.trial import unittest
-from twisted.test  import proto_helpers
-from twisted.logger   import Logger, LogLevel
+from twisted.logger   import Logger
 
 #--------------
 # local imports
 # -------------
 
-import tessdb.logger
 from   tessdb.error import ReadingKeyError, ReadingTypeError
 
 

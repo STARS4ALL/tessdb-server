@@ -21,12 +21,17 @@ import signal
 # Twisted imports
 # ---------------
 
-from zope.interface import implementer, Interface
+from zope.interface import implementer
 
 from twisted.persisted import sob
 from twisted.python import components
 from twisted.internet import defer, task
-from twisted.application.service import IService, Service as BaseService, MultiService as BaseMultiService, Process
+from twisted.application.service import (
+    IService,
+    Service as BaseService,
+    MultiService as BaseMultiService,
+    Process,
+)
 
 # --------------
 # local imports
@@ -52,15 +57,16 @@ from .interfaces import IReloadable
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 @implementer(IReloadable)
 class Service(BaseService):
-
     # --------------------------------
     # Extended Service API
     # -------------------------------
 
     def reloadService(self, options=None):
         pass
+
 
 # --------------------------------------------------------------
 # --------------------------------------------------------------
@@ -69,9 +75,9 @@ class Service(BaseService):
 
 @implementer(IReloadable)
 class MultiService(BaseMultiService):
-    '''
+    """
     Container for reloadable services
-    '''
+    """
 
     # --------------------------------
     # Extended Service API
@@ -85,23 +91,25 @@ class MultiService(BaseMultiService):
             dl.append(defer.maybeDeferred(service.reloadService, options))
         return defer.DeferredList(dl)
 
+
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
 
 class TopLevelService(MultiService):
-    '''
+    """
     This one is for use with the Application below
-    '''
+    """
+
     instance = None
     T = 1
 
     @staticmethod
     def sigreload(signum, frame):
-        '''
+        """
         Signal handler (SIGHUP)
-        '''
+        """
         TopLevelService.instance.sigreloaded = True
 
     def __init__(self):
@@ -111,14 +119,14 @@ class TopLevelService(MultiService):
         self.periodicTask = task.LoopingCall(self._sighandler)
 
     def __getstate__(self):
-        '''I don't know if this makes sense'''
+        """I don't know if this makes sense"""
         dic = BaseService.__getstate__(self)
         if "instance" in dic:
-            del dic['instance']
+            del dic["instance"]
         if "sigreloaded" in dic:
-            del dic['sigreloaded']
+            del dic["sigreloaded"]
         if "periodicTask" in dic:
-            del dic['periodicTask']
+            del dic["periodicTask"]
         return dic
 
     def startService(self):
@@ -130,9 +138,9 @@ class TopLevelService(MultiService):
         return BaseMultiService.stopService(self)
 
     def _sighandler(self):
-        '''
+        """
         Periodic task to check for signal events
-        '''
+        """
         if self.sigreloaded:
             self.sigreloaded = False
             self.reloadService()
@@ -140,7 +148,7 @@ class TopLevelService(MultiService):
 
 if os.name != "nt":
     # Install this signal handlers
-    signal.signal(signal.SIGHUP,  TopLevelService.sigreload)
+    signal.signal(signal.SIGHUP, TopLevelService.sigreload)
 
 # --------------------------------------------------------------
 # --------------------------------------------------------------
@@ -156,8 +164,11 @@ def Application(name, uid=None, gid=None):
     one of the interfaces.
     """
     ret = components.Componentized()
-    availableComponents = [TopLevelService(), Process(uid, gid),
-                           sob.Persistent(ret, name)]
+    availableComponents = [
+        TopLevelService(),
+        Process(uid, gid),
+        sob.Persistent(ret, name),
+    ]
 
     for comp in availableComponents:
         ret.addComponent(comp, ignoreClass=1)
