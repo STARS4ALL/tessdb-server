@@ -4,6 +4,7 @@
 # 3. Use just within the activated environment
 
 pkg := "tessdb-server"
+module := "tessdb"
 
 # list all recipes
 default:
@@ -27,7 +28,7 @@ tools:
 publish: build
     twine upload -r pypi dist/*
     uv run --no-project --with {{pkg}} --refresh-package {{pkg}} \
-        -- python -c "from tessdb  import __version__; print(__version__)"
+        -- python -c "from {{module}} import __version__; print(__version__)"
 
 # Publish to Test PyPi server
 test-publish: build
@@ -35,4 +36,4 @@ test-publish: build
     uv run --no-project  --with {{pkg}} --refresh-package {{pkg}} \
         --index-url https://test.pypi.org/simple/ \
         --extra-index-url https://pypi.org/simple/ \
-        -- python -c "from tessdb import __version__; print(__version__)"
+        -- python -c "from {{module}} import __version__; print(__version__)"
