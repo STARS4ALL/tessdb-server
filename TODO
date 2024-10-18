@@ -1,27 +1,33 @@
 
-{'freq': 106888.8, 'mag': 7.53, 'zp': 20.14}, 'F4': {'freq': 106888.8, 'mag': 7.65, 'zp': 20.04}, 'tamb': 36.62, 'tsky': 9.22}
-2023-12-04T12:54:02+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars705', 'seq': 10356, 'wdBm': -63, 'ain': 0, 'F1': {'freq': 106888.8, 'mag': 7.68, 'zp': 20.25}, 'F2': {'freq': 106888.8, 'mag': 7.64, 'zp': 20.25}, 'F3': {'freq': 106888.8, 'mag': 7.64, 'zp': 20.25}, 'F4': {'freq': 106888.8, 'mag': 7.64, 'zp': 20.25}, 'tamb': 35.67, 'tsky': 4.92}
-2023-12-04T12:54:17+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars856', 'seq': 199, 'wdBm': -41, 'ain': 310, 'F1': {'freq': 106888.8, 'mag': 7.43, 'zp': 20.0}, 'F2': {'freq': 106888.8, 'mag': 7.43, 'zp': 20.04}, 'F3': {'freq': 106888.8, 'mag': 7.69, 'zp': 20.08}, 'F4': {'freq': 106888.8, 'mag': 7.29, 'zp': 19.9}, 'tamb': 32.55, 'tsky': 0.13}
-2023-12-04T12:54:25+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars855', 'seq': 202, 'wdBm': -68, 'ain': 293, 'F1': {'freq': 106888.8, 'mag': 7.47, 'zp': 20.04}, 'F2': {'freq': 106888.8, 'mag': 7.34, 'zp': 19.95}, 'F3': {'freq': 106888.8, 'mag': 7.57, 'zp': 20.18}, 'F4': {'freq': 106888.8, 'mag': 7.63, 'zp': 20.02}, 'tamb': 36.94, 'tsky': 8.92}
-2023-12-04T12:54:26+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars854', 'seq': 189, 'wdBm': -84, 'ain': 312, 'F1': {'freq': 1716.6, 'mag': 11.94, 'zp': 20.03}, 'F2': {'freq': 4110.0, 'mag': 11.02, 'zp': 20.04}, 'F3': {'freq': 486.9, 'mag': 13.19, 'zp': 19.9}, 'F4': {'freq': 138.3, 'mag': 14.43, 'zp': 19.8}, 'tamb': 26.56, 'tsky': 24.86}
-2023-12-04T12:54:26+0100 [mqttS#error] Validation error in readings payload={'rev': 3, 'name': 'stars703', 'seq': 89, 'wdBm': -75, 'F1': {'freq': 94037.02, 'mag': 7.75, 'zp': 20.18}, 'F2': {'freq': 90000.0, 'mag': 7.89, 'zp': 20.28}, 'F3': {'freq': 90000.0, 'mag': 7.99, 'zp': 20.38}, 'F4': {'freq': 90000.0, 'mag': 7.65, 'zp': 20.04}}
-
-
+Prioridad Alta
+==============
 
 # make the database connection with detect_types 
 connection = sqlite3.connect('StudentAssignment.db',
                              detect_types=sqlite3.PARSE_DECLTYPES |
                              sqlite3.PARSE_COLNAMES)
 
-feat/tess4c
-===========
 
-Hay que hacer un flattening de la estructira JSON para el multicanal y convertirla en freq1, mag1, zp1, etc....
-Y tambien para el monocanal
+
+* Usar TOML para el fichero de configuracion
+* cambiar la linea de comandos para que no se vea la conexión a la BD
+  - nueva variable de entorno DATABASE_URL
+
+* Nuevo esquema y softweare de registro para tratar mensajes como estos:
+
+2024-10-17T01:04:22+0200 [mqttS#info] Register message at 2024-10-16 23:04:22.569064+00:00: {'name': 'stars2003', 'rev': 2, 'firmware': '4.32', 'date': 'Oct 17 2024', 'mac': '30:C9:22:24:CF:1C', 'calib': 20.51, 'offsethz': 0.0, 'wdBm': 0, 'hash': 'F1C'}
+
+2024-10-17T07:02:15+0200 [mqttS#info] Register message at 2024-10-17 05:02:15.196667+00:00: {'name': 'stars2004', 'rev': 3, 'mac': 'C8:F0:9E:7B:8D:04', 'firmware': '4.32', 'date': 'Oct 17 2024', 'F1': {'band': 'UVIR750', 'calib': 20.52}, 'F2': {'band': 'RGB-G', 'calib': 20.5}, 'F3': {'band': 'RGB-R', 'calib': 20.5}, 'F4': {'band': 'RGB-B', 'calib': 20.5}}
+
+
+
+
+Prioridad baja
+==============
 
 
 NUEVO TESSDB
-============
+------------
 
 * rescribir el subpaquete service para que solo haya que importar "application" como twisted
 * Implementar Prodcuer/Consumer
@@ -30,44 +36,3 @@ NUEVO TESSDB
 * En cada servicio consumer habra una Deferred queue.
    * Si la BD se satura, pausar hacia atras, hasta que se tiren paquetes de MQTT
 
-
-
-
-
-Prioridad Alta
-==============
-
-
-
-Prioridad baja
-==============
-
-*) Batch load utility
-
-- Al final tiene que quedar un fichero SQL con inserciones para que sea muy efeciente
-
-- Funcion (tstamp,name) => tess_id, location_id, observer_id
-Esta funcion tiene que ser calculada por agregados diarios, group by (date) y ver si ha habido
-cambios en location_id y observer_id empelando min() y max(). 
-No podemos estar llamandola por cada muestra que queremos insertar
-
-aqui es importanet tambien usar la fecha de la muestra para ver cambios de nombre y de zp, que dan lugar a nuevos tess_id 
-y nuevas asociaciones
-
-- Tambien se puede calcular el epriodo de envío por día y fijándonos en  3 números de secuencia consecutivos
-
-
-*) Tess multicanal
-
-La estrategia para soportar e TESS multicanal implicara muy pocos cambios en el modelo de datos:
-- Cada fila de la tabla tess_t indicará un canal
-- en cada canal hay que poner los siguientes datos adicionales, específicos suyos:
- +) los nombres de los angulos de inclinacion de los sensores respecto a la caja del instrumento (¿cuantos ángulos, qué nombres?) REALMENTE NO ES NECESARIO TENIENDO EL CHANNEL NUMBER
-- cada medida de tess_readings indicaró la medida de un canal
-- Hay que introducir la dimension adicional de orientación para tener datos de la orientación delos distintos sensores hacia el cielo. Por defecto, en los TESS monocanales, se asume el Zenit.
-  +) Número de angulos: 3. ¿Nombres como en aviacion?
-    Yaw   = Azimut
-    Pitch = Altura
-    Roll  = Inclinacion lateral Este-Oeste
-
-*) Embeber servidor web de twisted.
