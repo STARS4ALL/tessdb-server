@@ -14,18 +14,12 @@
 
 from __future__ import division, absolute_import
 
-import os
-import signal
-
 # ---------------
 # Twisted imports
 # ---------------
 
-from zope.interface import implementer, Interface
-
 from twisted.persisted import sob
 from twisted.python import components
-from twisted.internet import defer, task
 from twisted.application.service import IService, Process
 
 # --------------

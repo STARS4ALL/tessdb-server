@@ -9,10 +9,6 @@
 # -------------------
 
 import sys
-import os
-import os.path
-import errno
-
 
 # ---------------
 # Twisted imports
