@@ -8,11 +8,6 @@ connection = sqlite3.connect('StudentAssignment.db',
                              sqlite3.PARSE_COLNAMES)
 
 
-
-* Usar TOML para el fichero de configuracion
-* cambiar la linea de comandos para que no se vea la conexión a la BD
-  - nueva variable de entorno DATABASE_URL
-
 * Nuevo esquema y softweare de registro para tratar mensajes como estos:
 
 2024-10-17T01:04:22+0200 [mqttS#info] Register message at 2024-10-16 23:04:22.569064+00:00: {'name': 'stars2003', 'rev': 2, 'firmware': '4.32', 'date': 'Oct 17 2024', 'mac': '30:C9:22:24:CF:1C', 'calib': 20.51, 'offsethz': 0.0, 'wdBm': 0, 'hash': 'F1C'}
