@@ -31,13 +31,15 @@ from twisted.internet.defer import inlineCallbacks
 # local imports
 # -------------
 
-from . import NAMESPACE, __version__
+from . import NAMESPACE
+from .. import  __version__
+from ..error import DiscreteValueError
+from ..logger import setLogLevel
 from .dbutils import create_or_open_database
 from .tess import TESS
 from .tess_readings import TESSReadings
 from .tess_units import TESSUnits
-from .error import DiscreteValueError
-from .logger import setLogLevel
+
 
 # ----------------
 # Module constants

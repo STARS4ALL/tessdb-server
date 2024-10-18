@@ -23,7 +23,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Atmospheric Science",
 ]
 dependencies = [
-   'twisted-mqtt>0.3.9',
+   "twisted-mqtt>0.3.9",
+   "environs",
+   "tomli",
 ]
 
 [project.urls]
@@ -69,3 +71,6 @@ script-files = [
 dev-dependencies = [
     "pytest>=8.3.3",
 ]
+
+[tool.ruff]
+line-length = 100

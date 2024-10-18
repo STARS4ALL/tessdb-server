@@ -26,18 +26,10 @@ log_selected = ""
 
 # MQTT Client config
 
-# Broker to connect. Twisted-style endpoint
-# Not reloadable property
-broker = "tcp:test.mosquitto.org:1883"
-
-# Username/password credentials
-# leave blank if not needed
-# non reloadable properies
-username = ""
-password = ""
-
-# Cleint ID to use when connecting to MQTT broker
-client_id = "test-tessdb"
+# The borker, username, password and client_id
+# are configured by environmental variables
+# MQTT_BROKER, MQTT_USERNAME, MQTT_PASSWORD, MQTT_CLIENT_ID
+# respectively
 
 # Keepalive connection (in seconds)
 # Not reloadable property
@@ -50,7 +42,7 @@ tess_topic_register = "STARS4ALL/register"
 
 # MQTT topics to subscribe for readings
 # Reloadable property
-tess_topics = "STARS4ALL/+/reading"
+tess_topics = ["STARS4ALL/+/reading",]
 
 # Instrument White List.
 # Discards instruments readings and registrations 

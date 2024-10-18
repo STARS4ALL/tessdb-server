@@ -1,3 +1,4 @@
 #!/bin/bash
 # Runs tessdb in foreground for testing purposes
-tessdb --console --config config.ini 
+tessdb --console --config config.toml
+ 

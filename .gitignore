@@ -14,6 +14,7 @@ my*
 sftp-config.json
 .venv
 .env
-src/tessdb/_version.py
+_version.py
 sql/
-*.ini
+*.toml
+
