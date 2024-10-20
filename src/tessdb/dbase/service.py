@@ -32,7 +32,7 @@ from twisted.internet.defer import inlineCallbacks
 # -------------
 
 from . import NAMESPACE
-from .. import  __version__
+from .. import __version__
 from ..error import DiscreteValueError
 from ..logger import setLogLevel
 from .dbutils import create_or_open_database
@@ -100,9 +100,7 @@ class DBaseService(Service):
     def startService(self):
         setLogLevel(namespace=NAMESPACE, levelStr="warn")
         if self.options["secs_resolution"] not in self.SECS_RESOLUTION:
-            raise DiscreteValueError(
-                self.options["secs_resolution"], self.SECS_RESOLUTION
-            )
+            raise DiscreteValueError(self.options["secs_resolution"], self.SECS_RESOLUTION)
         connection = create_or_open_database(self.path)
         connection.close()
         super().startService()

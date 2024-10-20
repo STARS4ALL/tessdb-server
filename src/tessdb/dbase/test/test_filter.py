@@ -112,7 +112,7 @@ TEST_LOCATIONS = [
         "contact_email" : "asociacion@astrohenares.org", 
         "site"          : "Centro de Recursos Asociativos El Cerro", 
         "latitude"      : 40.418561, 
-        "longitude"     : -3.551502, 
+        "longitude"     : -3.55152, 
         "elevation"     : 650, 
         "zipcode"       : '28820', 
         "location"      : "Coslada", 
@@ -134,7 +134,7 @@ TEST_LOCATIONS = [
 ]
 
 # UTC time
-TODAY = ephem.Date(datetime.datetime(2016, 02, 21, 12, 00, 00))
+TODAY = ephem.Date(datetime.datetime(2016, 2, 21, 12, 00, 00))
 
 class FixedInstrumentTestCase(unittest.TestCase):
 
@@ -192,7 +192,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         '''
         Both rejected by lack of sunrise/sunse data in their locations
         '''
-        now = datetime.datetime(2016, 02, 21, 13, 00, 00)
+        now = datetime.datetime(2016, 2, 21, 13, 00, 00)
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
         self.row2['tstamp'] = now
@@ -211,7 +211,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         is always at day, no matter the day of the year
         '''
         yield self.db.sunrise(today=TODAY)
-        now = datetime.datetime(2016, 02, 21, 13, 00, 00)
+        now = datetime.datetime(2016, 2, 21, 13, 00, 00)
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
         self.row2['tstamp'] = now
@@ -230,7 +230,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         is always at night, no matter the day of the year
         '''
         yield self.db.sunrise(today=TODAY)
-        now = datetime.datetime(2016, 02, 21, 22, 00, 00)
+        now = datetime.datetime(2016, 2, 21, 22, 00, 00)
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
         self.row2['tstamp'] = now
@@ -249,7 +249,7 @@ class FixedInstrumentTestCase(unittest.TestCase):
         AH observatory at day -> rejected
         '''
         yield self.db.sunrise(today=TODAY)
-        now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
+        now = datetime.datetime(2016, 2, 21, 17, 35, 00) 
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
         self.row2['tstamp'] = now
@@ -283,7 +283,7 @@ class MobileInstrumentTestCase(unittest.TestCase):
         yield self.registerInstrument()
 
         self.row1 = { 'name': 'TESS-AH', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
-            'lat': 40.418561, 'long': -3.551502, 'height': 650.0, 'tstamp_src': 'Subscriber'}
+            'lat': 40.418561, 'long': -3.55152, 'height': 650.0, 'tstamp_src': 'Subscriber'}
         self.row2 = { 'name': 'TESS-OAM', 'seq': 1, 'freq': 1000.01, 'mag':12.0, 'tamb': 0, 'tsky': -12, 
             'lat': 39.64269, 'long': 2.950533, 'height': 100.0, 'tstamp_src': 'Subscriber'}
 
@@ -310,7 +310,7 @@ class MobileInstrumentTestCase(unittest.TestCase):
         Both will be rejected, since the timestamp at both locations 
         is always at day, no matter the day of the year
         '''
-        now = datetime.datetime(2016, 02, 21, 13, 00, 00)
+        now = datetime.datetime(2016, 2, 21, 13, 00, 00)
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
         self.row2['tstamp'] = now
@@ -328,7 +328,7 @@ class MobileInstrumentTestCase(unittest.TestCase):
         Both will be accepted, since the timestamp at both locations
         is always at night, no matter the day of the year
         '''
-        now = datetime.datetime(2016, 02, 21, 22, 00, 00)
+        now = datetime.datetime(2016, 2, 21, 22, 00, 00)
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
         self.row2['tstamp'] = now
@@ -346,7 +346,7 @@ class MobileInstrumentTestCase(unittest.TestCase):
         OAM observatory at night -> acepted
         AH observatory at day -> rejected
         '''
-        now = datetime.datetime(2016, 02, 21, 17, 35, 00) 
+        now = datetime.datetime(2016, 2, 21, 17, 35, 00) 
         self.row1['tstamp'] = now
         yield self.db.update(self.row1)
         self.row2['tstamp'] = now

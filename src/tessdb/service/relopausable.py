@@ -38,16 +38,17 @@ import tessdb.service.pausable as pausable
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 class Service(reloadable.Service, pausable.Service):
-    '''
+    """
     Pausable & Reloadable service
-    '''
+    """
 
     def __init__(self):
         super(Service, self).__init__()
 
     def __getstate__(self):
-        '''I don't know if this makes sense'''
+        """I don't know if this makes sense"""
         reloadable.Service.__getstate__(self)
         return pausable.Service.__getstate__(self)
 
@@ -56,10 +57,11 @@ class Service(reloadable.Service, pausable.Service):
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 class MultiService(reloadable.MultiService, pausable.MultiService):
-    '''
+    """
     Container for pausable & reloadable services
-    '''
+    """
 
     def __init__(self):
         super(MultiService, self).__init__()
@@ -69,24 +71,25 @@ class MultiService(reloadable.MultiService, pausable.MultiService):
 # --------------------------------------------------------------
 # --------------------------------------------------------------
 
+
 class TopLevelService(reloadable.TopLevelService, pausable.TopLevelService):
-    '''
+    """
     Top level container for pausable & reloadable services.
     Handles the signals for pasue/resume & reload.
-    '''
+    """
 
     def __init__(self):
         super(TopLevelService, self).__init__()
 
     def __getstate__(self):
-        '''I don't know if this makes sense'''
+        """I don't know if this makes sense"""
         reloadable.TopLevelService.__getstate__(self)
         return pausable.TopLevelService.__getstate__(self)
 
     def _sighandler(self):
-        '''
+        """
         Periodic task to check for signal events
-        '''
+        """
         reloadable.TopLevelService._sighandler(self)
         pausable.TopLevelService._sighandler(self)
 
@@ -105,8 +108,7 @@ def Application(name, uid=None, gid=None):
     one of the interfaces.
     """
     ret = components.Componentized()
-    availableComponents = [TopLevelService(), Process(uid, gid),
-                           sob.Persistent(ret, name)]
+    availableComponents = [TopLevelService(), Process(uid, gid), sob.Persistent(ret, name)]
 
     for comp in availableComponents:
         ret.addComponent(comp, ignoreClass=1)

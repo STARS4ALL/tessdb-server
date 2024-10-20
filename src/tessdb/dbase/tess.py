@@ -355,9 +355,7 @@ class TESS:
     # New refactored STUFF goes here
     # -------------------------------
 
-    def changedManagedAttributes(
-        self, row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4
-    ):
+    def changedManagedAttributes(self, row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4):
         if isTESS4C(row):
             unchanged = (
                 (abs(row["calib1"] - float(zp1)) < 0.005)

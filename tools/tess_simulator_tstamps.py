@@ -37,20 +37,14 @@ class TESS(Service):
     def gotProtocol(self, p):
         log.info("Got protocol")
         self.protocol = p
-        kk = yield self.protocol.connect(
-            "TwistedMQTT-pub", keepalive=2 * TX_PERIOD, version=v311
-        )
+        kk = yield self.protocol.connect("TwistedMQTT-pub", keepalive=2 * TX_PERIOD, version=v311)
         log.info("connect yielded res={o!s}", o=kk)
-        self.protocol.publish(
-            topic=TOPIC_REGISTER, qos=QoS, message=json.dumps(self.register())
-        )
+        self.protocol.publish(topic=TOPIC_REGISTER, qos=QoS, message=json.dumps(self.register()))
         self.task = task.LoopingCall(self.publish)
         self.task.start(TX_PERIOD, now=False)
 
     def publish(self):
-        self.protocol.publish(
-            topic=TOPIC_READINGS, qos=QoS, message=json.dumps(self.sample())
-        )
+        self.protocol.publish(topic=TOPIC_READINGS, qos=QoS, message=json.dumps(self.sample()))
 
     def register(self):
         """

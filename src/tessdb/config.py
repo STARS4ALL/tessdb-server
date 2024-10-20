@@ -59,7 +59,7 @@ def load_config_file(path):
 
     with open(path, "rb") as config_file:
         options = tomli.load(config_file)
-    
+
     env = Env()
     # An .enf file is usefu only for development
     # donot rely on it for systemd service

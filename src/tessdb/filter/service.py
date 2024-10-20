@@ -75,9 +75,7 @@ class FilterService(Service):
     def startService(self):
         log.info("Starting Filtering Service with depth = {depth}", depth=self.depth)
         if not self.enabled:
-            log.warn(
-                "actual filtering is disabled, passing all samples to the database qeeue"
-            )
+            log.warn("actual filtering is disabled, passing all samples to the database qeeue")
         reactor.callLater(0, self.filter)
 
     @inlineCallbacks
@@ -107,9 +105,7 @@ class FilterService(Service):
         first_diff = [aList[i + 1] - aList[i] for i in xrange(len(aList) - 1)]
         # Modified second difference with absolute values, to avoid cancellation
         # in final sum due to symmetric differences
-        second_diff = [
-            abs(first_diff[i + 1] - first_diff[i]) for i in xrange(len(first_diff) - 1)
-        ]
+        second_diff = [abs(first_diff[i + 1] - first_diff[i]) for i in xrange(len(first_diff) - 1)]
         return sum(second_diff) == 0
 
     def isSequenceInvalid(self, aList):
@@ -127,9 +123,7 @@ class FilterService(Service):
             while len(self.fifos[name]) > self.depth // 2:
                 self.fifos[name].popleft()
             while len(self.fifos[name]) != 0:
-                self.parent.queue["tess_filtered_readings"].append(
-                    self.fifos[name].popleft()
-                )
+                self.parent.queue["tess_filtered_readings"].append(self.fifos[name].popleft())
         self.fifos = dict()
 
     def doFilter(self, new_sample):

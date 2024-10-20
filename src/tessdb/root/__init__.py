@@ -8,4 +8,4 @@
 # Package logging namespace
 # -------------------------
 
-NAMESPACE = 'tessdb'
+NAMESPACE = "tessdb"

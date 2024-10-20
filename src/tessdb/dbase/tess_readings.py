@@ -246,9 +246,7 @@ class TESSReadings:
                 N = self._tesswSIZE
             buf.append(row)
             if len(buf) >= N:
-                log.info(
-                    "Flushing {tag} queue with {len} readings", len=len(buf), tag=tag
-                )
+                log.info("Flushing {tag} queue with {len} readings", len=len(buf), tag=tag)
                 yield self.flush(buf, sql)
 
     # ==============
@@ -299,13 +297,9 @@ class TESSReadings:
             )
             self.rejNotAuthorised += 1
             return False
-        row["date_id"], row["time_id"] = roundDateTime(
-            now, self.parent.options["secs_resolution"]
-        )
+        row["date_id"], row["time_id"] = roundDateTime(now, self.parent.options["secs_resolution"])
         row["tess_id"] = tess_id
-        row["units_id"] = yield self.parent.tess_units.latest(
-            timestamp_source=row["tstamp_src"]
-        )
+        row["units_id"] = yield self.parent.tess_units.latest(timestamp_source=row["tstamp_src"])
         row["location_id"] = location_id
         row["observer_id"] = observer_id
         row["az"] = row.get("az")

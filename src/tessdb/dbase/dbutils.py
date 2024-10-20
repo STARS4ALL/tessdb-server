@@ -54,9 +54,7 @@ except ModuleNotFoundError:
 # Module constants
 # ----------------
 
-VERSION_QUERY = (
-    "SELECT value from config_t WHERE section ='database' AND property = 'version'"
-)
+VERSION_QUERY = "SELECT value from config_t WHERE section ='database' AND property = 'version'"
 
 # -----------------------
 # Module global variables
@@ -129,9 +127,7 @@ def _create_schema(
         created = False
     if not created:
         connection.executescript(schema_resource.read_text())
-        log.debug(
-            "Created data model from {url}", url=os.path.basename(schema_resource)
-        )
+        log.debug("Created data model from {url}", url=os.path.basename(schema_resource))
         # the filtering part is because Python 3.9 resource folders cannot exists without __init__.py
         file_list = [
             sql_file
@@ -139,9 +135,7 @@ def _create_schema(
             if not sql_file.name.startswith("__") and not sql_file.is_dir()
         ]
         for sql_file in file_list:
-            log.debug(
-                "Populating data model from {path}", path=os.path.basename(sql_file)
-            )
+            log.debug("Populating data model from {path}", path=os.path.basename(sql_file))
             connection.executescript(sql_file.read_text())
     elif updates_data_dir is not None:
         filter_func = _filter_factory(connection)
@@ -169,9 +163,7 @@ def _create_schema(
 
 def _read_database_version(connection):
     cursor = connection.cursor()
-    query = (
-        "SELECT value FROM config_t WHERE section = 'database' AND property = 'version'"
-    )
+    query = "SELECT value FROM config_t WHERE section = 'database' AND property = 'version'"
     cursor.execute(query)
     version = cursor.fetchone()[0]
     return version
@@ -194,9 +186,7 @@ def _write_database_uuid(connection):
 
 def _make_database_uuid(connection):
     cursor = connection.cursor()
-    query = (
-        "SELECT value FROM config_t WHERE section = 'database' AND property = 'uuid'"
-    )
+    query = "SELECT value FROM config_t WHERE section = 'database' AND property = 'uuid'"
     cursor.execute(query)
     guid = cursor.fetchone()
     if guid:

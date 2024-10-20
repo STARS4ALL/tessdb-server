@@ -169,9 +169,7 @@ class MQTTService(ClientService):
         self.topics = []
         self.regAllowed = False
         setLogLevel(namespace=NAMESPACE, levelStr=options["log_level"])
-        setLogLevel(
-            namespace=PROTOCOL_NAMESPACE, levelStr=options["protocol_log_level"]
-        )
+        setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=options["protocol_log_level"])
         self.tess_heads = [t.split("/")[0] for t in self.options["tess_topics"]]
         self.tess_tails = [t.split("/")[2] for t in self.options["tess_topics"]]
         self.factory = MQTTFactory(profile=MQTTFactory.SUBSCRIBER)
@@ -210,9 +208,7 @@ class MQTTService(ClientService):
     @inlineCallbacks
     def reloadService(self, new_options):
         setLogLevel(namespace=NAMESPACE, levelStr=new_options["log_level"])
-        setLogLevel(
-            namespace=PROTOCOL_NAMESPACE, levelStr=new_options["protocol_log_level"]
-        )
+        setLogLevel(namespace=PROTOCOL_NAMESPACE, levelStr=new_options["protocol_log_level"])
         log.info("new log level is {lvl}", lvl=new_options["log_level"])
         yield self.subscribe(new_options)
         self.options = new_options
@@ -321,9 +317,7 @@ class MQTTService(ClientService):
                 remapTESSWReadings(row)
             handleTimestamps(row, now)
         except ValidationError as e:
-            log.error(
-                "Validation error {excp} in payload {payload}", excp=e, payload=row
-            )
+            log.error("Validation error {excp} in payload {payload}", excp=e, payload=row)
         except IncorrectTimestampError:
             log.error("Source timestamp unknown format {tstamp}", tstamp=row["tstamp"])
         except Exception:
@@ -353,9 +347,7 @@ class MQTTService(ClientService):
                 remapTESSWRegister(row)
             handleTimestamps(row, now)
         except ValidationError as e:
-            log.error(
-                "Validation error in registration payload={payload!s}", payload=row
-            )
+            log.error("Validation error in registration payload={payload!s}", payload=row)
             log.error("{excp!s}", excp=e)
         except Exception:
             log.failure(
@@ -398,9 +390,7 @@ class MQTTService(ClientService):
             return
         # Discard retained messages to avoid duplicates in the database
         if retain:
-            log.debug(
-                "Discarded payload from {log_tag} by retained flag", log_tag=row["name"]
-            )
+            log.debug("Discarded payload from {log_tag} by retained flag", log_tag=row["name"])
             self.nfilter += 1
             return
         # Apply White List filter
@@ -408,19 +398,12 @@ class MQTTService(ClientService):
             len(self.options["tess_whitelist"])
             and row["name"] not in self.options["tess_whitelist"]
         ):
-            log.debug(
-                "Discarded payload from {log_tag} by whitelist", log_tag=row["name"]
-            )
+            log.debug("Discarded payload from {log_tag} by whitelist", log_tag=row["name"])
             self.nfilter += 1
             return
         # Apply Black List filter
-        if (
-            len(self.options["tess_blacklist"])
-            and row["name"] in self.options["tess_blacklist"]
-        ):
-            log.debug(
-                "Discarded payload from {log_tag} by blacklist", log_tag=row["name"]
-            )
+        if len(self.options["tess_blacklist"]) and row["name"] in self.options["tess_blacklist"]:
+            log.debug("Discarded payload from {log_tag} by blacklist", log_tag=row["name"])
             self.nfilter += 1
             return
         # Handle incoming TESS Data
