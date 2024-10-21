@@ -16,6 +16,7 @@ import sqlite3
 import shutil
 import subprocess
 
+from contextlib import closing
 from importlib.resources import files
 
 # ---------------
@@ -119,40 +120,37 @@ def _create_schema(
     query=VERSION_QUERY,
 ):
     created = True
-    connection = sqlite3.connect(dbase_path)
-    cursor = connection.cursor()
-    try:
-        cursor.execute(query)
-    except Exception:
-        created = False
-    if not created:
-        connection.executescript(schema_resource.read_text())
-        log.debug("Created data model from {url}", url=os.path.basename(schema_resource))
-        # the filtering part is because Python 3.9 resource folders cannot exists without __init__.py
-        file_list = [
-            sql_file
-            for sql_file in initial_data_dir_path.iterdir()
-            if not sql_file.name.startswith("__") and not sql_file.is_dir()
-        ]
-        for sql_file in file_list:
-            log.debug("Populating data model from {path}", path=os.path.basename(sql_file))
-            connection.executescript(sql_file.read_text())
-    elif updates_data_dir is not None:
-        filter_func = _filter_factory(connection)
-        # the filtering part is beacuse Python 3.9 resource folders cannot exists without __init__.py
-        file_list = sorted(
-            [
+    with closing(sqlite3.connect(dbase_path)) as connection:
+        with closing(connection.cursor()) as cursor:
+            try:
+                cursor.execute(query)
+            except Exception:
+                created = False
+        if not created:
+            connection.executescript(schema_resource.read_text())
+            # the filtering part is because Python 3.9 resource folders cannot exists without __init__.py
+            file_list = [
                 sql_file
-                for sql_file in updates_data_dir.iterdir()
+                for sql_file in initial_data_dir_path.iterdir()
                 if not sql_file.name.startswith("__") and not sql_file.is_dir()
             ]
-        )
-        file_list = list(filter(filter_func, file_list))
-        connection.close()
-        for sql_file in file_list:
-            _execute_script(dbase_path, sql_file)
-    else:
-        file_list = list()
+            for sql_file in file_list:
+                connection.executescript(sql_file.read_text())
+        elif updates_data_dir is not None:
+            filter_func = _filter_factory(connection)
+            # the filtering part is beacuse Python 3.9 resource folders cannot exists without __init__.py
+            file_list = sorted(
+                [
+                    sql_file
+                    for sql_file in updates_data_dir.iterdir()
+                    if not sql_file.name.startswith("__") and not sql_file.is_dir()
+                ]
+            )
+            file_list = list(filter(filter_func, file_list))
+            for sql_file in file_list:
+                _execute_script(dbase_path, sql_file)
+        else:
+            file_list = list()
     return not created, file_list
 
 
@@ -209,7 +207,7 @@ def _make_database_uuid(connection):
 def create_or_open_database(url):
     new_database = _create_database(url)
     if new_database:
-        log.warn("Created new database file: {url}", url=url)
+        log.warn("Created new database file with initial schema: {url}", url=url)
     just_created, file_list = _create_schema(
         url, SQL_SCHEMA, SQL_INITIAL_DATA_DIR, SQL_UPDATES_DATA_DIR
     )
