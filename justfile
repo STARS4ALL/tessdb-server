@@ -8,7 +8,7 @@ module := "tessdb"
 
 drive_uuid := "77688511-78c5-4de3-9108-b631ff823ef4"
 user :=  file_stem(home_dir())
-def_drive := join("/media", user, drive_uuid)
+def_drive := join("/media", user, drive_uuid, "env")
 project := file_stem(justfile_dir())
 local_env := join(justfile_dir(), ".env")
 
@@ -76,6 +76,8 @@ env-backup bak_dir:
     fi
     echo "Copy {{ local_env }} => {{ bak_dir }}"
     cp {{ local_env }} {{ bak_dir }}
+    echo "Copy {{ join(justfile_dir(), "config.toml") }} => {{ bak_dir }}"
+    cp {{ join(justfile_dir(), "config.toml" )}} {{ bak_dir }}
 
 [private]
 env-restore bak_dir:
@@ -87,6 +89,8 @@ env-restore bak_dir:
     fi
     echo "Copy {{ bak_dir }}/.env => {{ local_env }}"
     cp {{ bak_dir }}/.env {{ local_env }}
+    echo "Copy {{ bak_dir }}/config.toml => {{ join(justfile_dir(), "config.toml") }}"
+    cp {{ bak_dir }}/config.toml {{ join(justfile_dir(), "config.toml") }}
 
 # restore testing database
 db-rst:
