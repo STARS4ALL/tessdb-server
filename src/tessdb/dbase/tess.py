@@ -47,7 +47,7 @@ from . import (
     AUTOMATIC,
     UNKNOWN,
     DEFAULT_FILTER,
-    DEFAULT_OFFSET_HZ
+    DEFAULT_OFFSET_HZ,
 )
 
 # ----------------
@@ -372,7 +372,22 @@ class TESS:
     # New refactored STUFF goes here
     # -------------------------------
 
-    def changedManagedAttributes(self, row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4, offset1, offset2, offset3, offset4):
+    def changedManagedAttributes(
+        self,
+        row,
+        zp1,
+        zp2,
+        zp3,
+        zp4,
+        filter1,
+        filter2,
+        filter3,
+        filter4,
+        offset1,
+        offset2,
+        offset3,
+        offset4,
+    ):
         if isTESS4C(row):
             unchanged = (
                 (abs(row["calib1"] - float(zp1)) < 0.005)
@@ -423,8 +438,8 @@ class TESS:
             )
             return False
         else:
-            unchanged = ( (abs(row["calib1"] - float(zp1)) < 0.005)
-                and (abs(row["offsethz1"] - float(offset1)) < 0.001)
+            unchanged = (abs(row["calib1"] - float(zp1)) < 0.005) and (
+                abs(row["offsethz1"] - float(offset1)) < 0.001
             )
             if not unchanged:
                 log2.info(
@@ -465,7 +480,19 @@ class TESS:
             photometer=photometer[0],
         )
         if self.changedManagedAttributes(
-            row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4, offset1, offset2, offset3, offset4
+            row,
+            zp1,
+            zp2,
+            zp3,
+            zp4,
+            filter1,
+            filter2,
+            filter3,
+            filter4,
+            offset1,
+            offset2,
+            offset3,
+            offset4,
         ):
             row["authorised"] = authorised  # carries over the authorised flag
             # carries over the registration method

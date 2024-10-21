@@ -112,8 +112,8 @@ def remapTESSWRegister(row):
     """remaps keywords for the filter/database statges"""
     row["calib1"] = row["calib"]
     del row["calib"]
-    row["offsethz1"] = row.get("offsethz",0.0)
-    if "offsethz" in row: 
+    row["offsethz1"] = row.get("offsethz", 0.0)
+    if "offsethz" in row:
         del row["offsethz"]
     row["model"] = TESSW_MODEL
     row["nchannels"] = 1
