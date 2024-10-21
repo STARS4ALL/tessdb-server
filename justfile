@@ -87,3 +87,14 @@ env-restore bak_dir:
     fi
     echo "Copy {{ bak_dir }}/.env => {{ local_env }}"
     cp {{ bak_dir }}/.env {{ local_env }}
+
+# restore testing database
+db-rst:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ ! -f  {{def_drive}}/tess.small.db ]]; then
+        echo "Can't restore: {{def_drive}}/tess.small.db doesn't exists"
+        exit 1 
+    fi
+    echo "Copy {{ def_drive }}/tess.small.db => ."
+    cp {{ def_drive }}/tess.small.db .

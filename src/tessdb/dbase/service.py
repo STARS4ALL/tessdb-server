@@ -9,6 +9,7 @@
 # System wide imports
 # -------------------
 
+import sqlite3
 import datetime
 
 # ---------------
@@ -60,6 +61,7 @@ log = Logger(namespace=NAMESPACE)
 def getPool(*args, **kargs):
     """Get connetion pool for sqlite3 driver"""
     kargs["check_same_thread"] = False
+    kargs["detect_types"] = sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
     return adbapi.ConnectionPool("sqlite3", *args, **kargs)
 
 

@@ -47,6 +47,7 @@ from . import (
     AUTOMATIC,
     UNKNOWN,
     DEFAULT_FILTER,
+    DEFAULT_OFFSET_HZ
 )
 
 # ----------------
@@ -105,12 +106,16 @@ PHOT_INSERTION_SQL = """
         nchannels,
         zp1,
         filter1,
+        offset1,
         zp2,
         filter2,
+        offset2,
         zp3,
         filter3,
+        offset3,
         zp4,
         filter4,
+        offset4,
         valid_since,
         valid_until,
         valid_state,
@@ -125,12 +130,16 @@ PHOT_INSERTION_SQL = """
         :nchannels,
         :calib1,
         :band1,
+        :offsethz1,
         :calib2,
         :band2,
+        :offsethz2,
         :calib3,
         :band3,
+        :offsethz3,
         :calib4,
         :band4,
+        :offsethz4,
         :eff_date,
         :exp_date,
         :valid_current,
@@ -224,11 +233,19 @@ class TESS:
         row["band2"] = row.get("band2")
         row["band3"] = row.get("band3")
         row["band4"] = row.get("band4")
+        row["offsethz1"] = row.get("offsethz1", DEFAULT_OFFSET_HZ)
+        row["offsethz2"] = row.get("offsethz2", DEFAULT_OFFSET_HZ)
+        row["offsethz3"] = row.get("offsethz3", DEFAULT_OFFSET_HZ)
+        row["offsethz4"] = row.get("offsethz4", DEFAULT_OFFSET_HZ)
         row["eff_date"] = row["tstamp"].replace(microsecond=0)
         row["exp_date"] = INFINITE_TIME
         row["valid_expired"] = EXPIRED
         row["valid_current"] = CURRENT
-        row["firmware"] = row.get("firmware", UNKNOWN)
+        compilation_date = row.get("date")
+        if not compilation_date:
+            row["firmware"] = row.get("firmware", UNKNOWN)
+        else:
+            row["firmware"] = f"{row.get("firmware", UNKNOWN)} ({compilation_date})"
 
         mac = yield self.lookupMAC(row)  # Returns list of pairs (MAC, name)
         name = yield self.lookupName(row)  # Returns list of pairs (name, MAC)
@@ -355,7 +372,7 @@ class TESS:
     # New refactored STUFF goes here
     # -------------------------------
 
-    def changedManagedAttributes(self, row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4):
+    def changedManagedAttributes(self, row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4, offset1, offset2, offset3, offset4):
         if isTESS4C(row):
             unchanged = (
                 (abs(row["calib1"] - float(zp1)) < 0.005)
@@ -366,6 +383,10 @@ class TESS:
                 and (row["band2"] == filter2)
                 and (row["band3"] == filter3)
                 and (row["band4"] == filter4)
+                and (abs(row["offsethz1"] - float(offset1)) < 0.001)
+                and (abs(row["offsethz2"] - float(offset2)) < 0.001)
+                and (abs(row["offsethz3"] - float(offset3)) < 0.001)
+                and (abs(row["offsethz4"] - float(offset4)) < 0.001)
             )
             if not unchanged:
                 old = {
@@ -377,6 +398,10 @@ class TESS:
                     "F2": filter2,
                     "F3": filter3,
                     "F4": filter4,
+                    "OFF1": offset1,
+                    "OFF2": offset2,
+                    "OFF3": offset3,
+                    "OFF4": offset4,
                 }
                 log2.info(
                     "TESS4C {log_tag} ({mac}) changing ZPs or Filters from {old} to {new} ",
@@ -398,7 +423,9 @@ class TESS:
             )
             return False
         else:
-            unchanged = abs(row["calib1"] - float(zp1)) < 0.005
+            unchanged = ( (abs(row["calib1"] - float(zp1)) < 0.005)
+                and (abs(row["offsethz1"] - float(offset1)) < 0.001)
+            )
             if not unchanged:
                 log2.info(
                     "TESS-W {log_tag} ({mac}) changing ZP from {old} to {calib}",
@@ -423,6 +450,10 @@ class TESS:
             filter2,
             filter3,
             filter4,
+            offset1,
+            offset2,
+            offset3,
+            offset4,
             authorised,
             registered,
             location_id,
@@ -434,7 +465,7 @@ class TESS:
             photometer=photometer[0],
         )
         if self.changedManagedAttributes(
-            row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4
+            row, zp1, zp2, zp3, zp4, filter1, filter2, filter3, filter4, offset1, offset2, offset3, offset4
         ):
             row["authorised"] = authorised  # carries over the authorised flag
             # carries over the registration method
@@ -492,7 +523,8 @@ class TESS:
         row["valid_current"] = CURRENT  # needed when called by tess_readings.
         d = self.pool.runQuery(
             """
-            SELECT tess_id,mac_address,zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4,authorised,registered,location_id,observer_id 
+            SELECT tess_id,mac_address,zp1,zp2,zp3,zp4,filter1,filter2,filter3,filter4,offset1,offset2,offset3,offset4,
+            authorised,registered,location_id,observer_id 
             FROM tess_t        AS i
             JOIN name_to_mac_t AS m USING (mac_address)
             WHERE name        = :name

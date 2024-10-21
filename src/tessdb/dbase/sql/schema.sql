@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS tess_t
     valid_until   TIMESTAMP NOT NULL,           -- versioning attributes, end  timestamp, ISO8601
     valid_state   TEXT    NOT NULL,             -- versioning attributes,state either 'Current' or 'Expired'
     model         TEXT    NOT NULL,             -- Either 'TESS-W', 'TESS4C'
-    firmware      TEXT    NOT NULL,             -- Firmware version string.
+    firmware      TEXT    NOT NULL,             -- Firmware version string + compilation date string if available.
     authorised    INTEGER NOT NULL,             -- Flag 1 = Authorised, 0 not authorised
     registered    TEXT    NOT NULL,             -- Either 'Manual' or 'Auto' or 'Unknown' in the worst case
     cover_offset  REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
@@ -155,14 +155,18 @@ CREATE TABLE IF NOT EXISTS tess_t
     azimuth       REAL    NOT NULL DEFAULT 0.0,       -- Deprecated
     altitude      REAL    NOT NULL DEFAULT 90.0,      -- Deprecated
     nchannels     INTEGER NOT NULL,   -- 1 to 4
-    zp1           REAL    NOT NULL,   -- Zero Point 1
-    filter1       TEXT    NOT NULL,   -- Filter 1 name (i.e. UV/IR-740, R, G, B)
-    zp2           REAL,               -- Zero Point 2
-    filter2       TEXT,               -- Filter 2 name (i.e. UV/IR-740, R, G, B)
-    zp3           REAL ,              -- Zero Point 3
-    filter3       TEXT,               -- Filter 3 name (i.e. UV/IR-740, R, G, B)
-    zp4           REAL,               -- Zero Point 4
-    filter4       TEXT,               -- Filter 4 name (i.e. UV/IR-740, R, G, B)
+    zp1           REAL    NOT NULL,             -- Zero Point 1
+    filter1       TEXT    NOT NULL,             -- Filter 1 name (i.e. UV/IR-740, R, G, B)
+    offset1       REAL    NOT NULL DEFAULT 0.0, -- Frequency 1 offset in Hz
+    zp2           REAL,                         -- Zero Point 2
+    filter2       TEXT,                         -- Filter 2 name (i.e. UV/IR-740, R, G, B)
+    offset2       REAL    NOT NULL DEFAULT 0.0, -- Frequency 2 offset in Hz
+    zp3           REAL ,                        -- Zero Point 3
+    filter3       TEXT,                         -- Filter 3 name (i.e. UV/IR-740, R, G, B)
+    offset3       REAL    NOT NULL DEFAULT 0.0, -- Frequency 3 offset in Hz
+    zp4           REAL,                         -- Zero Point 4
+    filter4       TEXT,                         -- Filter 4 name (i.e. UV/IR-740, R, G, B)
+    offset4       REAL    NOT NULL DEFAULT 0.0, -- Frequency 4 offset in Hz
     location_id   INTEGER NOT NULL DEFAULT -1,        -- Current location, defaults to unknown location
     observer_id   INTEGER NOT NULL DEFAULT -1,        -- Current observer, defaults to unknown observer
     PRIMARY KEY(tess_id),
@@ -212,12 +216,16 @@ CREATE VIEW IF NOT EXISTS tess_v AS SELECT
     tess_t.nchannels,
     tess_t.zp1,
     tess_t.filter1,
+    tess_t.offset1,
     tess_t.zp2,
     tess_t.filter2,
+    tess_t.offset2,
     tess_t.zp3,
     tess_t.filter3,
+    tess_t.offset3,
     tess_t.zp4,
     tess_t.filter4,
+    tess_t.offset4,
     location_t.longitude,
     location_t.latitude,
     location_t.elevation,
