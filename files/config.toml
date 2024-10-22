@@ -16,18 +16,18 @@ log_level = "info"
 
 # Log activity for *selected instruments* only and *all* namespaces
 # as opossed to the general log
-# comma separated list of TESS instrument names.
-# Leave blank if not used
+# list of TESS instrument names.
+# Empty list if not used
 # Reloadable property
-log_selected = ""
+log_selected = []
 
 #------------------------------------------------------------------------#
 [mqtt]
 
 # MQTT Client config
 
-# The borker, username, password and client_id
-# are configured by environmental variables
+# The broker host, username, password and client_id
+# are configured by environment variables
 # MQTT_BROKER, MQTT_USERNAME, MQTT_PASSWORD, MQTT_CLIENT_ID
 # respectively
 
@@ -36,29 +36,29 @@ log_selected = ""
 keepalive = 60
 
 # MQTT Topic to subscribe for automatic registration
-# Leave blank to disable automatic registration
+# Leave as empty string to disable automatic registration
 # Reloadable property
 tess_topic_register = "STARS4ALL/register"
 
-# MQTT topics to subscribe for readings
+# List of MQTT topics to subscribe for readings
 # Reloadable property
 tess_topics = ["STARS4ALL/+/reading",]
 
 # Instrument White List.
 # Discards instruments readings and registrations 
-# whose name do not belong to this comma separated list
+# whose name do not belong to this list
 # Useful to keep your own readings database when sharing
 # MQTT topic with other TESS instruments
-# Leave blank if not used.
+# Leave empty if not used.
 # Reloadable property
 tess_whitelist = []
 
 # Instrument Black List.
 # Discards instruments readings and registrations 
-# whose name belong to this comma separated list
+# whose name belong to this list
 # Useful to discard a particular "noisy" instruments
 # with lots of readings
-# Leave blank if not used.
+# Leave empty if not used.
 # Reloadable property
 tess_blacklist = []
 
@@ -100,6 +100,9 @@ log_level = "info"
 # Database configuration section
 [dbase]
 
+# The database connection string is configured
+# in the DATABASE_URL environment variable
+
 # Day resolution (in seconds)
 # Must be one of 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1
 # If changed to a lower time span it may be necessary to delete excess rows
@@ -118,7 +121,7 @@ auth_filter = true
 # Writes to database every N readings to improve I/O performance
 # Integer > 1
 # Reloadable property
-buffer_size = 15
+buffer_size = 50
 
 # ZP Low Limit
 # Due to a firmware bug, some ZP sends absurd low ZP values such as 2 or 0
