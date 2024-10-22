@@ -245,7 +245,7 @@ class TESS:
         if not compilation_date:
             row["firmware"] = row.get("firmware", UNKNOWN)
         else:
-            row["firmware"] = f"{row.get("firmware", UNKNOWN)} ({compilation_date})"
+            row["firmware"] = f"{row.get('firmware', UNKNOWN)} ({compilation_date})"
 
         mac = yield self.lookupMAC(row)  # Returns list of pairs (MAC, name)
         name = yield self.lookupName(row)  # Returns list of pairs (name, MAC)
