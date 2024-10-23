@@ -2,24 +2,11 @@
 Prioridad Alta
 ==============
 
-# make the database connection with detect_types 
-connection = sqlite3.connect('StudentAssignment.db',
-                             detect_types=sqlite3.PARSE_DECLTYPES |
-                             sqlite3.PARSE_COLNAMES)
-
-
-* Nuevo esquema y softweare de registro para tratar mensajes como estos:
-
-2024-10-17T01:04:22+0200 [mqttS#info] Register message at 2024-10-16 23:04:22.569064+00:00: {'name': 'stars2003', 'rev': 2, 'firmware': '4.32', 'date': 'Oct 17 2024', 'mac': '30:C9:22:24:CF:1C', 'calib': 20.51, 'offsethz': 0.0, 'wdBm': 0, 'hash': 'F1C'}
-
-2024-10-17T07:02:15+0200 [mqttS#info] Register message at 2024-10-17 05:02:15.196667+00:00: {'name': 'stars2004', 'rev': 3, 'mac': 'C8:F0:9E:7B:8D:04', 'firmware': '4.32', 'date': 'Oct 17 2024', 'F1': {'band': 'UVIR750', 'calib': 20.52}, 'F2': {'band': 'RGB-G', 'calib': 20.5}, 'F3': {'band': 'RGB-R', 'calib': 20.5}, 'F4': {'band': 'RGB-B', 'calib': 20.5}}
-
-
-
 
 Prioridad baja
 ==============
 
+Actualizar la documentación del modelo de datos.
 
 NUEVO TESSDB
 ------------

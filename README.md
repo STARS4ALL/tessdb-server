@@ -27,71 +27,50 @@ Instrument should send their readings at twice the time resolution specified in 
 
 # INSTALLATION
     
-## Requirements
 
-The following components are needed and should be installed first:
+* Requires Python 3.9+
+* Create a virtual environment and install it from there.
 
- * python 2.7.x (tested on Ubuntu Python 2.7.6) or python 3.6+
-
-**Note:** It is foreseen a Python 3 migration in the future, retaining Python 2.7.x compatibility.
-
-### Installation
-
-Installation is done from GitHub:
-
-    git clone https://github.com/astrorafael/tessdb.git
-    cd tessdb
-    sudo python setup.py install
-
+```bash
+    pip install tessdb-server
+```
 **Note:** Installation from PyPi is now obsolete. Do not use the package uploaded in PyPi.
 
 * All executables are copied to `/usr/local/bin`
 * The database is located at `/var/dbase/tess.db` by default
 * The log file is located at `/var/log/tessdb.log`
-* The following required PIP packages will be automatically installed:
-    - twisted,
-    - twisted-mqtt
-    - pyephem
-    
-### Start up and Verification
-
-* Type `sudo tessdb -k` to start the service in foreground with console output.
-Verify that it starts without errors or exceptions. When done, abort it with `^C`
-
-From tessdb release 1.2.0, the background execution is handled as a `systemd` service instead of the old system V style init script:
-
-    `sudo systemctl start tessdb`
-
-although the old `sudo service tessdb start` command still works.
-* It is strongly recommended to enable the service at boot time by issuing:
-
-`sudo systemctl enable tessdb`
 
 # CONFIGURATION
 
-There is a small configuration file for this service:
+## Environment file:
 
-* `/etc/tessdb/config` (Linux)
+This file contains mostly credentials and connection endpoints to the broker and the database.
+Example `/etc/tessdb/tessdb.env` file:
 
-This file is self explanatory. 
-In special, the database file name and location is specified in this file.
+```bash
+VIRTUAL_ENV=/home/pi/repos/tessdb-server/.venv
+PATH=/home/pi/repos/tessdb-server/.venv:/usr/local/bin:/usr/bin:/bin
+PYTHONIOENCODING=utf-8
+DATABASE_URL=/var/dbase/tess.db
+MQTT_BROKER=tcp:test.mosquitto.org:1883
+MQTT_USERNAME=""
+MQTT_PASSWORD=""
+MQTT_CLIENT_ID=""
+```
+
+## TOML File
+
+* `/etc/tessdb/config.toml`
+
+This file is self explanatory.
+
 Some of the properities marked in this file are marked as *reloadable property*. This means that this value can be changed and the process reloads its new value on the fly.
-
-## Sunrise / Sunset filtering
-
-A configurable window (7 samples by default) is stored in the server for each photometer. 
-A filter process analyzes the middle sample in this window, if it finds all saturated values (magnitude=0)
-around this middle sample (past and future), this sample is discarded, otherwise it is elegible to be written to the database.
-
-*Positive*: This filtering does not need to know the position where the photometer is placed.
-*Negative*: There is a time lag (Window size/2) between receiving the sample and storing it.
-Furthermore, if the server crashes or is abruptly stopped, the so-called "future samples" are lost.
 
 ## Logging
 
-Log file is usually placed under `/var/log/tessdb.log` in Linux or under `C:\tessdb\log` folder on Windows. 
+Log file is usually placed under `/var/log/tessdb.log` . 
 Default log level is `info`. It generates very litte logging at this level.
-File is rotated by logrotate **only under Linux**. 
+Recommended to be rotated by the logrotate utility. 
 
 # OPERATION
 
@@ -154,6 +133,8 @@ Mainteninance operations include:
 
 
 # DATA MODEL
+
+***Note:*** The data model is a bit obsolete. See the [SQL schema](src/tessdb/dbase/sql/schema.sql) for an updated version.
 
 ## Dimensional Modelling
 
@@ -347,6 +328,8 @@ EOF
 ```
 
 # MQTT PAYLOAD INFORMATION
+
+***Note:*** Payload
 
 Payloads are transmitted in JSON format, with the format described below.
 
