@@ -34,13 +34,18 @@ Instrument should send their readings at twice the time resolution specified in 
 ```bash
     pip install tessdb-server
 ```
-**Note:** Installation from PyPi is now obsolete. Do not use the package uploaded in PyPi.
 
-* All executables are copied to `/usr/local/bin`
-* The database is located at `/var/dbase/tess.db` by default
-* The log file is located at `/var/log/tessdb.log`
+* The default database path is `/var/dbase/tess.db`
+* The default log file is `/var/log/tessdb.log`
 
 # CONFIGURATION
+
+## Systemd serice file
+
+The Github repo includes a [sample systemd service file for tessdb-server](files/tessdb.service), 
+which also needs for its confguration:
+* A [sample enviroment file](files/tessdb.env) described below
+* A [sample TOML configuration file](files/config.toml)
 
 ## Environment file:
 
@@ -60,7 +65,8 @@ MQTT_CLIENT_ID=""
 
 ## TOML File
 
-* `/etc/tessdb/config.toml`
+A [sample TOML configuration file](files/config.toml) is usually located at `/etc/tessdb/config.toml`
+and used by the systemd.service
 
 This file is self explanatory.
 
@@ -70,27 +76,49 @@ Some of the properities marked in this file are marked as *reloadable property*.
 
 Log file is usually placed under `/var/log/tessdb.log` . 
 Default log level is `info`. It generates very litte logging at this level.
-Recommended to be rotated by the logrotate utility. 
+
+## Database backup and log rotation
+
+Since the database is a single file, it can be easily backed up by logrotate.
+There is a [sample log rotate spec](files/tessdb.logrotate) in the GitHub repo.
+
+It is recommeded (although not necessayr) to backup the database by in a moment where there are little photometer activity.
+For instance, in Spain, the log rotation and database backup is performed at noon.
+
+To perform the sqlite backup without service interruption, the logrotate spec uses two auxiliar scripts:
+* [tessdb_pause](scripts/tessdb_pause)
+* [tessdb_resume](scripts/tessdb_resume)
 
 # OPERATION
 
 ## Server Status/Start/Stop/Restart
 
+The Github repo includes a [sample systemd service file for tessdb-server](files/tessdb.service), 
+which also needs a [sample enviroment file](files/tessdb.env)
+
 * Service status: `sudo systemctl status tessdb` or `sudo service tessdb status`
 * Start Service:  `sudo systemctl start tessdb`  or `sudo service tessdb start`
 
-Strongly recommended:
-* Stop Service:    `sudo /usr/local/bin/tessdb_stop`
-* Restart Service: `sudo /usr/local/bin/tessdb_restart`
+If using the daylight filter functionality:
+    Strongly recommended:
+    * Stop Service:    `sudo /usr/local/bin/tessdb_stop`
+    * Restart Service: `sudo /usr/local/bin/tessdb_restart`
 
-No don use:
-* Stop Service:    `sudo systemctl stop tessdb`    or `sudo service tessdb stop`
-* Restart Service: `sudo systemctl restart tessdb` or `sudo service tessdb stop`
+   Don't use:
+    * Stop Service:    `sudo systemctl stop tessdb`    or `sudo service tessdb stop`
+    * Restart Service: `sudo systemctl restart tessdb` or `sudo service tessdb stop`
+
+If no daylight filter functionality is being used, you can start/stop the server normally:
+    * Stop Service:    `sudo systemctl stop tessdb`    or `sudo service tessdb stop`
+    * Restart Service: `sudo systemctl restart tessdb` or `sudo service tessdb stop`
+
+
 
 ## Service Pause/Resume
 
-The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enqueued and not written to the database. Also, all connections to the database are closed. This allows to perform high risk operations on the database without loss of incoming data. Examples:
+The server can be put in *pause mode*, in which will be still receiving incoming MQTT messages but will be internally enqueued and not written to the database. Also, all connections to the database are closed. This allows to perform sensible operations on the database without loss of incoming data. Examples:
 
+* Database backup
 * Compact the database using the SQLite `VACUUM` pragma
 * Migrating data from tables.
 * etc.
@@ -131,6 +159,7 @@ Mainteninance operations include:
 - listing instruments not assigned to any known location
 - etc.
 
+***NOTE***: the `tess` command line utility is largely obsolete.
 
 # DATA MODEL
 
