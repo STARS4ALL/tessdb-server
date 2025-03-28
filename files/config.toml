@@ -119,6 +119,14 @@ auth_filter = true
 
 # Write Buffer size
 # Writes to database every N readings to improve I/O performance
+# If you just kill or stop the server by systemd you will loose 
+# all the samples stoired in the buffer.
+# If this is relevant to you, you may perform a more convoluted approach:
+#    1. change the buffer size to 1
+#    2. reload the server with tessdb_reload
+#    3. watch the logfile until the server starts writing sample by sample to database
+#    4. you may now kill or stop the server
+#    5. do not forget to set it to its original value before starting the server again
 # Integer > 1
 # Reloadable property
 buffer_size = 50
