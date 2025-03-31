@@ -176,6 +176,8 @@ The figure below shows the layout of **tessdb**.
 
 ![TESS Database Model](doc/tessdb-full.png)
 
+***NOTE***: The graphics is a bit outdated, you can find the latest data model as a SQL schema file [here](src/tessdb/dbase/sql/schema.sql)
+
 ### Dimension Tables
 
 They are:
