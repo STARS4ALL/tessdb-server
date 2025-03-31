@@ -35,7 +35,7 @@ Repository = "https://github.com/astrorafael/tessdb-server.git"
 tessdb = "tessdb.main:main"
 
 [build-system]
-requires = ["setuptools >= 77", "wheel", "setuptools_scm[toml]>=6.2"]
+requires = ["setuptools >= 78.1", "wheel", "setuptools_scm[toml]>=8.2"]
 build-backend = "setuptools.build_meta"
 
 # pyproject.toml
