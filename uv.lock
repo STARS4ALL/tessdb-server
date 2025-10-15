@@ -1169,7 +1169,7 @@ wheels = [
 
 [[package]]
 name = "tessdb-api"
-version = "0.6.2"
+version = "0.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "email-validator" },
@@ -1181,9 +1181,9 @@ dependencies = [
     { name = "tessdb-dao" },
     { name = "timezonefinder" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/41/44/2c178577016d17b1278dace21f7559cad556b9afbbfed9d2a9629e6c0f88/tessdb_api-0.6.2.tar.gz", hash = "sha256:4ab758b90e26f25691c18efddec9a3a67fc6e9ee77f18e8ab161e7a51d49a408", size = 70648, upload-time = "2025-10-10T06:27:32.306Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/22/c797ae02d9ffe72617b3c03b7add8d782ef130a6a741b7d09acfa526a32e/tessdb_api-0.6.3.tar.gz", hash = "sha256:26f9f0a206e087beb9f4e79a9c18cc08dca2e0110dac4f457e70b825bb1b1b5f", size = 70669, upload-time = "2025-10-15T19:09:01.33Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/da/a954013af593692e504d0627b6b6a7cf4973186582cb6890542b0d68c374/tessdb_api-0.6.2-py3-none-any.whl", hash = "sha256:49c81e7a953a3b7f189cb710e433ed02f0c0d77c040e0e34756a32c621c1487b", size = 30262, upload-time = "2025-10-10T06:27:31.129Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/5d/76100f3ba1d09d0d9beb108ffe3bbe5cdfa1722a8fe4aba50d2184bb42a2/tessdb_api-0.6.3-py3-none-any.whl", hash = "sha256:0b5e4f770d2262eac273e3a00c5629ba5c9e459e79d65d4ceae3883d2c1035d0", size = 30287, upload-time = "2025-10-15T19:08:59.776Z" },
 ]
 
 [[package]]
