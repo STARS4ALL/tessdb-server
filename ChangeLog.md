@@ -1,4 +1,7 @@
 # Change Log
+# 5.0
+Big refactoring to avoid Twisted.
+Native asyncio tasks and SQLAlchemy DAO layer
 # 4.0.0
 Datamodel revision to include TESS4C
 Buffered database write.

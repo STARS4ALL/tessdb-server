@@ -1,0 +1,10 @@
+[Unit]
+Description=TESS Database alarm service
+Documentation=https://github.com/STARS4ALL/tessdb-server
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/home/rfg/tessdb-server-ng/.venv/bin/tess-db-alarms --log-file /home/rfg/tessdb-server-ng/tdbalarm.log --file /var/log/tessdb.log
+EnvironmentFile=/home/rfg/tessdb-server-ng/.env
+WorkingDirectory=/home/rfg/tessdb-server-ng/

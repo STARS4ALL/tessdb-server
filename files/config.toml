@@ -5,21 +5,15 @@
 # ----------------------------------------------------------------------
 
 #------------------------------------------------------------------------#
+[stats]
 
-[tessdb]
-
-# Global section
+# Statistics section
+# interval in seconds where to display statistics
+interval = 3600
 
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = "info"
-
-# Log activity for *selected instruments* only and *all* namespaces
-# as opossed to the general log
-# list of TESS instrument names.
-# Empty list if not used
-# Reloadable property
-log_selected = []
 
 #------------------------------------------------------------------------#
 [mqtt]
@@ -86,47 +80,60 @@ protocol_log_level = "info"
 # Not reloadable property
 depth = 7
 
-# Enable flag
-# If not enabled, the new reading is passed directly to the database input queue
-# Reloadable property
-enabled = true
-
 # namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = "info"
+
+# number of photometers whose filters remain to be flushed
+# The flushing process will stop when this threahold is reached
+# An estimate of (depth/2)*flush_threshold readings will be lost
+# if set too low, the remaining filters will be offering to the database
+# unfiltered data, possibly with saturated readings, so there is a
+# trade-off to be made. 6 seems a good compromise 
+# for the STARS4ALL photometer network.
+# reloadable property 
+flush_threshold = 6
+
+# Individual filter loggers
+# reloadable property
+[filter.loggers]
+stars1 = "info"
+stars1267 = "info"
+
+# Enable/disable daylight filtering, which reduce database size
+# by not storing daylight, saturated readings.
+# reloadable property
+[filter.enable]
+daylight = true
+
+# Disable daylight filtering for an specific photometers list
+# reloadable property
+disabled_for = []
+
+# Divisor N to decimate every N times the following data coming from photometers
+# reloadable property
+[filter.divisor]
+stars1267 = 6
+stars1277 = 6
+stars1421 = 6
+stars1 = 2
 
 #------------------------------------------------------------------------#
 
 # Database configuration section
 [dbase]
-
 # The database connection string is configured
 # in the DATABASE_URL environment variable
-
-# Day resolution (in seconds)
-# Must be one of 60, 30, 20, 15, 12, 10, 6, 5, 4, 3, 2, 1
-# If changed to a lower time span it may be necessary to delete excess rows
-# in the database
-# Not reloadable property.
-secs_resolution = 1
 
 # Authorisation filter
 # Each TESS-W photometer must be authorised to write to the database
 # The recommended use is to manually authorise it after the TESS photomenter
 # is in place and measuring properly
 # However, this can be disabled.
-auth_filter = true
+auth_filter = false
 
 # Write Buffer size
 # Writes to database every N readings to improve I/O performance
-# If you just kill or stop the server by systemd you will loose 
-# all the samples stoired in the buffer.
-# If this is relevant to you, you may perform a more convoluted approach:
-#    1. change the buffer size to 1
-#    2. reload the server with tessdb_reload
-#    3. watch the logfile until the server starts writing sample by sample to database
-#    4. you may now kill or stop the server
-#    5. do not forget to set it to its original value before starting the server again
 # Integer > 1
 # Reloadable property
 buffer_size = 50
@@ -137,10 +144,10 @@ buffer_size = 50
 # Reloadable property
 zp_threshold = 10
 
-# general namespace log level (debug, info, warn, error, critical)
+# general dbase namespace log level (debug, info, warn, error, critical)
 # Reloadable property
 log_level = "info"
 
-# specific registration log level (debug, info, warn, error, critical)
-# Reloadable property
-register_log_level = "info"
+# max queue size for write TESS readings
+# non reloadable property
+queue_size = 86400

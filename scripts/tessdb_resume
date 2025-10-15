@@ -1,3 +1,5 @@
-#!/bin/bash
-# This script pauses tessdb writting activity
-systemctl kill -s USR2 tessdb.service
+#!/usr/bin/env bash   
+set -euo pipefail
+port="${ADM_HTTP_PORT:-8080}"
+response=$(/usr/bin/curl -s -X POST http://localhost:${port}/v1/server/resume -d '{}' -H "Content-Type: application/json")
+echo $response

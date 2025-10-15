@@ -1,147 +1,76 @@
 # ----------------------------------------------------------------------
-# Copyright (c) 2014 Rafael Gonzalez.
+# Copyright (c) 2022
 #
 # See the LICENSE file for details
+# see the AUTHORS file for authors
 # ----------------------------------------------------------------------
 
+from enum import Enum, StrEnum
 
-# --------------------
-# System wide imports
-# -------------------
+import logging
+from typing import Annotated
 
-import sys
-
-# ---------------
-# Twisted imports
-# ---------------
-
-from zope.interface import implementer
-
-from twisted.logger import (
-    LogLevel,
-    globalLogBeginner,
-    textFileLogObserver,
-    FilteringLogObserver,
-    LogLevelFilterPredicate,
-    ILogFilterPredicate,
-    PredicateResult,
-)
-
-# --------------
-# local imports
-# -------------
-
-# ----------------
-# Module constants
-# ----------------
-
-# --------------
-# Module Classes
-# --------------
+from tessdbapi.model import Stars4AllName, LogSpace as TessDbApiLogSpace
+from pydantic import BaseModel, AfterValidator
 
 
-@implementer(ILogFilterPredicate)
-class LogTagFilterPredicate(object):
-    """
-    L{ILogFilterPredicate} that filters out events with a log tag not in a tag set.
-    Events that do not have a log_tag key are forwarded to the next filter.
-    If the tag set is empty, the events are also forwarded
-    """
-
-    def __init__(self, defaultLogTags=None):
-        """ """
-        self.logTags = list() if defaultLogTags is None else defaultLogTags
-
-    def setLogTags(self, logTags):
-        """
-        Set a new tag set. An iterable (usually a sequence)
-        """
-        self.logTags = logTags
-
-    def __call__(self, event):
-        eventTag = event.get("log_tag", None)
-
-        # Allow events with missing log_tag to pass through
-        if eventTag is None:
-            return PredicateResult.maybe
-
-        # Allow all events to pass through if empty tag set
-        if len(self.logTags) == 0:
-            return PredicateResult.maybe
-
-        # Allow events contained in the tag set to pass through
-        if eventTag in self.logTags:
-            return PredicateResult.maybe
-
-        return PredicateResult.no
+class Levels(Enum):
+    none = logging.NOTSET
+    critical = logging.CRITICAL
+    error = logging.ERROR
+    warn = logging.WARNING
+    info = logging.INFO
+    debug = logging.DEBUG
+    trace = 5
 
 
-# ----------------------------------------------------------------------
+STR_TO_LEVEL = {lev.name: lev.value for lev in Levels}
 
 
-# -----------------------
-# Module global variables
-# -----------------------
+def level(level_str: str) -> int:
+    return STR_TO_LEVEL[level_str]
 
-# Global object to control globally namespace logging
-logLevelFilterPredicate = LogLevelFilterPredicate(defaultLogLevel=LogLevel.info)
 
-# Global object for filtering out events with a log_tag not in a tag set
-logTagFilterPredicate = LogTagFilterPredicate()
+def level_name(level: int) -> str:
+    return Levels(level).name
+
+
+# Log NameSpaces
+class LogSpace(StrEnum):
+    MQTT = "mqtt"
+    FILTER = TessDbApiLogSpace.FILTER.value
+    DBASE = TessDbApiLogSpace.DBASE.value
+    HTTP = "http"
+    STATS = "stats"
+    SERVER = "server"
+
 
 # ------------------------
-# Module Utility Functions
+# This is for the HTTP API
 # ------------------------
 
 
-def startLogging(console=True, filepath=None):
-    """
-    Starts the global Twisted logger subsystem with maybe
-    stdout and/or a file specified in the config file
-    """
-    global logLevelFilterPredicate
-    global logTagFilterPredicate
-
-    observers = []
-    if console:
-        observers.append(
-            FilteringLogObserver(
-                observer=textFileLogObserver(sys.stdout),
-                predicates=[logTagFilterPredicate, logLevelFilterPredicate],
-            )
-        )
-
-    if filepath is not None and filepath != "":
-        observers.append(
-            FilteringLogObserver(
-                observer=textFileLogObserver(open(filepath, "a")),
-                predicates=[logTagFilterPredicate, logLevelFilterPredicate],
-            )
-        )
-    globalLogBeginner.beginLoggingTo(observers)
+def is_log_level(value: str) -> str:
+    if value not in STR_TO_LEVEL.keys():
+        raise ValueError(f"log level {value} outside {STR_TO_LEVEL.keys()} values")
+    return value
 
 
-def setLogLevel(namespace=None, levelStr="info"):
-    """
-    Set a new log level for a given namespace
-    LevelStr is: 'critical', 'error', 'warn', 'info', 'debug'
-    """
-    level = LogLevel.levelWithName(levelStr)
-    logLevelFilterPredicate.setLogLevelForNamespace(namespace=namespace, level=level)
+def is_log_name(value: str) -> str:
+    allowed = [x.value for x in LogSpace]
+    if value not in allowed:
+        raise ValueError(f"log level {value} outside {allowed} values")
+    return value
 
 
-def setLogTags(logTags):
-    """
-    Set a new tag set for filtering out events
-    """
-    logTagFilterPredicate.setLogTags(logTags)
+LogLevel = Annotated[str, AfterValidator(is_log_level)]
+LogSpaceName = Annotated[str, AfterValidator(is_log_name)]
 
 
-# ----------------------------------------------------------------------
+class PhotLogLevelInfo(BaseModel):
+    name: Stars4AllName
+    level: LogLevel
 
-
-__all__ = [
-    "startLogging",
-    "setLogLevel",
-    "setLogTags",
-]
+class LogLevelInfo(BaseModel):
+    name: LogSpaceName
+    level: LogLevel

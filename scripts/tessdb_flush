@@ -1,3 +1,5 @@
-#!/bin/bash
-# This script flushes the tessdb filter activity
-systemctl kill -s WINCH tessdb.service
+#!/usr/bin/env bash   
+set -euo pipefail
+port="${ADM_HTTP_PORT:-8080}"
+response=$(/usr/bin/curl -s -X POST http://localhost:${port}/v1/server/flush -d '{}' -H "Content-Type: application/json")
+echo $response

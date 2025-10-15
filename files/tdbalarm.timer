@@ -1,0 +1,14 @@
+# Ensure to do the following:
+# sudo systemctl daemon-reload
+# sudo systemctl enable tdbalarm.timer
+# sudo systemctl start tdbalarm.timer
+
+
+[Unit]
+Description=Runs every 20 minutes
+
+[Timer]
+OnCalendar=*-*-* *:0/20:00
+
+[Install]
+WantedBy=timers.target
