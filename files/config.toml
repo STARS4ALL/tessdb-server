@@ -16,6 +16,16 @@ interval = 3600
 log_level = "info"
 
 #------------------------------------------------------------------------#
+[http]
+
+# HTTP management interface section
+
+# Connection is made by env variables ADMIN_HTTP_LISTEN_ADDR, ADMIN_HTTP_PORT
+
+# http task log level (debug, info, warn, error, critical)
+log_level = "info"
+
+#------------------------------------------------------------------------#
 [mqtt]
 
 # MQTT Client config
