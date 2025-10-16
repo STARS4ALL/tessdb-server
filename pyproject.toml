@@ -33,11 +33,11 @@ dependencies = [
   "aiosqlite >= 0.21", # Another asyncio sqlite connector
   "alembic >= 1.15",
   "lica[aiosqlalchemy]>=2.0",
-  "tessdb-dao",
+  "tessdb-dao>=1.0",
   "pydantic",
   # Management HTTP interface
   "fastapi[standard]",
-  "tessdb-api>=0.6.2",
+  "tessdb-api>=1.0",
   # Tess database alarm utility
   "requests>=2.32",
 ]
