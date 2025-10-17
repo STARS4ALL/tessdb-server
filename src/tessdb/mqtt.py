@@ -379,8 +379,10 @@ async def subscriber(
                         continue
         except json.JSONDecodeError:
             log.error("Invalid JSON in payload=%s", payload)
+            continue
         except asyncio.QueueFull:
             log.error("Queue full for %s", row)
+            continue
         except aiomqtt.MqttError:
             log.warning(f"Connection lost; Reconnecting in {interval} seconds ...")
             await asyncio.sleep(interval)
