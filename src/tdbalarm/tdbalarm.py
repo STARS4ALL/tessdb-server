@@ -69,7 +69,8 @@ def email_send(
     message.attach(MIMEText(body, "plain"))
     if secure:
         # Log in to server using secure context and send email
-        context = ssl.create_default_context()
+        #context = ssl.create_default_context()
+        context = ssl._create_unverified_context()
         with smtplib.SMTP(host, port) as server:
             server.ehlo()  # Can be omitted
             server.starttls(context=context)
