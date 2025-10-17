@@ -204,7 +204,7 @@ def one_pass(
             now = datetime.now(timezone.utc).replace(microsecond=0)
             if i < 1:
                 if readings[0] == 0:
-                    log.warning("Database stored readings is already 0")
+                    log.warning("Database stored #readings is already 0")
                     handle_new_detections(
                         session, host, port, password, sender, receivers, set([now])
                     )
@@ -213,7 +213,7 @@ def one_pass(
                 time.sleep((wait_minutes - 1) * 60)
         if len(readings) == 2 and (readings[1] - readings[0] == 0):
             log.warning(
-                "Database stored readings (%d) has no changed during %d minutes",
+                "Database stored #readings (%d) has not changed during %d minutes",
                 readings[0],
                 wait_minutes,
             )
