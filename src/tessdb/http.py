@@ -208,7 +208,7 @@ def get_logger_level(name: LogSpaceName):
 
 @app.put("/v1/loggers/{name}")
 def set_logger_level(name: LogSpaceName, log_level_info: LogLevelInfo):
-    log.info("task logger get level request: %s", log_level_info)
+    log.info("task logger set level request: %s", log_level_info)
     logging.getLogger(name).setLevel(level(log_level_info.level))
     return log_level_info
 
