@@ -191,6 +191,7 @@ def one_pass(
     admin_port: int,
     wait_minutes: int,
 ):
+    wait_minutes += -1
     handle_unsent_email(session, host, port, password, sender, receivers)
     url = f"http://{admin_host}:{admin_port}/v1/stats"
     try:
@@ -210,7 +211,7 @@ def one_pass(
                     )
                     break
                 log.info("waiting %d minutes for a new check", wait_minutes)
-                time.sleep((wait_minutes - 1) * 60)
+                time.sleep(wait_minutes * 60)
         if len(readings) == 2 and (readings[1] - readings[0] == 0):
             log.warning(
                 "Database stored #readings (%d) has not changed during %d minutes",
