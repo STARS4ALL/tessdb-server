@@ -143,7 +143,7 @@ async def write_readings(
     if ref:
         batch.append((item, ref))
     if len(batch) >= buffer_size:
-        log.info("Flushing queue with %d photometers", len(batch))
+        log.warning("Flushing queue with %d photometers", len(batch))
         await photometer_resolved_batch_write(
             session=session,
             items=batch,
