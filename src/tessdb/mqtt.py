@@ -340,49 +340,49 @@ async def subscriber(
                     log.info("subscribing to %s", topic)
                     await client.subscribe(topic, qos=2)
                 async for message in client.messages:
-                    stats.num_published += 1
-                    payload = message.payload.decode("utf-8")
-                    row = json.loads(payload)
-                    if "tstamp" not in row:
-                        tstamp, tsmap_src = None, TimestampSource.SUBSCRIBER
-                    else:
-                        tstamp, tsmap_src = row["tstamp"], TimestampSource.PUBLISHER
-                    plog = logging.getLogger(row["name"])
-                    # Discard retained messages to avoid duplicates in the database
-                    if message.retain:
-                        plog.debug("Discarded payload by retained flag")
-                        stats.num_filtered += 1
-                        continue
-                    # Apply White List filter
-                    if state.white_list and row["name"] not in state.white_list:
-                        plog.debug("Discarded payload by whitelist")
-                        stats.num_filtered += 1
-                        continue
-                    # Apply Black List filter
-                    if state.black_list and row["name"] in state.black_list:
-                        plog.debug("Discarded payload by blacklist")
-                        stats.num_filtered += 1
-                        continue
-                    # Handle registering
-                    if message.topic.matches(state.topic_register):
-                        info = _handle_register(row, tstamp, tsmap_src)
-                        if info:
-                            if not db_queue.full():
-                                db_queue.put_nowait((MessagePriority.REGISTER, info))
-                            else:
-                                log.warning("Register DBQueue full: %s", dict(info))
-                        continue
-                    else:
-                        info = _handle_reading(row, tstamp, tsmap_src)
-                        if info:
-                            filt_queue.put_nowait(info)
-                        continue
-        except json.JSONDecodeError:
-            log.error("Invalid JSON in payload=%s", payload)
-            continue
-        except asyncio.QueueFull:
-            log.error("Queue full for %s", row)
-            continue
+                    try:
+                        stats.num_published += 1
+                        payload = message.payload.decode("utf-8")
+                        row = json.loads(payload)
+                        if "tstamp" not in row:
+                            tstamp, tsmap_src = None, TimestampSource.SUBSCRIBER
+                        else:
+                            tstamp, tsmap_src = row["tstamp"], TimestampSource.PUBLISHER
+                        plog = logging.getLogger(row["name"])
+                        # Discard retained messages to avoid duplicates in the database
+                        if message.retain:
+                            plog.debug("Discarded payload by retained flag")
+                            stats.num_filtered += 1
+                            continue
+                        # Apply White List filter
+                        if state.white_list and row["name"] not in state.white_list:
+                            plog.debug("Discarded payload by whitelist")
+                            stats.num_filtered += 1
+                            continue
+                        # Apply Black List filter
+                        if state.black_list and row["name"] in state.black_list:
+                            plog.debug("Discarded payload by blacklist")
+                            stats.num_filtered += 1
+                            continue
+                        # Handle registering
+                        if message.topic.matches(state.topic_register):
+                            info = _handle_register(row, tstamp, tsmap_src)
+                            if info:
+                                if not db_queue.full():
+                                    db_queue.put_nowait((MessagePriority.REGISTER, info))
+                                else:
+                                    log.warning("Register DBQueue full: %s", dict(info))
+                        else:
+                            info = _handle_reading(row, tstamp, tsmap_src)
+                            if info:
+                                filt_queue.put_nowait(info)
+                    except json.JSONDecodeError:
+                        log.error("Invalid JSON in payload=%s", payload)
+                    except asyncio.QueueFull:
+                        log.error("Queue full for %s", row)
         except aiomqtt.MqttError:
             log.warning(f"Connection lost; Reconnecting in {interval} seconds ...")
             await asyncio.sleep(interval)
+        except Exception as e:
+            log.critical("Unexpected & unhandled exception, see details below")
+            log.exception(e)
