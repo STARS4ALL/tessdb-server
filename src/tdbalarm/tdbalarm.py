@@ -89,14 +89,14 @@ def existing_detections(session: Session) -> Set[datetime]:
 
 
 def count_not_notified(session: Session) -> int:
-    query = select(func.count()).select_from(Alarms).where(Alarms.notified_at == None)
+    query = select(func.count()).select_from(Alarms).where(Alarms.notified_at == None)  # noqa: E711
     return session.scalars(query).one()
 
 
 def not_notified(session: Session) -> Set[datetime]:
     query = (
         select(Alarms.detected_at)
-        .where(Alarms.notified_at == None)
+        .where(Alarms.notified_at == None)  # noqa: E711
         .order_by(Alarms.detected_at.asc())
     )
     return set(session.scalars(query).all())
@@ -110,13 +110,19 @@ def insert_detections(session: Session, iterable: Iterable) -> None:
 
 def update_alarms_state(session: Session) -> None:
     now = datetime.now(timezone.utc).replace(microsecond=0)
-    stmt = update(Alarms).where(Alarms.notified_at == None).values(notified_at=now)
+    stmt = update(Alarms).where(Alarms.notified_at == None).values(notified_at=now)  # noqa: E711
     session.execute(stmt)
     session.commit()
 
 
 def handle_new_detections(
-    session: Session, host: str, port: int, password: str, sender: str, receivers: str, detections: set[datetime]
+    session: Session,
+    host: str,
+    port: int,
+    password: str,
+    sender: str,
+    receivers: str,
+    detections: set[datetime],
 ):
     existing = existing_detections(session)
     difference = detections.difference(existing)
@@ -183,7 +189,7 @@ def one_pass(
     receivers: str,
     admin_host: str,
     admin_port: int,
-    wait_minutes: int
+    wait_minutes: int,
 ):
     handle_unsent_email(session, host, port, password, sender, receivers)
     url = f"http://{admin_host}:{admin_port}/v1/stats"
@@ -194,14 +200,24 @@ def one_pass(
             response = requests.get(url, timeout=(1, 1))
             response.raise_for_status()
             body = response.json()
-            readings.append(body['dbase_readings']['num_readings'])
-            if i < 1:
-                log.info("waiting %d minutes for a new check", wait_minutes)
-                time.sleep(wait_minutes*60)
-        if readings[1] - readings[0] == 0:
+            readings.append(body["dbase_readings"]["num_readings"])
             now = datetime.now(timezone.utc).replace(microsecond=0)
-            detections= set([now])
-            handle_new_detections(session, host, port, password, sender, receivers, detections)
+            if i < 1:
+                if readings[0] == 0:
+                    log.warning("Database stored readings is already 0")
+                    handle_new_detections(
+                        session, host, port, password, sender, receivers, set([now])
+                    )
+                    break
+                log.info("waiting %d minutes for a new check", wait_minutes)
+                time.sleep((wait_minutes - 1) * 60)
+        if len(readings) == 2 and (readings[1] - readings[0] == 0):
+            log.warning(
+                "Database stored readings (%d) has no changed during %d minutes",
+                readings[0],
+                wait_minutes,
+            )
+            handle_new_detections(session, host, port, password, sender, receivers, set([now]))
         else:
             log.info("Todo ok.")
     except json.JSONDecodeError:
@@ -210,17 +226,15 @@ def one_pass(
         log.info("No contact with tessdb server")
         try:
             email_send(
-                    subject="[STARS4ALL] TESS Database Alarm !",
-                    body="no contact with tessdb server. Is it down?",
-                    sender=sender,
-                    receivers=receivers,
-                    host=host,
-                    port=port,
-                    password=password,
-                )
+                subject="[STARS4ALL] TESS Database Alarm !",
+                body="no contact with tessdb server. Is it down?",
+                sender=sender,
+                receivers=receivers,
+                host=host,
+                port=port,
+                password=password,
+            )
         except Exception as e:
-            log.critical("While trying to send an email: %s",e)
+            log.critical("While trying to send an email: %s", e)
     except Exception as e:
         log.exception(e)
-    
-       

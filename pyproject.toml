@@ -52,7 +52,7 @@ dev = [
 
 [project.urls]
 Homepage = "https://foundation.stars4all.eu"
-Repository = "https://github.com/astrorafael/tessdb-server-v2.git"
+Repository = "https://github.com/astrorafael/tessdb-server.git"
 
 [project.scripts]
 # This is the server
