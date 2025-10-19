@@ -50,6 +50,7 @@ def email_send(
     host: str,
     port: int,
     password: str,
+    cafile: str = None,
     confidential: bool = False,
     secure: bool = True,
 ):
@@ -70,9 +71,9 @@ def email_send(
     if secure:
         # Log in to server using secure context and send email
         context = ssl.create_default_context()
-        #context = ssl._create_unverified_context()
+        if cafile:
+            context.load_verify_locations(cafile=cafile)
         with smtplib.SMTP(host, port) as server:
-            server.ehlo()  # Can be omitted
             server.starttls(context=context)
             server.ehlo()  # Can be omitted
             server.login(sender, password)
@@ -121,6 +122,7 @@ def handle_new_detections(
     host: str,
     port: int,
     password: str,
+    cafile: str,
     sender: str,
     receivers: str,
     detections: set[datetime],
@@ -144,6 +146,7 @@ def handle_new_detections(
                 host=host,
                 port=port,
                 password=password,
+                cafile=cafile,
             )
         except Exception as e:
             log.error("Exception while sending email: %s", e)
@@ -156,7 +159,7 @@ def handle_new_detections(
 
 
 def handle_unsent_email(
-    session: Session, host: str, port: int, password: str, sender: str, receivers: str
+    session: Session, host: str, port: int, password: str, cafile: str, sender: str, receivers: str
 ):
     if count_not_notified(session) > 0:
         pending = not_notified(session)
@@ -170,6 +173,7 @@ def handle_unsent_email(
                 host=host,
                 port=port,
                 password=password,
+                cafile=cafile,
             )
         except Exception as e:
             log.error("Exception while sending email: %s", e)
@@ -187,13 +191,14 @@ def one_pass(
     port: int,
     sender: str,
     password: str,
+    cafile: str,
     receivers: str,
     admin_host: str,
     admin_port: int,
     wait_minutes: int,
 ):
     wait_minutes += -1
-    handle_unsent_email(session, host, port, password, sender, receivers)
+    handle_unsent_email(session, host, port, password, cafile, sender, receivers)
     url = f"http://{admin_host}:{admin_port}/v1/stats"
     try:
         url = f"http://{admin_host}:{admin_port}/v1/stats"
@@ -208,7 +213,7 @@ def one_pass(
                 if readings[0] == 0:
                     log.warning("Database stored #readings is already 0")
                     handle_new_detections(
-                        session, host, port, password, sender, receivers, set([now])
+                        session, host, port, password, cafile, sender, receivers, set([now])
                     )
                     break
                 log.info("waiting %d minutes for a new check", wait_minutes)
@@ -219,7 +224,7 @@ def one_pass(
                 readings[0],
                 wait_minutes,
             )
-            handle_new_detections(session, host, port, password, sender, receivers, set([now]))
+            handle_new_detections(session, host, port, password, cafile, sender, receivers, set([now]))
         else:
             log.info("Todo ok.")
     except json.JSONDecodeError:
@@ -235,6 +240,7 @@ def one_pass(
                 host=host,
                 port=port,
                 password=password,
+                cafile=cafile,
             )
         except Exception as e:
             log.critical("While trying to send an email: %s", e)
