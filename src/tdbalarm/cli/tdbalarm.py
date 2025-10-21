@@ -49,8 +49,8 @@ port = decouple.config("SMTP_PORT", cast=int)
 password = decouple.config("SMTP_PASSWORD")
 cafile = decouple.config("SMTP_CACERT", default=None)
 secure = decouple.config("SMTP_SECURE", cast=int, default=0)
-adm_host = decouple.config("ADMIN_HTTP_ADDR")
-adm_port = decouple.config("ADMIN_HTTP_PORT", cast=int)
+admin_host = decouple.config("ADMIN_HTTP_ADDR")
+admin_port = decouple.config("ADMIN_HTTP_PORT", cast=int)
 wait_minutes = decouple.config("WAIT_MINUTES", cast=int)
 
 # -------------------
@@ -70,8 +70,8 @@ def cli_main(args: Namespace) -> None:
                 secure=bool(secure),
                 cafile=cafile,
                 receivers=receivers,
-                adm_host=adm_host,
-                adm_port=adm_port,
+                admin_host=admin_host,
+                admin_port=admin_port,
                 wait_minutes=wait_minutes,
             )
 
