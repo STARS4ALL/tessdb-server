@@ -35,18 +35,18 @@ requirements:
     uv pip compile pyproject.toml -o requirements.txt
 
 # Publish the package to PyPi
-publish pkg=project: build
+publish pkg=project mod="tessdb": build
     twine upload -r pypi dist/*
     uv run --no-project --with {{pkg}} --refresh-package {{pkg}} \
-        -- python -c "from {{pkg}} import __version__; print(__version__)"
+        -- python -c "from {{mod}} import __version__; print(__version__)"
 
 # Publish to Test PyPi server
-test-publish pkg=project: build
+test-publish pkg=project mod="tessdb": build
     twine upload --verbose -r testpypi dist/*
     uv run --no-project  --with {{pkg}} --refresh-package {{pkg}} \
         --index-url https://test.pypi.org/simple/ \
         --extra-index-url https://pypi.org/simple/ \
-        -- python -c "from {{pkg}} import __version__; print(__version__)"
+        -- python -c "from {{mod}} import __version__; print(__version__)"
 
 
 # upgrades library and uv.lock
