@@ -125,6 +125,7 @@ def handle_new_detections(
     cafile: str,
     sender: str,
     receivers: str,
+    secure: bool,
     detections: set[datetime],
 ):
     existing = existing_detections(session)
@@ -147,6 +148,7 @@ def handle_new_detections(
                 port=port,
                 password=password,
                 cafile=cafile,
+                secure=secure,
             )
         except Exception as e:
             log.error("Exception while sending email: %s", e)
@@ -159,7 +161,14 @@ def handle_new_detections(
 
 
 def handle_unsent_email(
-    session: Session, host: str, port: int, password: str, cafile: str, sender: str, receivers: str
+    session: Session,
+    host: str,
+    port: int,
+    password: str,
+    cafile: str,
+    sender: str,
+    receivers: str,
+    secure: bool,
 ):
     if count_not_notified(session) > 0:
         pending = not_notified(session)
@@ -174,6 +183,7 @@ def handle_unsent_email(
                 port=port,
                 password=password,
                 cafile=cafile,
+                secure=secure,
             )
         except Exception as e:
             log.error("Exception while sending email: %s", e)
@@ -191,6 +201,7 @@ def one_pass(
     port: int,
     sender: str,
     password: str,
+    secure: bool,
     cafile: str,
     receivers: str,
     admin_host: str,
@@ -198,7 +209,16 @@ def one_pass(
     wait_minutes: int,
 ):
     wait_minutes += -1
-    handle_unsent_email(session, host, port, password, cafile, sender, receivers)
+    handle_unsent_email(
+        session=session,
+        host=host,
+        port=port,
+        password=password,
+        secure=secure,
+        cafile=cafile,
+        sender=sender,
+        receivers=receivers,
+    )
     url = f"http://{admin_host}:{admin_port}/v1/stats"
     try:
         url = f"http://{admin_host}:{admin_port}/v1/stats"
@@ -224,7 +244,17 @@ def one_pass(
                 readings[0],
                 wait_minutes,
             )
-            handle_new_detections(session, host, port, password, cafile, sender, receivers, set([now]))
+            handle_new_detections(
+                session=session,
+                host=host,
+                port=port,
+                password=password,
+                cafile=cafile,
+                sender=sender,
+                receivers=receivers,
+                secure=secure,
+                detections=set([now]),
+            )
         else:
             log.info("Todo ok.")
     except json.JSONDecodeError:
@@ -239,6 +269,7 @@ def one_pass(
                 receivers=receivers,
                 host=host,
                 port=port,
+                secure=secure,
                 password=password,
                 cafile=cafile,
             )
