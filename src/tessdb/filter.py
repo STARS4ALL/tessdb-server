@@ -73,31 +73,35 @@ def update_log_levels() -> None:
     global state
     log.setLevel(state.log_level)
     for name, level in state.loggers_dict.items():
-        fifo = LookAheadFilter.instance(
-            name, state.depth, state.flushing, buffered=state.daylight_enabled
-        )
+        fifo = LookAheadFilter.instance(name)
+        if not fifo.configured:
+            fifo.configure(state.depth, state.flushing, buffered=state.daylight_enabled)
         fifo.set_log_level(logger.level(level))
         if name in state.sampling_dict:
             sampling_factor = state.sampling_dict[name]
         else:
             sampling_factor = 1
-        decimator = Sampler.instance(name, sampling_factor)
+        decimator = Sampler.instance(name)
+        if not decimator.configured:
+            decimator.configure(sampling_factor)
         decimator.set_log_level(logger.level(level))
 
 
 def update_selective_unbuffered() -> None:
     global state
     for name in state.disabled_for:
-        filt = LookAheadFilter.instance(
-            name, state.depth, flushing=state.flushing, buffered=state.daylight_enabled
-        )
+        filt = LookAheadFilter.instance(name)
+        if not filt.configured:
+            filt.configure(state.depth, flushing=state.flushing, buffered=state.daylight_enabled)
         filt.buffered = False
 
 
 def update_divisor() -> None:
     global state
     for name, N in state.sampling_dict.items():
-        sampler = Sampler.instance(name, N)
+        sampler = Sampler.instance(name)
+        if not sampler.configured:
+            sampler.configure(N)
         sampler.divisor = N
 
 
@@ -151,10 +155,12 @@ async def filter_flush_monitor():
 
 def do_filter(sample: ReadingInfo, db_queue: PriorityQueue) -> None:
     sampling_factor = state.sampling_dict[sample.name] if sample.name in state.sampling_dict else 1
-    decimator = Sampler.instance(sample.name, sampling_factor)
-    fifo = LookAheadFilter.instance(
-        sample.name, state.depth, state.flushing, state.daylight_enabled
-    )
+    decimator = Sampler.instance(sample.name)
+    if not decimator.configured:
+        decimator.configure(sampling_factor)
+    fifo = LookAheadFilter.instance(sample.name)
+    if not fifo.configured:
+        fifo.configure(state.depth, state.flushing, state.daylight_enabled)
     sample = decimator.push_pop(sample)
     if sample is None:
         return
