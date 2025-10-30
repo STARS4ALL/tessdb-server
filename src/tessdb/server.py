@@ -65,20 +65,14 @@ state = State()
 
 
 def signal_pause(signum: int, frame):
-    signame = signal.Signals(signum).name
-    log.warning("server paused, signal %s (%d)", signame, signum)
     pub.sendMessage(Topic.SERVER_PAUSE)
 
 
 def signal_resume(signum: int, frame):
-    signame = signal.Signals(signum).name
-    log.warning("server resumed, signal %s (%d)", signame, signum)
     pub.sendMessage(Topic.SERVER_RESUME)
 
 
 def signal_reload(signum: int, frame):
-    signame = signal.Signals(signum).name
-    log.warning("reload configuration request, signal %s (%d)", signame, signum)
     pub.sendMessage(Topic.SERVER_RELOAD)
 
 
@@ -120,6 +114,7 @@ async def reload_monitor() -> None:
     while True:
         if state.reloaded:
             state.reloaded = False
+            log.warning("reloading server configuration")
             options = await reload_file(state.config_path)
             mqtt.on_server_reload(options["mqtt"])
             http.on_server_reload(options["http"])
