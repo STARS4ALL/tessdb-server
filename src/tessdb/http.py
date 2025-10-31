@@ -82,6 +82,10 @@ class FilterState(BaseModel):
     lookahead: LookAheadState
 
 
+class DatabaseInfo(BaseModel):
+    buffer_size: int
+
+
 # ----------------
 # Global variables
 # ----------------
@@ -294,3 +298,15 @@ def get_filter_confige(name: Stars4AllName):
     response = FilterState(name=name, sampler=obj1, lookahead=obj2)
     log.info("get filter state request returns %s", response)
     return response
+
+
+# ==========================================
+# DATABASE WRITER CONFIGURATION IN REAL TIME
+# ==========================================
+
+
+@app.put("/v1/dbase/buffer")
+def set_db_buffer_size(info: DatabaseInfo):
+    log.info("set database buffer size request to %d", info.buffer_size)
+    pub.sendMessage(Topic.DATABASE_BUFFER, size=info.buffer_size)
+    return {}

@@ -10,10 +10,12 @@ from enum import StrEnum, IntEnum
 
 class MessagePriority(IntEnum):
     """Priority of messages coming from the MQTT broker or the HTTP admin interface"""
+
     REGISTER = 1
-    FILTER_READINGS = 2 # pending readings from filter task to write to database when flushing
+    FILTER_READINGS = 2  # pending readings from filter task to write to database when flushing
     MQTT_READINGS = 3
-  
+
+
 class Topic(StrEnum):
     SERVER_STATS = "server.stats"
     SERVER_RELOAD = "server.reload"
@@ -22,6 +24,7 @@ class Topic(StrEnum):
     SERVER_FLUSH = "server.flush"
     PHOT_LOG_LEVEL = "server.plog_level"
     DATABASE_FLUSH = "database.flush"
+    DATABASE_BUFFER = "database.buffer"
 
 
 DEFAULT_FILTER = "UV/IR-740"

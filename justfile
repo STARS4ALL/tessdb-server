@@ -227,6 +227,12 @@ filter-state name port="8080":
     response=$(curl -s -X GET http://localhost:{{port}}/v1/filter/{{name}})
     echo $response
 
+buffer-size size port="8080":
+    #!/usr/bin/env bash   
+    set -euo pipefail
+    response=$(curl -s -X PUT http://localhost:{{port}}/v1/dbase/buffer -d '{"buffer_size": {{size}}}' -H "Content-Type: application/json")
+    echo $response
+
 # --------------
 # Alarms utility
 # --------------

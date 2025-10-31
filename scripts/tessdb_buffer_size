@@ -1,0 +1,8 @@
+#!/usr/bin/env bash   
+set -euo pipefail
+
+# COMPOOBAR ESTO
+buffer=$1
+port="${ADM_HTTP_PORT:-8080}"
+response=$(/usr/bin/curl -s -X POST http://localhost:${port}/v1/server/flush -d '{"buffer_size": $buffer}' -H "Content-Type: application/json")
+echo $response

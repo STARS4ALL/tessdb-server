@@ -127,6 +127,13 @@ def on_database_flush() -> None:
 pub.subscribe(on_database_flush, Topic.DATABASE_FLUSH)
 
 
+def on_database_buffer(size: int) -> None:
+    state.buffer_size = size
+
+
+pub.subscribe(on_database_buffer, Topic.DATABASE_BUFFER)
+
+
 async def write_readings(
     session: Session,
     item: ReadingInfo,
