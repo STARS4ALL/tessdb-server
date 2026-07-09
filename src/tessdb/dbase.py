@@ -44,7 +44,7 @@ from .constants import MessagePriority, Topic
 # Constants
 # ---------
 
-PAUSE_CYCLE = 60 # counts in 1 count/seconds
+PAUSE_CYCLE = 60  # counts in 1 count/seconds
 
 # -------
 # Classes
@@ -56,6 +56,7 @@ class State:
     url: str = decouple.config("DATABASE_URL")
     log_level: int = 0
     paused: bool = False
+    resumed: bool = False
     counter: itertools.cycle = itertools.cycle(range(PAUSE_CYCLE))
     buffer_size: int = 1
     auth_filter: bool = False
@@ -73,6 +74,7 @@ class State:
 
     def resume(self) -> None:
         self.paused = False
+        self.resumed = True
 
 
 def on_server_stats() -> None:
@@ -164,6 +166,13 @@ async def writer(options: dict[str, Any], queue: asyncio.PriorityQueue) -> None:
         try:
             async with Session() as session:
                 while True:
+                    if state.resumed:
+                        state.resumed = False
+                        log.warning(
+                            "Database writer resumed. Queue size: [%d/%d]",
+                            queue.qsize(),
+                            queue.maxsize,
+                        )
                     if state.paused:
                         await asyncio.sleep(1)
                         i = next(state.counter)

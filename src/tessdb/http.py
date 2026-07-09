@@ -8,8 +8,6 @@
 # System wide imports
 # -------------------
 
-import asyncio
-import tomllib
 import logging
 from typing import Any
 from dataclasses import dataclass, asdict
@@ -54,7 +52,6 @@ from .mqtt import stats as mqtt_stats
 class State:
     host: str = decouple.config("ADMIN_HTTP_LISTEN_ADDR")
     port: int = decouple.config("ADMIN_HTTP_PORT", cast=int)
-    config_path: str = None  # This is quirky (needed for reload)
     log_level: int = 0
 
     def update(self, options: dict[str, Any]) -> None:
@@ -104,25 +101,13 @@ def on_server_reload(options: dict[str, Any]) -> None:
 # pub.subscribe(on_server_reload, Topic.SERVER_RELOAD)
 
 
-def load_config(path: str) -> dict[str, Any]:
-    with open(path, "rb") as config_file:
-        return tomllib.load(config_file)
-
-
-async def reload_file() -> dict[str, Any]:
-    global state
-    loop = asyncio.get_running_loop()
-    return await loop.run_in_executor(None, load_config, state.config_path)
-
-
 # -------------------------
 # The HTTP server main task
 # -------------------------
 
 
-async def admin(options: dict[str, Any], config_path: str) -> None:
+async def admin(options: dict[str, Any]) -> None:
     global state
-    state.config_path = config_path  # This is quirky (needed for reload)
     state.update(options)
     log.setLevel(state.log_level)
     config = uvicorn.Config(
@@ -150,8 +135,7 @@ async def root():
 @app.post("/v1/server/reload")
 async def server_reload():
     log.info("reload configuration request")
-    options = await reload_file()
-    pub.sendMessage(Topic.SERVER_RELOAD, options=options)
+    pub.sendMessage(Topic.SERVER_RELOAD)
     return {"message": "Server reloaded"}
 
 
@@ -179,7 +163,7 @@ def server_flush():
 @app.get("/v1/stats")
 async def server_stats():
     stats = {"mqtt": mqtt_stats, "dbase_register": reg_stats, "dbase_readings": read_stats}
-    result = {k: asdict(v) for k,v in stats.items()}
+    result = {k: asdict(v) for k, v in stats.items()}
     return result
 
 
